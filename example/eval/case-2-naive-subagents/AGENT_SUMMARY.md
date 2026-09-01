@@ -1,6 +1,6 @@
 # AGENT_SUMMARY — case-2-naive-subagents
 
-Shipped a local Todo MVP: Express JSON API + Vite React frontend. Product code lives in `$BENCH_V1/case-2-naive-subagents`.
+Shipped a local Todo MVP: Express JSON API + Vite React frontend. Product code lives in `$BENCH_ROOT/case-2-naive-subagents`.
 
 Process: naive overlapping tracks (backend / frontend / docs / tests) without a locked API contract, then merge. Did **not** use agents-holding to build the product.
 
@@ -9,7 +9,7 @@ Process: naive overlapping tracks (backend / frontend / docs / tests) without a 
 From the product workspace:
 
 ```bash
-cd $BENCH_V1/case-2-naive-subagents
+cd $BENCH_ROOT/case-2-naive-subagents
 npm --prefix backend install
 npm --prefix frontend install
 

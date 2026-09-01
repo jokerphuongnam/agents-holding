@@ -4,7 +4,7 @@ Chronological log of this run.
 
 1. Read bench workspace (`eval-todo-bench/case-1-chat-only/README.md`) and eval input (`agents-holding/example/eval/case-1-chat-only/INPUT.md`). Workspace was empty except the bench README.
 2. Chose stack: Express 5 (ESM) + JSON file persistence + Vite 6 / React 19. Confirmed Node v26.7.0 / npm 11.19.0.
-3. Wrote product files under `$BENCH_V1/case-1-chat-only`:
+3. Wrote product files under `$BENCH_ROOT/case-1-chat-only`:
    - root `package.json` (concurrently scripts), `.gitignore`, `README.md`
    - `backend/src/store.js` (UUID todos, atomic JSON write to `backend/data/todos.json`)
    - `backend/src/server.js` (health + CRUD, CORS, validation)

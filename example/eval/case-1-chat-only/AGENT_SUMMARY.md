@@ -1,13 +1,13 @@
 # AGENT_SUMMARY — case-1-chat-only
 
-Shipped a local Todo MVP: Express JSON API + Vite React frontend. Product code lives in `$BENCH_V1/case-1-chat-only`.
+Shipped a local Todo MVP: Express JSON API + Vite React frontend. Product code lives in `$BENCH_ROOT/case-1-chat-only`.
 
 ## Run instructions
 
 From the product workspace:
 
 ```bash
-cd $BENCH_V1/case-1-chat-only
+cd $BENCH_ROOT/case-1-chat-only
 npm install
 npm run install:all
 npm run dev

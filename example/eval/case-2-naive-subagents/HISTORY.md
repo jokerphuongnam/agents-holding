@@ -2,7 +2,7 @@
 
 Chronological log of this run. Real turns only.
 
-1. Workspace `$BENCH_V1/case-2-naive-subagents` was empty except the bench README. User input: Vietnamese Todo API + React MVP, ask if something is missing. Operator constraints: naive parallel tracks (backend / frontend / docs / tests) **without** a shared API contract first, then merge; do not use agents-holding to build; prove with curl; existing libs; persist todos; write `AGENT_SUMMARY.md` + `HISTORY.md` here when done.
+1. Workspace `$BENCH_ROOT/case-2-naive-subagents` was empty except the bench README. User input: Vietnamese Todo API + React MVP, ask if something is missing. Operator constraints: naive parallel tracks (backend / frontend / docs / tests) **without** a shared API contract first, then merge; do not use agents-holding to build; prove with curl; existing libs; persist todos; write `AGENT_SUMMARY.md` + `HISTORY.md` here when done.
 2. This harness has no spawn-subagent tool (only background bash / monitors). Did **not** start agents-holding. Implemented the four tracks as overlapping parallel file writes in one session, with no contract markdown locked first.
 3. Independent choices before merge:
    - Backend: Express + CORS + `node:test`, JSON file store, routes under `/api`, field `completed`, extra `POST /todos/:id/toggle`, UUID ids.
