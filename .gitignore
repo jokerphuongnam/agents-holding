@@ -5,3 +5,6 @@ holding/cache/export/
 holding/cache/cache/**
 !holding/cache/cache/.gitkeep
 *.tmp
+**/node_modules/
+templates/starters/**/node_modules/
+templates/starters/**/package-lock.json
