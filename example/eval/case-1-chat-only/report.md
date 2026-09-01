@@ -7,7 +7,8 @@
 - Model / effort actual: grok-4.6 (effort not separately metered by host)
 - Workspace: `$BENCH_ROOT/case-1-chat-only`
 - Wall clock: ~174s (subagent duration_ms=173969)
-- Tokens: **unknown** (host did not expose a final token total). Evidence: tool_calls=32, turns=1
+- Tokens (billed total): **unknown**
+- Token proxies: 33,124 contextTokensUsed; 32 tools; 173s (signals.json) (host did not expose a final token total). Evidence: tool_calls=32, turns=1
 - Subagent: `01a05c59-ec2c-7ad2-83f4-276c2a0e5f48`
 
 ## Input used

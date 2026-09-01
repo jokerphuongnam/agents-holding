@@ -7,7 +7,8 @@
 - Model / effort actual: grok-4.6 (effort not separately metered)
 - Workspace: `$BENCH_ROOT/case-2-naive-subagents`
 - Wall clock: ~394s (duration_ms=394326)
-- Tokens: **unknown** final total. Mid-run host showed ~26K context usage once; tool_calls=71, turns=2
+- Tokens (billed total): **unknown**
+- Token proxies: 55,179 contextTokensUsed; 71 tools; 394s (signals.json) final total. Mid-run host showed ~26K context usage once; tool_calls=71, turns=2
 - Subagent: `01a05c59-ec2c-7ad2-83f4-277e9ec47986`
 
 ## Input used
