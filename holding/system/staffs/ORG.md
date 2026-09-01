@@ -27,12 +27,15 @@ scripts stay holding-side tools, not subsidiary HR.
 ```text
 user / subsidiary
  └─ holding-ceo
-     ├─ staffing shortage ("we lack staff like this")
-     │    └─ holding-hr ↔ USER (budget, name, role, skills, duties, project slice)
-     │         → confirm/lock → HR writes .agents/<company>/ (+ company_os)
+     ├─ new company (chat) OR staffing shortage
+     │    └─ holding-hr ↔ USER (budget, name, tech/roles, skills, duties, project-root)
+     │         → confirm/lock → create-company.sh / hire SoT (+ company_os)
      ├─ multi-company task → Assign subsidiary ceo(s) / coordinator
      └─ single-company product → that company's ceo (existing hop)
 ```
+
+**Create company:** chat with `holding-ceo` (Assign `holding-hr`) **or** self-serve
+`create-company.sh` — same factory.
 
 ### Hiring example
 

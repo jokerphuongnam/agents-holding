@@ -10,8 +10,11 @@ Grok, Codex, Claude, … are **runtimes** — they do not own the conglomerate.
 
 | Topic | Who talks to the user |
 | --- | --- |
-| Conglomerate / multi-company | **`holding-ceo`** |
-| **Hiring / staffing deal** | **`holding-hr`** (after `holding-ceo` routes the shortage) |
+| Conglomerate / multi-company / **new company ask** | **`holding-ceo`** |
+| **Create-company or hire deal** (budget, name, tech, roles, skills) | **`holding-hr`** (after `holding-ceo` routes) |
+
+Creating a company is supported **via chat** (ceo → hr ↔ you → factory) **or**
+self-serve `create-company.sh` — same factory.
 
 Subsidiary product chat stays with that company’s `ceo` / `ba` — not holding ICs.
 
@@ -38,7 +41,8 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 3. Act as the **role** hop returns (or the parent assigned).
 4. Load **one** skill path from hop (`skill:`) when present.
 5. Cascade:
-   - User / subsidiary shortage → **`holding-ceo`** → Assign **`holding-hr`** ↔ user (hire deal) → lock → HR writes into that company.
+   - New company → **`holding-ceo`** → **`holding-hr`** ↔ user → lock → `create-company.sh` + `company_os.sh all`.
+   - Shortage → **`holding-ceo`** → **`holding-hr`** ↔ user → lock → HR writes into that company.
    - Multi-company → **`holding-ceo`** → **`holding-coordinator`** / subsidiary `ceo`(s).
 6. Short briefs only (goal / path / done-when). English SoT only.
 

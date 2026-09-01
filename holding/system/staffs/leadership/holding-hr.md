@@ -31,8 +31,13 @@ factory, not subsidiary invention.
 
 ## When you wake
 
-CEO hands you: target **company slug**, shortage text, optional feature context
-(e.g. call feature → need Swift).
+CEO hands you either:
+
+- **New company:** slug, budget (`low|medium|high`), tech hints, `--project-root`
+  — propose roster + `--tech` tags, then after confirm/lock run
+  `create-company.sh` + `company_os.sh all`.
+- **Shortage / re-hire:** target company slug, shortage text, optional feature
+  context (e.g. call feature → need Swift).
 
 1. Inventory that company (`staffs/`, hop TSV, customs, `BUDGET_APPLIED.json`,
    skills-library `MANIFEST.json`).
