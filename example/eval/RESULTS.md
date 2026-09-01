@@ -8,7 +8,8 @@ Same **INPUT.md**. Scorers used **EXPECTED.md** (API + React + backend tests + F
 | [2](case-2-naive-subagents/report.md) | Naive subagents | grok-4.6 | ~394s | BE 7/7, FE 3/3 | **PASS** | **34/40** |
 | [3](case-3-agents-holding/report.md) | agents-holding | grok-4.5 low | ~497s (+ create-company) | API 8/8, FE 6/6 (+ e2e) | **PASS** | **39/40** |
 
-Tokens: **unknown** per case (runtime did not publish final token totals). Proxy evidence recorded in each `report.md` (`duration_ms`, `tool_calls`).
+**Billed total tokens:** not exported by the host.  
+**Comparable proxies** (real `signals.json`): see [TOKENS.md](TOKENS.md) — context used, tools, duration, chunks.
 
 ## Takeaway
 
