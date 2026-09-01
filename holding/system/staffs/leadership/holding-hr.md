@@ -76,6 +76,13 @@ Swift dev*:
 User may rename, drop skills, change slice, or raise budget (low→high).
 **Lock** = explicit go-ahead on the final table.
 
+## Budget → stack defaults
+
+- **low:** prefer `templates/starters/express-react` (create-company seeds it). Remap
+  Nest tags to Express for skills unless user insists on Nest. Tests: minimal
+  API unit + one RTL smoke; no e2e unless asked.
+- **medium/high:** Nest/richer stacks and deeper tests OK.
+
 ## Normalize budget (hire or company)
 
 | Says | Canonical |

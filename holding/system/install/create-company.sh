@@ -196,11 +196,35 @@ else
   echo "[create-company] warn: no reference hop at $REF_HOP" >&2
 fi
 
+# Budget low: prefer Express over Nest for skills tags unless user only asked nest
+SKILLS_TECH="$TECH"
+if [[ "$BUDGET" == "low" ]]; then
+  SKILLS_TECH="$(echo "$TECH" | sed -E 's/(^|[, ])nestjs([, ]|$)/\1express\2/g; s/(^|[, ])nest([, ]|$)/\1express\2/g')"
+  echo "[create-company] budget=low skills-tech remapped: $SKILLS_TECH"
+fi
+
 # Copy matching skills-library customs by --tech (+ ba/po/qc/design baselines)
 python3 "$HOLDING_INSTALL/copy_library_skills.py" \
   --dest "$DEST" \
-  --tech "$TECH" \
+  --tech "$SKILLS_TECH" \
   --library "$AGENTS_HOME/templates/skills-library"
+
+# Seed express-react starter into project root when budget=low and UI+backend-ish
+STARTER="$AGENTS_HOME/templates/starters/express-react"
+if [[ "$BUDGET" == "low" && -d "$STARTER" ]]; then
+  if echo "$TECH_L" | grep -Eq 'react|frontend|typescript|javascript|express|nestjs|node|backend'; then
+    PROJECT_DIR="$(cd "$DEST/../.." && pwd)"
+    # Only seed if project looks empty of app code
+    if [[ ! -d "$PROJECT_DIR/backend" && ! -d "$PROJECT_DIR/apps" && ! -d "$PROJECT_DIR/frontend" ]]; then
+      if command -v rsync >/dev/null 2>&1; then
+        rsync -a --exclude '.DS_Store' "$STARTER/" "$PROJECT_DIR/"
+      else
+        cp -R "$STARTER/." "$PROJECT_DIR/"
+      fi
+      echo "[create-company] seeded starter express-react into $PROJECT_DIR"
+    fi
+  fi
+fi
 
 if [[ -f "$REF_INSTALL/company_os.sh" ]]; then
   cp "$REF_INSTALL/company_os.sh" "$DEST/system/install/company_os.sh"
@@ -230,20 +254,29 @@ cat > "$DEST/CTO_TECH_SEED.md" <<EOF
 
 **Budget:** $BUDGET
 **Hints from holding/user:** ${TECH:-_(none)_}
+**Skills tags used:** ${SKILLS_TECH:-_(none)_}
 
 CTO: propose tech teams and \`system/skills/customs/<team>/<role>/\` skills next.
 If UI-heavy, keep design staffs (design-lead, ux-writer, ui-designer) and
 use ba for design intake → canonical brief.
 Do not invent stack the user did not ask for.
+
+## Budget policy
+
+- **low:** prefer Express+Vite starter if seeded; **one** API unit suite + **one** FE RTL smoke; **no e2e** unless user asks. Load **one** customs skill per IC.
+- **medium/high:** Nest or richer stacks OK; more tests OK.
 EOF
 
 cat > "$DEST/COMPANY_BOOT.md" <<EOF
-# $TITLE — boot
+# $TITLE — boot (keep short)
 
-1. Read \`COMPANY.md\` / \`README.md\`.
-2. Hop:
-   \`python3 .agents/$SLUG/system/skills/defaults/marlin-hop/scripts/hop.py --path <file>\`
-3. Multi-company work → \`.agents/holding/\` (\`holding-ceo\`).
+User channel: \`ceo\` / \`ba\` only.
+
+1. Hop once: \`python3 .agents/$SLUG/system/skills/defaults/marlin-hop/scripts/hop.py --path <file>\`
+2. Assign **one** IC for that path. Do **not** read all of ORG or all customs.
+3. IC loads **at most one** customs \`SKILL.md\`. Prefer editing seeded \`backend/\` + \`frontend/\` (budget low starter) over re-scaffolding.
+4. Multi-company / hire → \`.agents/holding/\` \`holding-ceo\`.
+5. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 EOF
 
 echo "[create-company] done: $DEST"
