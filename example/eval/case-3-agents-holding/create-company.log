@@ -1,0 +1,36 @@
+[create-company] slug=todo-app-company budget=low tech=typescript,react,nestjs
+[create-company] agents-home=/Users/phuongnampham/.agents
+[create-company] dest=/Users/phuongnampham/Documents/Agents/eval-todo-bench/case-3-agents-holding/.agents/todo-app-company
+[apply_budget_harness] budget=low harness=3 agents_tier_updates=0
+[apply_budget_harness] always_max=['ba', 'po-modify', 'po-new'] → xhigh
+[create-company] seeded design staffs (frontend-shaped tech hints)
+[seed_company_hop_data] agents=13 roster=13 routes=10
+[apply_budget_harness] budget=low harness=3 agents_tier_updates=0
+[apply_budget_harness] always_max=['ba', 'po-modify', 'po-new'] → xhigh
+[create-company] bootstrapped hop scripts + company-local hop data
+[copy_library_skills] copied 13 skills
+  - frontend/frontend-engineer/js-ts-core tags=['typescript']
+  - backend/backend-engineer/js-ts-backend tags=['typescript']
+  - frontend/frontend-engineer/react tags=['react']
+  - backend/backend-engineer/nestjs tags=['nestjs']
+  - product/ba/ba-requirements tags=['ba', 'requirements']
+  - product/ba/ba-design-intake tags=['ba', 'design-intake', 'figma']
+  - product/po-modify/po-ac-writing tags=['ac', 'po']
+  - product/po-new/po-plan-slicing tags=['po']
+  - design/ui-designer/design-system tags=['design', 'design-system']
+  - design/ux-writer/ux-writing tags=['ux-writing']
+  - qc/qc-lead/qc-test-strategy tags=['qc', 'test-strategy']
+  - qc/qc-lead/qc-automation tags=['qc']
+  - qc/qc-lead/qc-regression tags=['qc']
+[create-company] installed company_os.sh
+[create-company] done: /Users/phuongnampham/Documents/Agents/eval-todo-bench/case-3-agents-holding/.agents/todo-app-company
+[create-company] next: .agents/todo-app-company/system/install/company_os.sh all
+[create-company] then CTO refines teams from CTO_TECH_SEED.md
+[company_os] root=/Users/phuongnampham/Documents/Agents/eval-todo-bench/case-3-agents-holding
+[company_os] holding=/Users/phuongnampham/Documents/Agents/eval-todo-bench/case-3-agents-holding/.agents/todo-app-company
+[company_os] generate harness=all
+sot: normalized 13 portable role cards
+claude: layout=tree_symlink — mounts under .claude/
+codex: layout=agents_md — pointer .codex/AGENTS.md (13 roles mirrored under export_dir)
+grok: layout=flat — 13 agent cards → .agents/todo-app-company/cache/export/grok
+[company_os] done — see holding README.md / COMPANY_BOOT.md

@@ -1,0 +1,381 @@
+{
+  "version": 1,
+  "note": "Library of optional customs. create-company copies by --tech tags into company customs/<target>/.",
+  "skills": [
+    {
+      "id": "csharp-core",
+      "path": "tech/csharp/csharp-core",
+      "tags": [
+        "csharp",
+        "c#",
+        "dotnet",
+        ".net"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "csharp-backend",
+      "path": "tech/csharp/csharp-backend",
+      "tags": [
+        "csharp",
+        "c#",
+        "aspnet",
+        "dotnet-backend",
+        "backend"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "csharp-unity",
+      "path": "tech/csharp/csharp-unity",
+      "tags": [
+        "csharp",
+        "c#",
+        "unity",
+        "game"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "cpp-core",
+      "path": "tech/cpp/cpp-core",
+      "tags": [
+        "cpp",
+        "c++",
+        "cplusplus"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "objc-core",
+      "path": "tech/apple/objc-core",
+      "tags": [
+        "objc",
+        "objective-c",
+        "objectivec",
+        "apple"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "swift-core",
+      "path": "tech/apple/swift-core",
+      "tags": [
+        "swift",
+        "apple",
+        "ios",
+        "macos"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "uikit",
+      "path": "tech/apple/uikit",
+      "tags": [
+        "uikit",
+        "ios",
+        "apple"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "swiftui",
+      "path": "tech/apple/swiftui",
+      "tags": [
+        "swiftui",
+        "ios",
+        "apple"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "kotlin-core",
+      "path": "tech/kotlin/kotlin-core",
+      "tags": [
+        "kotlin"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "kotlin-backend",
+      "path": "tech/kotlin/kotlin-backend",
+      "tags": [
+        "kotlin",
+        "backend",
+        "ktor",
+        "spring"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "kotlin-android",
+      "path": "tech/kotlin/kotlin-android",
+      "tags": [
+        "kotlin",
+        "android",
+        "compose"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "kotlin-kmp",
+      "path": "tech/kotlin/kotlin-kmp",
+      "tags": [
+        "kotlin",
+        "kmp",
+        "multiplatform"
+      ],
+      "target": "mobile/mobile-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "js-ts-core",
+      "path": "tech/web/js-ts-core",
+      "tags": [
+        "javascript",
+        "typescript",
+        "js",
+        "ts"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "js-ts-backend",
+      "path": "tech/web/js-ts-backend",
+      "tags": [
+        "typescript",
+        "javascript",
+        "node",
+        "backend",
+        "express"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "react",
+      "path": "tech/web/react",
+      "tags": [
+        "react",
+        "reactjs",
+        "frontend"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "redux",
+      "path": "tech/web/redux",
+      "tags": [
+        "redux",
+        "react-redux",
+        "redux-toolkit"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "vue",
+      "path": "tech/web/vue",
+      "tags": [
+        "vue",
+        "vuejs",
+        "nuxt"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "angular",
+      "path": "tech/web/angular",
+      "tags": [
+        "angular",
+        "angularjs"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "nextjs",
+      "path": "tech/web/nextjs",
+      "tags": [
+        "next",
+        "nextjs"
+      ],
+      "target": "frontend/frontend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "nestjs",
+      "path": "tech/web/nestjs",
+      "tags": [
+        "nest",
+        "nestjs"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "python-core",
+      "path": "tech/python/python-core",
+      "tags": [
+        "python",
+        "py"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "bash",
+      "path": "tech/shell/bash",
+      "tags": [
+        "bash",
+        "sh",
+        "shell",
+        "zsh"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "rust-core",
+      "path": "tech/rust/rust-core",
+      "tags": [
+        "rust"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "go-core",
+      "path": "tech/go/go-core",
+      "tags": [
+        "go",
+        "golang"
+      ],
+      "target": "backend/backend-engineer",
+      "always_for_roles": []
+    },
+    {
+      "id": "ba-requirements",
+      "path": "product/ba/ba-requirements",
+      "tags": [
+        "ba",
+        "requirements"
+      ],
+      "target": "product/ba",
+      "always_for_roles": []
+    },
+    {
+      "id": "ba-design-intake",
+      "path": "product/ba/ba-design-intake",
+      "tags": [
+        "ba",
+        "design-intake",
+        "figma",
+        "ux"
+      ],
+      "target": "product/ba",
+      "always_for_roles": []
+    },
+    {
+      "id": "po-ac-writing",
+      "path": "product/po/po-ac-writing",
+      "tags": [
+        "po",
+        "ac",
+        "acceptance"
+      ],
+      "target": "product/po-modify",
+      "always_for_roles": []
+    },
+    {
+      "id": "po-plan-slicing",
+      "path": "product/po/po-plan-slicing",
+      "tags": [
+        "po",
+        "plan",
+        "roadmap"
+      ],
+      "target": "product/po-new",
+      "always_for_roles": []
+    },
+    {
+      "id": "design-system",
+      "path": "design/design-system",
+      "tags": [
+        "design",
+        "design-system",
+        "ui"
+      ],
+      "target": "design/ui-designer",
+      "always_for_roles": []
+    },
+    {
+      "id": "ux-writing",
+      "path": "design/ux-writing",
+      "tags": [
+        "ux-writing",
+        "copy",
+        "content"
+      ],
+      "target": "design/ux-writer",
+      "always_for_roles": []
+    },
+    {
+      "id": "design-critique",
+      "path": "design/design-critique",
+      "tags": [
+        "design-review",
+        "critique"
+      ],
+      "target": "design/design-lead",
+      "always_for_roles": []
+    },
+    {
+      "id": "qc-test-strategy",
+      "path": "qc/qc-test-strategy",
+      "tags": [
+        "qc",
+        "qa",
+        "test-strategy"
+      ],
+      "target": "qc/qc-lead",
+      "always_for_roles": []
+    },
+    {
+      "id": "qc-automation",
+      "path": "qc/qc-automation",
+      "tags": [
+        "qc",
+        "automation",
+        "e2e",
+        "unit-test"
+      ],
+      "target": "qc/qc-lead",
+      "always_for_roles": []
+    },
+    {
+      "id": "qc-regression",
+      "path": "qc/qc-regression",
+      "tags": [
+        "qc",
+        "regression"
+      ],
+      "target": "qc/qc-lead",
+      "always_for_roles": []
+    }
+  ]
+}
