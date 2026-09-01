@@ -1,0 +1,14 @@
+{
+  "role": "primary",
+  "session_id": "01a05c70-cbda-77d3-9dc8-24c21044c52a",
+  "nested_llm_subagents": 0,
+  "inputTokens": 458774,
+  "outputTokens": 11301,
+  "reasoningTokens": 4244,
+  "cachedReadTokens": 327808,
+  "totalTokens": 470075,
+  "modelCalls": 16,
+  "costUsdTicks": 1455473360,
+  "apiDurationMs": 183294,
+  "note": "post-optimize case-3 only re-run; nested LLM bills=0"
+}

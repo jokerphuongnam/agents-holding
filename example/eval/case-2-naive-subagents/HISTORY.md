@@ -1,16 +1,28 @@
-# HISTORY — case-2-naive-subagents
+# HISTORY — case-2-naive-subagents (merge)
 
-Chronological log of this run. Real turns only.
+Chronological log of the merge run. Real work only.
 
-1. Workspace `$BENCH_ROOT/case-2-naive-subagents` was empty except the bench README. User input: Vietnamese Todo API + React MVP, ask if something is missing. Operator constraints: naive parallel tracks (backend / frontend / docs / tests) **without** a shared API contract first, then merge; do not use agents-holding to build; prove with curl; existing libs; persist todos; write `AGENT_SUMMARY.md` + `HISTORY.md` here when done.
-2. This harness has no spawn-subagent tool (only background bash / monitors). Did **not** start agents-holding. Implemented the four tracks as overlapping parallel file writes in one session, with no contract markdown locked first.
-3. Independent choices before merge:
-   - Backend: Express + CORS + `node:test`, JSON file store, routes under `/api`, field `completed`, extra `POST /todos/:id/toggle`, UUID ids.
-   - Frontend: Vite + React 18 + fetch `/api/todos`, loading / empty / error+retry, add / toggle / edit / delete.
-   - Docs: root README with run + curl.
-   - Tests: backend HTTP tests against a temp file store; frontend RTL + vitest with mocked `fetch`.
-4. Merge: kept `/api` prefix + `completed` (not `done`) + toggle POST + PATCH for title/completed. Frontend `api.js` aligned to that. No Nest/SQLite — used Express + `fs`.
-5. Installed existing packages (`express`, `cors`, `react`, `vite`, `@testing-library/*`, `vitest`, `jsdom`). Backend tests 7/7 pass. Frontend tests 3/3 pass.
-6. Port 3001 already used by case-1 (`node src/server.js` in `eval-todo-bench/case-1-chat-only/backend`). Started **this** API on `PORT=3002` with `TODO_DATA_FILE=backend/data/todos.json`. Vite UI started on `127.0.0.1:5173`.
-7. Curl proof on :3002: health, empty list, POST create, GET by id, PATCH title, POST toggle, 400 empty title, 404 missing. Confirmed persist file. Killed API, restarted, list still had `Buy oat milk`. DELETE → 204, list `[]`. Frontend HTML 200.
-8. No `ASK_USER.md`. Wrote this file and `AGENT_SUMMARY.md`.
+1. User input (product): merge three naive tracks into one working Todo API + React UI; align routes/ports; keep Express; field `done` OK; tests + curl proof; fix README; overwrite eval artifacts. Operator overlay: `children_ids.json` must list the three nested LLM ids exactly; `primary` = `PARENT_SPAWNED`.
+2. This merge session id: `01a05c7c-3cdc-7fe1-8826-c3bd84f80267`. Workspace: `$BENCH_V1/case-2-naive-subagents`.
+3. Read the three TRACK files:
+   - Backend: Express `/todos`, `done`, port 4000.
+   - Frontend: Vite `/api/todos`, `done`, proxy to 3001.
+   - Docs: imagined FastAPI on 8000; root README described that fiction.
+4. Merge decision: keep Express + `done`; move API routes to `/api/todos`; keep API port **4000**; retarget Vite proxy 3001 → 4000 (3001 was already bound by case-1-chat-only).
+5. Code: `backend/src/app.js` routes `/api/todos` (+ `/health` and `/api/health`); `backend/src/server.js` default `PORT=4000`; `frontend/vite.config.js` proxy target `http://localhost:4000`. Backend tests updated to `/api/todos`. Frontend RTL tests cover list/empty, add, toggle, delete; API client unit tests added. `handleAdd` guarded against double-submit.
+6. Docs: root `README.md` rewritten to the real Express + Vite product. `backend/TRACK.md`, `frontend/TRACK.md`, `docs/TRACK.md` record original assumptions vs merged contract. `scripts/smoke.sh` curls health + CRUD on port 4000. Root `package.json` added (`concurrently` + `install:all` / `dev` / `test`).
+7. Tests: backend **13/13** pass; frontend **7/7** pass.
+8. Live servers: `cd backend && node src/server.js` → `http://localhost:4000`; `cd frontend && npx vite --host 127.0.0.1 --port 5173`. Curl proved health, POST 201, PATCH `done`, 400, 404, DELETE 204, UI 200, Vite proxy `/api/health`. `./scripts/smoke.sh` ok.
+9. Overwrote eval artifacts under `agents-holding/example/eval/case-2-naive-subagents/`.
+
+## Child subagent_id list (exact ids)
+
+- `01a05c79-96a0-7203-b26d-156f4a09febf`
+- `01a05c79-96bb-7182-8270-4cc11c859bb6`
+- `01a05c79-96bb-7182-8270-4cd4d6d86222`
+
+## Primary / this session
+
+- primary: `PARENT_SPAWNED`
+- merge session: `01a05c7c-3cdc-7fe1-8826-c3bd84f80267`
+- merge_agent: Grok Build MERGE subagent for naive case-2
