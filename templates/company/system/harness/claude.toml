@@ -1,0 +1,30 @@
+id = "claude"
+layout = "tree_symlink"
+
+[tier_to_model]
+dispatch = "sonnet"
+low = "sonnet"
+medium = "sonnet"
+high = "opus"
+xhigh = "opus"
+
+[tier_to_effort]
+dispatch = "{{EFFORT_DISPATCH}}"
+low = "{{EFFORT_LOW}}"
+medium = "{{EFFORT_MEDIUM}}"
+high = "{{EFFORT_HIGH}}"
+xhigh = "{{EFFORT_XHIGH}}"
+
+[paths]
+runtime_dir = ".claude"
+link_agents = "agents"
+link_skills = "skills"
+link_plans = "plans"
+agents_target = "../.agents/{{COMPANY_SLUG}}/system/staffs"
+skills_target = "../.agents/{{COMPANY_SLUG}}/system/skills"
+plans_target = "../.agents/{{COMPANY_SLUG}}/cache/plans"
+
+[boot]
+company_boot = "../.agents/{{COMPANY_SLUG}}/COMPANY_BOOT.md"
+link_boot = "COMPANY_BOOT.md"
+harness_readme = ".claude/README.md"

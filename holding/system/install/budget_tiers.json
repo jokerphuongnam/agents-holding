@@ -1,0 +1,98 @@
+{
+  "policy": {
+    "always_max_roles": [
+      "ba",
+      "po-modify",
+      "po-new"
+    ],
+    "always_max_tier": "xhigh",
+    "note": "Plan and doc writers always keep max tier/effort regardless of company budget.",
+    "nl_aliases": {
+      "low": [
+        "low",
+        "poor",
+        "cheap",
+        "tight",
+        "broke",
+        "lean"
+      ],
+      "medium": [
+        "medium",
+        "normal",
+        "ok",
+        "default",
+        "balanced"
+      ],
+      "high": [
+        "high",
+        "rich",
+        "generous",
+        "unlimited",
+        "fat"
+      ]
+    }
+  },
+  "low": {
+    "tier_to_effort": {
+      "dispatch": "low",
+      "low": "low",
+      "medium": "low",
+      "high": "medium",
+      "xhigh": "xhigh"
+    },
+    "agents_tsv_tier_overrides": {
+      "ceo": "dispatch",
+      "cto": "dispatch",
+      "ba": "xhigh",
+      "po-modify": "xhigh",
+      "po-new": "xhigh",
+      "git": "low",
+      "qc-lead": "dispatch",
+      "tech-lead": "dispatch",
+      "frontend-engineer": "low",
+      "backend-engineer": "low",
+      "mobile-engineer": "low",
+      "ui-designer": "low",
+      "ux-writer": "low",
+      "data": "low"
+    },
+    "note": "Poor/lean budget: compress IC effort; plan+doc roles stay xhigh."
+  },
+  "medium": {
+    "tier_to_effort": {
+      "dispatch": "low",
+      "low": "low",
+      "medium": "medium",
+      "high": "high",
+      "xhigh": "xhigh"
+    },
+    "agents_tsv_tier_overrides": {
+      "ba": "xhigh",
+      "po-modify": "xhigh",
+      "po-new": "xhigh"
+    },
+    "note": "Balanced defaults; plan+doc roles always xhigh."
+  },
+  "high": {
+    "tier_to_effort": {
+      "dispatch": "low",
+      "low": "medium",
+      "medium": "high",
+      "high": "high",
+      "xhigh": "xhigh"
+    },
+    "agents_tsv_tier_overrides": {
+      "ba": "xhigh",
+      "po-modify": "xhigh",
+      "po-new": "xhigh",
+      "cto": "dispatch",
+      "frontend-engineer": "high",
+      "backend-engineer": "high",
+      "mobile-engineer": "high",
+      "ui-designer": "high",
+      "ux-writer": "high",
+      "data": "high"
+    },
+    "note": "Rich budget: raise IC effort; plan+doc roles stay xhigh."
+  }
+}

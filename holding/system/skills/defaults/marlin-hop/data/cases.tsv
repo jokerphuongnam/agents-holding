@@ -1,0 +1,5 @@
+id	path	section	expect
+holding-root	.agents/holding/COMPANY.md		holding-ceo
+holding-install	.agents/holding/system/install/create-company.sh		holding-hr
+hire-section		hiring	holding-hr
+coord-section		multi-company	holding-coordinator

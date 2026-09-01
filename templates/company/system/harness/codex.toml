@@ -1,0 +1,21 @@
+id = "codex"
+layout = "agents_md"
+
+[tier_to_model]
+dispatch = "default"
+low = "default"
+medium = "default"
+high = "default"
+xhigh = "default"
+
+[tier_to_effort]
+dispatch = "{{EFFORT_DISPATCH}}"
+low = "{{EFFORT_LOW}}"
+medium = "{{EFFORT_MEDIUM}}"
+high = "{{EFFORT_HIGH}}"
+xhigh = "{{EFFORT_XHIGH}}"
+
+[paths]
+# Codex pointer under .codex/ (no repo-root AGENTS.md). Fallback wired by export.
+agents_md = ".codex/AGENTS.md"
+export_dir = ".agents/{{COMPANY_SLUG}}/cache/export/codex"

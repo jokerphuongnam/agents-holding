@@ -1,0 +1,4 @@
+name	tier	permission_mode	capability_mode	skill	lead	qc	routing	blurb
+holding-ceo	dispatch	plan	read-only	marlin-hop			1	Dispatch only. Shortage → Assign holding-hr. Multi-company via coordinator. Do not code.
+holding-hr	medium	plan	read-only				1	Hiring authority. Deal with user; after lock write staffs/skills/harness into company. No product code.
+holding-coordinator	medium	plan	read-only				1	Cross-company handoffs. Short English brief to subsidiary ceo only. No hiring, no product code.
