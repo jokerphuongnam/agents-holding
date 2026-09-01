@@ -8,7 +8,7 @@ Compare three ways to build the **same** product from the **same** short chat.
 | [case-2-naive-subagents](case-2-naive-subagents/) | Naive parallel subagents | grok-4.6 medium/full | [34/40](case-2-naive-subagents/report.md) — PASS |
 | [case-3-agents-holding](case-3-agents-holding/) | agents-holding company OS | grok-4.5 low | [39/40](case-3-agents-holding/report.md) — PASS |
 
-**Summary:** [RESULTS.md](RESULTS.md) · **Token proxies:** [TOKENS.md](TOKENS.md)
+**Summary:** [RESULTS.md](RESULTS.md) · **Token bill:** [TOKENS.md](TOKENS.md) · **Optimize holding:** [OPTIMIZE_HOLDING.md](OPTIMIZE_HOLDING.md)
 
 - **Input (agents):** [INPUT.md](INPUT.md)  
 - **Expected (scorers only):** [EXPECTED.md](EXPECTED.md) — API + React + backend tests + FE unit/UI tests  

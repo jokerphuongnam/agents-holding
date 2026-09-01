@@ -1,37 +1,38 @@
-# Token / cost proxies (real session signals)
+# Token bill (from session `updates.jsonl`)
 
-**Billed total tokens (input+output across the run): not available** from the Grok host for these subagent sessions. No `input_tokens` / `output_tokens` / `total_tokens` fields were found in session JSON.
+Source: last cumulative `usage` object that includes `costUsdTicks` in each
+subagent’s `updates.jsonl` (Grok Build session telemetry).
 
-What **is** recorded in each case’s `signals.json` (host telemetry):
+**Method:** take the **final** usage snapshot (not sum of every intermediate
+event — those are progressive updates and would double-count).
 
-| Metric | Meaning |
-| --- | --- |
-| `contextTokensUsed` | Tokens in the context window at session end (not cumulative spend) |
-| `contextWindowUsage` | Percent of 500k window |
-| `toolCallCount` | Tool invocations |
-| `sessionDurationSeconds` | Wall time |
-| `assistantMessageCount` / `num_messages` | Message volume |
-| `totalChunkCount` | Stream chunks (output-ish proxy) |
-| `reasoning_effort` | Actual effort flag on the session (`summary.json`) |
+| Case | Model | Input | Output | Reasoning | Cached read | **Total** | Model calls | API ms | costUsdTicks |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 chat-only | grok-4.6 | 282,649 | 9,875 | 3,775 | 233,344 | **292,524** | 12 | 150,076 | 466,704,400 |
+| 2 naive subagents | grok-4.6 | 985,816 | 21,343 | 11,344 | 881,920 | **1,007,159** | 26 | 371,295 | 1,320,577,000 |
+| 3 agents-holding | grok-4.5 | 1,169,969 | 19,309 | 17,013 | 832,768 | **1,189,278** | 29 | 349,739 | 3,536,293,760 |
 
-## Comparison
+### Relative to case 1
 
-| Case | Model | Requested effort | Actual `reasoning_effort` | Context used | Window % | Tools | Duration | Asst msgs | Chunks |
-| --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 chat-only | grok-4.6 | medium/full | **high** | **33,124** | 6% | **32** | **173s** | 12 | 321 |
-| 2 naive subagents | grok-4.6 | medium/full | **high** | **55,179** | 11% | **71** | **394s** | 26 | 569 |
-| 3 agents-holding | grok-4.5 | low | **high** | **61,017** | 12% | **96** | **497s** | 29 | 507 |
+| Case | Total tokens | costUsdTicks |
+| --- | ---: | ---: |
+| 1 | 1.0× | 1.0× |
+| 2 | **3.4×** | **2.8×** |
+| 3 | **4.1×** | **7.6×** |
 
-Sources (on the bench machine):
+Notes:
 
-- `~/.grok/sessions/.../case-1-chat-only/01a05c59-ec2c-7ad2-83f4-276c2a0e5f48/signals.json`
-- `.../case-2-naive-subagents/01a05c59-ec2c-7ad2-83f4-277e9ec47986/signals.json`
-- `.../case-3-agents-holding/01a05c59-ec2c-7ad2-83f4-278f29d974b2/signals.json`
+- `totalTokens` = `inputTokens` + `outputTokens` in these snapshots.
+- `cachedReadTokens` is reported separately (subset/related to input); do not add
+  it on top of `totalTokens`.
+- `costUsdTicks` is the host’s internal cost unit (not converted to USD here —
+  scale unknown). Use it for **relative** cost only.
+- Case 3’s cost ratio (7.6×) is higher than its token ratio (4.1×) — consistent
+  with **grok-4.5-build** pricing differing from **grok-4.6-build**, plus more
+  reasoning tokens.
 
-## How to read this
+Session ids:
 
-- **Leanest run:** case 1 (fewest tools / shortest / smallest context) but **failed** the EXPECTED test bar.
-- **Case 2 vs 1:** ~2.3× duration, ~2.2× tools, ~1.7× context — paid for tests + naive fan-out thrash.
-- **Case 3:** highest context/tools/duration among the three, but **highest quality score (39/40)** and fullest tests; note requested **low** effort yet session recorded `reasoning_effort: high` (host override / default).
-
-Until the runtime exports cumulative billed tokens, use this table for comparison — do not invent dollar costs.
+- case-1 `01a05c59-ec2c-7ad2-83f4-276c2a0e5f48`
+- case-2 `01a05c59-ec2c-7ad2-83f4-277e9ec47986`
+- case-3 `01a05c59-ec2c-7ad2-83f4-278f29d974b2`
