@@ -72,9 +72,20 @@ curl -fsSL …/install.sh | bash -s -- --from-local /path/to/agents-holding
 
 ## Quick start — new product company
 
+Two supported ways (same factory under the hood):
+
+### 1) Talk to agents (recommended for humans)
+
+After `curl …/install.sh | bash`, open any runtime on a project folder (or home) and talk to **`holding-ceo`**:
+
+> Create a new company for this project. Budget medium. Tech: TypeScript, React, NestJS. Project root is `/path/to/project`. Name it `my-app`.
+
+`holding-ceo` Assigns **`holding-hr`**. HR deals with you on name, budget, `--tech` tags, roles/skills, then runs (or asks you to confirm) `create-company.sh` + `company_os.sh all`.
+
+### 2) Self-serve script
+
 ```bash
-# In an empty or existing project directory:
-mkdir -p ~/Projects/my-app && cd ~/Projects/my-app
+mkdir -p /path/to/project && cd /path/to/project
 git init   # optional
 
 ~/.agents/holding/system/install/create-company.sh \
@@ -86,15 +97,22 @@ git init   # optional
 .agents/my-app-company/system/install/company_os.sh all
 ```
 
-Result: `~/Projects/my-app/.agents/my-app-company/` with staffs, hop, harness, and matching skills.
-
-Open the project in Grok / Codex / Claude and talk to **`ceo`** or **`ba`** for product work.
+Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba`** for product work.
 
 ---
 
 ## How to use
 
-### A. Create a company (self-serve)
+### A. Create a company
+
+**A1 — Via agents**
+
+1. User → **`holding-ceo`**: new company + budget + tech hints + `--project-root`.
+2. **`holding-ceo` → `holding-hr`**: options brief (roster, skills-library tags).
+3. **`holding-hr` ↔ user**: negotiate name / budget / tech / roles until you **confirm/lock**.
+4. HR executes factory + `company_os.sh all`, then returns the subsidiary path.
+
+**A2 — Via script (self-serve)**
 
 ```bash
 ~/.agents/holding/system/install/create-company.sh \
