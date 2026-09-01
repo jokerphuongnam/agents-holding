@@ -7,7 +7,8 @@
 - Model / effort actual: grok-4.5 (effort not separately metered)
 - Workspace: `$BENCH_ROOT/case-3-agents-holding`
 - Wall clock: ~497s (duration_ms=497459) **plus** pre-step `create-company` + `company_os` (~1s logged)
-- Tokens: **unknown** final total. Mid-run host showed ~40K context once; tool_calls=96, turns=2
+- Tokens (billed total): **unknown**
+- Token proxies: 61,017 contextTokensUsed; 96 tools; 497s (signals.json) final total. Mid-run host showed ~40K context once; tool_calls=96, turns=2
 - Subagent: `01a05c59-ec2c-7ad2-83f4-278f29d974b2`
 - Pre-step: `create-company.log` (`budget=low`, `tech=typescript,react,nestjs`)
 
