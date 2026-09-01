@@ -272,12 +272,21 @@ cat > "$DEST/COMPANY_BOOT.md" <<EOF
 
 User channel: \`ceo\` / \`ba\` only.
 
-1. Hop once: \`python3 .agents/$SLUG/system/skills/defaults/marlin-hop/scripts/hop.py --path <file>\`
-2. Assign **one** IC for that path. Do **not** read all of ORG or all customs.
-3. IC loads **at most one** customs \`SKILL.md\`. Prefer editing seeded \`backend/\` + \`frontend/\` (budget low starter) over re-scaffolding.
-4. Multi-company / hire → \`.agents/holding/\` \`holding-ceo\`.
-5. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+0. **Always** \`task_cache.py show\` first. Same goal → resume cached role (no re-analysis). New goal → clear then set.
+1. Hop once only on cache miss: \`hop.py --path <file>\`
+2. Assign **one** IC. Do **not** read all of ORG or all customs.
+3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
+4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
+5. Multi-company / hire → holding \`holding-ceo\`.
+6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 EOF
+
+# Seed task_cache pointer so CEO resume works immediately
+TC="$DEST/system/skills/defaults/marlin-hop/scripts/task_cache.py"
+if [[ -f "$TC" ]]; then
+  python3 "$TC" set     --goal "Company ready — wait for user product ask"     --path "backend/" --path "frontend/"     --role ceo     --note "Prefer task_cache resume; do not re-browse ORG/skills each turn." >/dev/null || true
+  echo "[create-company] seeded task_cache"
+fi
 
 echo "[create-company] done: $DEST"
 echo "[create-company] next: .agents/$SLUG/system/install/company_os.sh all"
