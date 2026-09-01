@@ -22,6 +22,8 @@ correctness.
 
 ### A. Agent behavior (biggest win)
 
+0. **`task_cache.py show` first every turn** — same goal → resume cached role; never re-analyze hop/ORG/skills. This was the intended fix for repeated analysis.
+
 1. **CEO brief must be path-narrow:** Assign one IC with Exact paths
    (`apps/api/**`, `apps/web/**`). Forbid “read all of ORG / all skills”.
 2. **Hop Unique Path only** — already the design; enforce in `holding-ceo` /
