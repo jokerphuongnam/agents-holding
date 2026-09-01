@@ -1,0 +1,73 @@
+{
+  "role": "case-total",
+  "methodology": "Parent chat spawned real nested LLM subagents (case-2 child could not call spawn_subagent). Case total = sum of 3 track agents + merge agent. Abort primary 01a05c75 and old v1 primary 01a05c59 are NOT included in case total.",
+  "primary": "PARENT_SPAWNED",
+  "nested_llm_subagents": 4,
+  "agents": [
+    {
+      "role": "child-backend",
+      "session_id": "01a05c79-96a0-7203-b26d-156f4a09febf",
+      "inputTokens": 347930,
+      "outputTokens": 8538,
+      "reasoningTokens": 3114,
+      "cachedReadTokens": 275072,
+      "totalTokens": 356468,
+      "modelCalls": 12,
+      "costUsdTicks": 568616000
+    },
+    {
+      "role": "child-frontend",
+      "session_id": "01a05c79-96bb-7182-8270-4cc11c859bb6",
+      "inputTokens": 257987,
+      "outputTokens": 8152,
+      "reasoningTokens": 2589,
+      "cachedReadTokens": 150144,
+      "totalTokens": 266139,
+      "modelCalls": 10,
+      "costUsdTicks": 577439000
+    },
+    {
+      "role": "child-docs",
+      "session_id": "01a05c79-96bb-7182-8270-4cd4d6d86222",
+      "inputTokens": 57656,
+      "outputTokens": 3572,
+      "reasoningTokens": 1161,
+      "cachedReadTokens": 44288,
+      "totalTokens": 61228,
+      "modelCalls": 5,
+      "costUsdTicks": 119530400
+    },
+    {
+      "role": "child-merge",
+      "session_id": "01a05c7c-3cdc-7fe1-8826-c3bd84f80267",
+      "inputTokens": 1689709,
+      "outputTokens": 31550,
+      "reasoningTokens": 22237,
+      "cachedReadTokens": 1436416,
+      "totalTokens": 1721259,
+      "modelCalls": 26,
+      "costUsdTicks": 2403959800
+    }
+  ],
+  "inputTokens": 2353282,
+  "outputTokens": 51812,
+  "reasoningTokens": 29101,
+  "cachedReadTokens": 1905920,
+  "totalTokens": 2405094,
+  "modelCalls": 53,
+  "costUsdTicks": 3669545200,
+  "excluded_from_case_total": [
+    {
+      "role": "primary-redo-abort",
+      "session_id": "01a05c75-51b3-70a3-add6-b45637b08082",
+      "totalTokens": 1014816,
+      "note": "Could not spawn; aborted without product tracks"
+    },
+    {
+      "role": "primary-v1-no-spawn",
+      "session_id": "01a05c59-ec2c-7ad2-83f4-277e9ec47986",
+      "totalTokens": 1007159,
+      "note": "Old run; nested kids were bash only — superseded"
+    }
+  ]
+}

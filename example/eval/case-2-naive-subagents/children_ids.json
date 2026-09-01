@@ -1,0 +1,11 @@
+{
+  "primary": "PARENT_SPAWNED",
+  "children": [
+    "01a05c79-96a0-7203-b26d-156f4a09febf",
+    "01a05c79-96bb-7182-8270-4cc11c859bb6",
+    "01a05c79-96bb-7182-8270-4cd4d6d86222"
+  ],
+  "merge": "01a05c7c-3cdc-7fe1-8826-c3bd84f80267",
+  "merge_agent": "Grok Build MERGE subagent for naive case-2 (Express + Vite alignment, tests, curl proof, README)",
+  "note": "primary launcher was parent; these three are real nested LLM subagents"
+}

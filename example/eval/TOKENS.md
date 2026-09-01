@@ -1,66 +1,68 @@
-# Token bill — primary agent + subagents
+# Token bill — primary agent + nested LLM subagents
 
 Source: final cumulative `usage` in each session’s `updates.jsonl`
 (`inputTokens`, `outputTokens`, `totalTokens`, `costUsdTicks`).
 
-## Per case (product agent)
+## Per case (product agents)
 
 | Case | Role | Agents with LLM bill | Input | Output | Reasoning | **Total** | costUsdTicks |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 1 | Primary | 1 | 282,649 | 9,875 | 3,775 | **292,524** | 466,704,400 |
 | 1 | Nested LLM subagents | **0** | 0 | 0 | 0 | **0** | 0 |
 | 1 | **Case total** | 1 | 282,649 | 9,875 | 3,775 | **292,524** | 466,704,400 |
-| 2 | Primary | 1 | 985,816 | 21,343 | 11,344 | **1,007,159** | 1,320,577,000 |
-| 2 | Nested LLM subagents | **0** | 0 | 0 | 0 | **0** | 0 |
-| 2 | **Case total** | 1 | 985,816 | 21,343 | 11,344 | **1,007,159** | 1,320,577,000 |
-| 3 | Primary | 1 | 1,169,969 | 19,309 | 17,013 | **1,189,278** | 3,536,293,760 |
+| 2 | Nested LLM (BE+FE+docs+merge) | **4** | 2,353,282 | 51,812 | 29,101 | **2,405,094** | 3,669,545,200 |
+| 2 | **Case total** | 4 | 2,353,282 | 51,812 | 29,101 | **2,405,094** | 3,669,545,200 |
+| 3 | Primary (optimized) | 1 | 458,774 | 11,301 | 4,244 | **470,075** | 1,455,473,360 |
 | 3 | Nested LLM subagents | **0** | 0 | 0 | 0 | **0** | 0 |
-| 3 | **Case total** | 1 | 1,169,969 | 19,309 | 17,013 | **1,189,278** | 3,536,293,760 |
+| 3 | **Case total** | 1 | 458,774 | 11,301 | 4,244 | **470,075** | 1,455,473,360 |
 
 ### Case totals side-by-side
 
 | Case | **Total tokens** | vs case 1 | costUsdTicks | vs case 1 |
 | --- | ---: | ---: | ---: | ---: |
 | 1 chat-only | **292,524** | 1.0× | 466,704,400 | 1.0× |
-| 2 naive subagents | **1,007,159** | 3.4× | 1,320,577,000 | 2.8× |
-| 3 agents-holding | **1,189,278** | 4.1× | 3,536,293,760 | 7.6× |
+| 2 naive nested LLM | **2,405,094** | 8.2× | 3,669,545,200 | 7.9× |
+| 3 agents-holding (optimized) | **470,075** | 1.6× | 1,455,473,360 | 3.1× |
 
-## Important: nested “kids” were not billed LLM agents
+## Case 2 nested breakdown
 
-Each primary session lists IDs under `ReportedTaskCompletions` (case1: 3, case2: 12, case3: 20). Those IDs are **background bash/monitor tasks** (dev servers, `npm test`, etc.), **not** separate Grok subagent sessions.
+| Role | Session | Total |
+| --- | --- | ---: |
+| Backend | `01a05c79-96a0-7203-b26d-156f4a09febf` | 356,468 |
+| Frontend | `01a05c79-96bb-7182-8270-4cc11c859bb6` | 266,139 |
+| Docs | `01a05c79-96bb-7182-8270-4cd4d6d86222` | 61,228 |
+| Merge | `01a05c7c-3cdc-7fe1-8826-c3bd84f80267` | 1,721,259 |
+| **Sum** | | **2,405,094** |
 
-- No `updates.jsonl` / `usage` exists for those IDs.
-- Case 2 HISTORY states explicitly: the child harness **had no `spawn_subagent` tool**, so “naive parallel tracks” were overlapping writes **inside the same primary session** — token bill stays on the primary.
+**Methodology:** a case-2 product child cannot call `spawn_subagent`, so the parent chat spawned the three tracks + merge. Case total = those four LLM sessions only.  
+**Excluded:** abort primary `01a05c75` (1,014,816) and old v1 primary `01a05c59` (1,007,159, bash-only “kids”).
 
-So for this bench: **case total = primary total**.
+## Case 3 note
+
+Post `task_cache` + Express starter optimize. Old case-3 primary was 1,189,278 → now **470,075** (~0.40×). Nested LLM still 0 (bash task completions only).
 
 ## Orchestrator (parent) session — separate
 
-The parent chat that designed the bench, launched the three cases, fixed docs, and scored them:
+Parent chat that designed the bench, launched cases, spawned case-2 kids, and scored:
 
-| Session | Input | Output | Reasoning | **Total** | costUsdTicks |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Parent `01a049a0-…` | 1,534,239 | 6,261 | 4,539 | **1,540,500** | 7,001,992,640 |
+| Session | **Total** (snapshot; grows) | Note |
+| --- | ---: | --- |
+| Parent `01a049a0-…` | not fixed into case totals | Spans whole operator conversation |
 
-This is **not** part of any single case’s product bill; it spans the whole operator conversation.
+Parent bill is **not** part of any single case’s product total.
 
-### If you want “everything spent on this bench day”
+### Sum of three case agents (current fair bills)
 
 | Bucket | Total tokens |
 | --- | ---: |
 | Case 1 | 292,524 |
-| Case 2 | 1,007,159 |
-| Case 3 | 1,189,278 |
-| **Sum of 3 case agents** | **2,488,961** |
-| Parent orchestrator | 1,540,500 |
-| **Grand total (cases + parent)** | **4,029,461** |
-
-`costUsdTicks` is the host internal cost unit (relative only; USD scale not documented here).
+| Case 2 (nested LLM) | 2,405,094 |
+| Case 3 (optimized) | 470,075 |
+| **Sum of 3 cases** | **3,167,693** |
 
 ## How this was computed
 
-1. Take each case primary session id from `RUN_META.md`.
-2. Read final `usage` with `costUsdTicks` + `inputTokens` from `updates.jsonl`.
-3. Collect child IDs from `resources_state.json` → `ReportedTaskCompletions` and from parent `subagents/*/meta.json` where `parent_session_id` matches.
-4. Attempt to load each child’s `updates.jsonl` — **none** had LLM usage (bash tasks only).
-5. Case total = primary (+ 0 nested LLM).
+1. Case 1: primary `01a05c59-…276c2a0e5f48` final usage.
+2. Case 2: export each of the four nested sessions’ `updates.jsonl` → sum (`usage.json`).
+3. Case 3: primary `01a05c70-cbda-77d3-9dc8-24c21044c52a` → `usage.json`.
+4. Bash/monitor task IDs under `ReportedTaskCompletions` have no LLM usage — ignored.
