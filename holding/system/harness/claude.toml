@@ -1,0 +1,34 @@
+# Claude runtime driver for Holding Company OS (.agents/holding/).
+# Runtime under export only — do not clobber a project `.claude/`.
+
+id = "claude"
+layout = "tree_symlink"
+
+[tier_to_model]
+dispatch = "sonnet"
+low = "sonnet"
+medium = "sonnet"
+high = "opus"
+xhigh = "opus"
+
+[tier_to_effort]
+dispatch = "low"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "max"
+
+[paths]
+runtime_dir = ".agents/holding/cache/export/claude-runtime"
+link_agents = "agents"
+link_skills = "skills"
+link_plans = "plans"
+# Targets relative to runtime_dir
+agents_target = "../../../system/staffs"
+skills_target = "../../../system/skills"
+plans_target = "../../../cache/plans"
+
+[boot]
+company_boot = "../../../COMPANY_BOOT.md"
+link_boot = "COMPANY_BOOT.md"
+harness_readme = ".agents/holding/cache/export/claude-runtime/README.md"

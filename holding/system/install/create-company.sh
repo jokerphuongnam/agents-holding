@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+# Create a subsidiary company from .agents/templates/company/
+# Usage:
+#   create-company.sh --name my-app --budget medium --tech "typescript,react"
+set -euo pipefail
+
+HOLDING_INSTALL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOLDING_DIR="$(cd "$HOLDING_INSTALL/../.." && pwd)"
+# Holding lives at <agents-home>/holding — agents-home is repo `.agents` or `~/.agents`
+AGENTS_HOME="$(cd "$HOLDING_DIR/.." && pwd)"
+TEMPLATE="$AGENTS_HOME/templates/company"
+BUDGET_JSON="$HOLDING_INSTALL/budget_tiers.json"
+# Hop reference: prefer templates/hop-reference (system install); else Marlin company hop
+REF_HOP="$AGENTS_HOME/templates/hop-reference"
+if [[ ! -d "$REF_HOP/scripts" ]]; then
+  REF_HOP="$AGENTS_HOME/marlin-language-company/system/skills/defaults/marlin-hop"
+fi
+REF_INSTALL="$AGENTS_HOME/templates/install"
+if [[ ! -f "$REF_INSTALL/company_os.sh" ]]; then
+  REF_INSTALL="$AGENTS_HOME/marlin-language-company/system/install"
+fi
+
+NAME=""
+BUDGET="medium"
+TECH=""
+PROJECT_ROOT=""
+DRY=0
+
+usage() {
+  cat <<'USAGE'
+Create a subsidiary Company OS tree from templates/company.
+
+  create-company.sh --name <slug> --budget low|medium|high […] \
+    [--tech "a,b,c"] [--project-root <path>] [--dry-run]
+
+Result:
+  (default)           <agents-home>/<slug>-company/
+  --project-root DIR  DIR/.agents/<slug>-company/
+
+Holding may live in-repo (.agents/holding) or system (~/.agents/holding).
+Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script.
+
+Always-on staffs: ceo, cto, ba, po-*, git, qc-lead, tech-lead.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) NAME="${2:-}"; shift 2 ;;
+    --budget) BUDGET="${2:-}"; shift 2 ;;
+    --tech) TECH="${2:-}"; shift 2 ;;
+    --project-root) PROJECT_ROOT="${2:-}"; shift 2 ;;
+    --dry-run) DRY=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "unknown arg: $1" >&2; usage; exit 2 ;;
+  esac
+done
+
+if [[ -z "$NAME" ]]; then
+  echo "error: --name required" >&2
+  exit 2
+fi
+# Normalize budget aliases → low|medium|high via budget_tiers.json policy
+BUDGET="$(python3 "$HOLDING_INSTALL/apply_budget_harness.py" \
+  --budget "$BUDGET" --budget-json "$BUDGET_JSON" --normalize-only)"
+case "$BUDGET" in
+  low|medium|high) ;;
+  *) echo "error: --budget must be low|medium|high " >&2; exit 2 ;;
+esac
+
+SLUG="$NAME"
+[[ "$SLUG" == *-company ]] || SLUG="${SLUG}-company"
+SLUG="$(echo "$SLUG" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')"
+TITLE="$(echo "$SLUG" | sed 's/-company$//; s/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')"
+
+if [[ -n "$PROJECT_ROOT" ]]; then
+  PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
+  mkdir -p "$PROJECT_ROOT/.agents"
+  DEST="$PROJECT_ROOT/.agents/$SLUG"
+else
+  DEST="$AGENTS_HOME/$SLUG"
+fi
+
+if [[ ! -d "$TEMPLATE" || ! -f "$BUDGET_JSON" ]]; then
+  echo "error: missing template ($TEMPLATE) or budget_tiers.json" >&2
+  echo "hint: run holding system/install/install_holding_system.sh if using ~/.agents" >&2
+  exit 1
+fi
+
+echo "[create-company] slug=$SLUG budget=$BUDGET tech=${TECH:-—}"
+echo "[create-company] agents-home=$AGENTS_HOME"
+echo "[create-company] dest=$DEST"
+
+if [[ "$DRY" -eq 1 ]]; then
+  echo "[create-company] dry-run OK (no write)"
+  exit 0
+fi
+
+if [[ -e "$DEST" ]]; then
+  echo "error: already exists: $DEST" >&2
+  exit 1
+fi
+
+mkdir -p "$DEST"
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --exclude '.DS_Store' "$TEMPLATE/" "$DEST/"
+else
+  cp -R "$TEMPLATE/." "$DEST/"
+fi
+
+# Replace placeholders
+while IFS= read -r -d '' f; do
+  case "$f" in
+    *.png|*.jpg|*.jpeg|*.gif|*.webp|*.bin) continue ;;
+  esac
+  if grep -q '{{' "$f" 2>/dev/null; then
+    tmp="$f.tmp.$$"
+    sed \
+      -e "s/{{COMPANY_SLUG}}/$SLUG/g" \
+      -e "s/{{COMPANY_TITLE}}/$TITLE/g" \
+      -e "s/{{BUDGET}}/$BUDGET/g" \
+      -e "s/{{TECH_HINTS}}/${TECH:-none}/g" \
+      "$f" > "$tmp" && mv "$tmp" "$f"
+  fi
+done < <(find "$DEST" -type f -print0)
+
+# First pass: fill harness {{EFFORT_*}} placeholders from budget
+python3 "$HOLDING_INSTALL/apply_budget_harness.py" \
+  --dest "$DEST" --budget "$BUDGET" --budget-json "$BUDGET_JSON"
+
+# Frontend-shaped? seed design staffs from template
+TECH_L="$(echo "$TECH" | tr '[:upper:]' '[:lower:]')"
+if echo "$TECH_L" | grep -Eq 'react|vue|angular|ios|android|flutter|swiftui|compose|frontend|mobile|ui|ux|next'; then
+  if [[ -d "$TEMPLATE/system/staffs/design" ]]; then
+    mkdir -p "$DEST/system/staffs/design"
+    cp -R "$TEMPLATE/system/staffs/design/." "$DEST/system/staffs/design/"
+    echo "[create-company] seeded design staffs (frontend-shaped tech hints)"
+  fi
+fi
+
+# Tech engineer stub cards (thin) when hints match
+seed_eng() {
+  local role="$1" blurb="$2" dir="$3"
+  mkdir -p "$DEST/system/staffs/$dir"
+  cat > "$DEST/system/staffs/$dir/${role}.md" <<EOF
+---
+name: ${role}
+description: ${blurb}
+tier: medium
+permission_mode: default
+capability_mode: all
+---
+${blurb}
+
+Follow CTO_TECH_SEED.md and design brief when UI-shaped. Load only skills named
+in the brief (customs under system/skills/customs/). Escalate cross-company API
+needs to company ceo → holding-ceo.
+EOF
+}
+
+if echo "$TECH_L" | grep -Eq 'react|vue|angular|frontend|next|typescript|javascript'; then
+  seed_eng frontend-engineer "Frontend app code per CTO seed. Not design system." "frontend"
+fi
+if echo "$TECH_L" | grep -Eq 'ios|android|flutter|swiftui|compose|mobile'; then
+  seed_eng mobile-engineer "Mobile app code per CTO seed. Not design system." "mobile"
+fi
+if echo "$TECH_L" | grep -Eq 'node|express|nestjs|backend|fastapi|django|rails|spring'; then
+  seed_eng backend-engineer "Backend/API services per CTO seed. Cross-company API via holding." "backend"
+fi
+
+# Bootstrap hop: scripts/SKILL only — then seed company-local hop data (no Marlin roster)
+if [[ -d "$REF_HOP" ]]; then
+  mkdir -p "$DEST/system/skills/defaults/marlin-hop"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete \
+      --exclude 'data/' \
+      --exclude 'agents/' \
+      --exclude '__pycache__/' \
+      "$REF_HOP/" "$DEST/system/skills/defaults/marlin-hop/"
+  else
+    rm -rf "$DEST/system/skills/defaults/marlin-hop"
+    mkdir -p "$DEST/system/skills/defaults/marlin-hop"
+    cp -R "$REF_HOP/scripts" "$DEST/system/skills/defaults/marlin-hop/" 2>/dev/null || true
+    cp "$REF_HOP/SKILL.md" "$DEST/system/skills/defaults/marlin-hop/" 2>/dev/null || true
+  fi
+  python3 "$HOLDING_INSTALL/seed_company_hop_data.py" \
+    --dest "$DEST" \
+    --budget "$BUDGET" \
+    --tech "$TECH" \
+    --budget-json "$BUDGET_JSON"
+  # Re-apply so agents.tsv gets budget overrides + always-max plan/doc roles
+  python3 "$HOLDING_INSTALL/apply_budget_harness.py" \
+    --dest "$DEST" --budget "$BUDGET" --budget-json "$BUDGET_JSON"
+  echo "[create-company] bootstrapped hop scripts + company-local hop data"
+else
+  echo "[create-company] warn: no reference hop at $REF_HOP" >&2
+fi
+
+# Copy matching skills-library customs by --tech (+ ba/po/qc/design baselines)
+python3 "$HOLDING_INSTALL/copy_library_skills.py" \
+  --dest "$DEST" \
+  --tech "$TECH" \
+  --library "$AGENTS_HOME/templates/skills-library"
+
+if [[ -f "$REF_INSTALL/company_os.sh" ]]; then
+  cp "$REF_INSTALL/company_os.sh" "$DEST/system/install/company_os.sh"
+  chmod +x "$DEST/system/install/company_os.sh"
+  echo "[create-company] installed company_os.sh"
+fi
+
+# Frontend customs stub only if library seed did not already write TASK_SKILLS
+if [[ -d "$DEST/system/staffs/frontend" ]]; then
+  CUST="$DEST/system/skills/customs/frontend/frontend-engineer"
+  mkdir -p "$CUST"
+  if [[ ! -f "$CUST/TASK_SKILLS.json" ]]; then
+    cat > "$CUST/TASK_SKILLS.json" <<EOF
+{
+  "role": "frontend-engineer",
+  "default_skill": "",
+  "customs_root": ".agents/${SLUG}/system/skills/customs/frontend/frontend-engineer",
+  "note": "Add <skill>/SKILL.md folders freely; append tasks[] here. No script edits.",
+  "tasks": []
+}
+EOF
+  fi
+fi
+
+cat > "$DEST/CTO_TECH_SEED.md" <<EOF
+# CTO tech seed — $TITLE
+
+**Budget:** $BUDGET
+**Hints from holding/user:** ${TECH:-_(none)_}
+
+CTO: propose tech teams and \`system/skills/customs/<team>/<role>/\` skills next.
+If UI-heavy, keep design staffs (design-lead, ux-writer, ui-designer) and
+use ba for design intake → canonical brief.
+Do not invent stack the user did not ask for.
+EOF
+
+cat > "$DEST/COMPANY_BOOT.md" <<EOF
+# $TITLE — boot
+
+1. Read \`COMPANY.md\` / \`README.md\`.
+2. Hop:
+   \`python3 .agents/$SLUG/system/skills/defaults/marlin-hop/scripts/hop.py --path <file>\`
+3. Multi-company work → \`.agents/holding/\` (\`holding-ceo\`).
+EOF
+
+echo "[create-company] done: $DEST"
+echo "[create-company] next: .agents/$SLUG/system/install/company_os.sh all"
+echo "[create-company] then CTO refines teams from CTO_TECH_SEED.md"

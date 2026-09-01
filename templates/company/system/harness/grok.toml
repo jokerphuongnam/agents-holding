@@ -1,0 +1,29 @@
+# Grok harness — tiers seeded by holding budget at create-company time.
+
+id = "grok"
+layout = "flat"
+
+[tier_to_model]
+dispatch = "grok-4.6"
+low = "grok-4.6"
+medium = "grok-4.6"
+high = "grok-4.6"
+xhigh = "grok-4.6"
+
+[tier_to_effort]
+dispatch = "{{EFFORT_DISPATCH}}"
+low = "{{EFFORT_LOW}}"
+medium = "{{EFFORT_MEDIUM}}"
+high = "{{EFFORT_HIGH}}"
+xhigh = "{{EFFORT_XHIGH}}"
+
+[frontmatter]
+prompt_mode = "full"
+discoverSkills = false
+inheritSkills = false
+agents_md = false
+
+[paths]
+export_dir = ".agents/{{COMPANY_SLUG}}/cache/export/grok"
+repo_flat_agents = ".grok/agents"
+user_flat_agents = "~/.grok/agents"

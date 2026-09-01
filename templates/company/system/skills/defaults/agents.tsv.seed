@@ -1,0 +1,9 @@
+name	tier	permission_mode	capability_mode	skill	lead	qc	routing	blurb
+ba	medium	plan	read-only				1	Clarify ask; many paths → describe + wait-user. Do not cut scope.
+ceo	dispatch	plan	read-only				1	Dispatch only. hop then spawn IC/lead. Do not code.
+cto	dispatch	plan	read-only				1	Multi-team architecture; recommend tech teams. Do not code.
+git	low	default	all				0	git add/commit/branch/push/gitignore gate.
+po-modify	medium	default	all				0	AC + update existing cache/plans/. Not new plan files.
+po-new	xhigh	default	all				0	Create one new plan under cache/plans/.
+qc-lead	dispatch	plan	read-only				1	Assign matching *-qc; adapt QC shape to this company.
+tech-lead	dispatch	plan	read-only				1	Slice design. Not CTO. Not a default coder.

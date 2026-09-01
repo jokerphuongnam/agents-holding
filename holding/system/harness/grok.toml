@@ -1,0 +1,30 @@
+# Grok runtime driver for Holding Company OS (.agents/holding/).
+# Portable SoT: agents.tsv `tier`. This file only maps tier → Grok knobs.
+
+id = "grok"
+layout = "flat"
+
+[tier_to_model]
+dispatch = "grok-4.6"
+low = "grok-4.6"
+medium = "grok-4.6"
+high = "grok-4.6"
+xhigh = "grok-4.6"
+
+[tier_to_effort]
+dispatch = "low"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+
+[frontmatter]
+prompt_mode = "full"
+discoverSkills = false
+inheritSkills = false
+agents_md = false
+
+[paths]
+export_dir = ".agents/holding/cache/export/grok"
+repo_flat_agents = ".grok/agents"
+user_flat_agents = "~/.grok/agents"

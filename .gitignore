@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+*.pyc
+holding/cache/export/
+holding/cache/cache/**
+!holding/cache/cache/.gitkeep
+*.tmp
