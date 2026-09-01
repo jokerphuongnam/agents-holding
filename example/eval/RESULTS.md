@@ -8,14 +8,16 @@ Same **INPUT.md**. Scorers used **EXPECTED.md** (API + React + backend tests + F
 | [2](case-2-naive-subagents/report.md) | Naive subagents | grok-4.6 | ~394s | BE 7/7, FE 3/3 | **PASS** | **34/40** |
 | [3](case-3-agents-holding/report.md) | agents-holding | grok-4.5 low | ~497s (+ create-company) | API 8/8, FE 6/6 (+ e2e) | **PASS** | **39/40** |
 
-**Token bill:** see [TOKENS.md](TOKENS.md) (final cumulative `usage` from `updates.jsonl`).  
+**Token bill (primary + nested LLM subagents):** [TOKENS.md](TOKENS.md).  
+Nested LLM subagents billed **0** extra (ReportedTaskCompletions were bash tasks; case 2 never got `spawn_subagent`).  
 **Why case 3 was expensive / how to cut:** [OPTIMIZE_HOLDING.md](OPTIMIZE_HOLDING.md).
 
-| Case | Total tokens (bill) | costUsdTicks (relative) | Score |
-| --- | ---: | ---: | ---: |
-| 1 | 292,524 | 1.0× | 25/40 |
-| 2 | 1,007,159 | 2.8× | 34/40 |
-| 3 | 1,189,278 | 7.6× | 39/40 |
+| Case | Primary total | Nested LLM total | **Case total** | costUsdTicks | Score |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 292,524 | 0 | **292,524** | 1.0× | 25/40 |
+| 2 | 1,007,159 | 0 | **1,007,159** | 2.8× | 34/40 |
+| 3 | 1,189,278 | 0 | **1,189,278** | 7.6× | 39/40 |
+| **Sum of 3 cases** |  |  | **2,488,961** |  |  |
 
 ## Takeaway
 
