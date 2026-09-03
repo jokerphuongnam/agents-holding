@@ -16,9 +16,9 @@ Before any hop / ORG / skills browse:
 ```bash
 python3 …/task_cache.py show
 # MANDATORY one-shot before work (own --staff only) — prefer resolve over index+get
-python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…']
+python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] [--with-snippets]
 # after finish: slim record-done (path+task only) if new or pattern changed
-python3 …/task_memory.py record-done --staff <ic> --path … --goal … --summary … --fails … --fixes … --short-descript 'pattern…'
+python3 …/task_memory.py record-done --staff <ic> --path … --goal … --summary … --fails … --fixes … --refs 'file:start-end;…' --short-descript 'pattern…'
 ```
 
 1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
@@ -40,6 +40,11 @@ to save. Always **index first**; **record-done** after new work or changed reuse
 Prefer reusable *patterns* in `short_descript` (e.g. "Screens with List +
 nav bar empty-state") so a later *different* screen that shares the shape can
 reuse fails/fixes. Details differ; the pattern transfers.
+
+**Distill only (never full-file cache):** `work` = `fails` + `fixes` + `refs=file:start-end;…`.
+After `resolve`, prefer `snippets` / those line ranges — do **not** paste whole siblings.
+Cache exists to keep the essence and avoid known bugs; if it costs more than
+re-fixing the same bug, the usage is wrong (too much ceremony or caching too much).
 
 **Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
 other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.
