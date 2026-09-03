@@ -316,7 +316,11 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 7. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 
 \`task_cache\` = current task. \`task_memory\` = durable keyed SQLite under
-\`cache/cache/task_memory.sqlite\` (local/gitignored). Never \`dump\` into prompts.
+\`cache/cache/task_memory.sqlite\` (local/gitignored).
+
+**All staffs:** read **only** script stdout (compact TSV). Forbidden: open
+\`*.sqlite\`, \`sqlite3\`, or \`dump\` in prompts. Use \`propose\` / \`get\` /
+\`record-done\`.
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately

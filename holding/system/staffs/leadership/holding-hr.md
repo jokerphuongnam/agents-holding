@@ -83,7 +83,7 @@ python3 "$HC" record-bundle --family mobile \
 | Rule | |
 | --- | --- |
 | Store | `<holding>/cache/user_habits.sqlite` — **never commit** |
-| Agent I/O | `propose` / `get` / `keys` only — never `dump` in prompts |
+| Agent I/O | **stdout TSV only** — `propose`/`get`/`keys`; never open sqlite or `dump` |
 | Lock | Habits never auto-run `create-company` or write staffs |
 | Family | Keep mobile / web / backend priors separate |
 
