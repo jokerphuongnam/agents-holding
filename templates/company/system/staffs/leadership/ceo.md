@@ -32,9 +32,10 @@ python3 …/task_memory.py record-done --staff <ic> …
 4. After hop/assign → `task_cache.py set` / `patch`.
 
 **Why memory exists:** reuse prior `work` (especially recorded fails/fixes) so
-repeat tasks and old bugs cost **far fewer tokens/time** than re-hopping and
-re-debugging from scratch. Always **index first**; always **record-done** after
-new work or after a changed reuse (upsert overwrites).
+*later* passes cost far fewer tokens/time. **First pass is not 2–3× more
+expensive** — normal work + a cheap `record-done` (short `short_descript` +
+compact `work` one-liner). Do not re-analyze or paste essays into cache just
+to save. Always **index first**; **record-done** after new work or changed reuse.
 
 **Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
 other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.

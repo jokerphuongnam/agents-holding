@@ -9,6 +9,9 @@ Two-step agent I/O (low token):
   2) get   --staff <name> --key <key> → work payload
 
 Staffs/agents read CLI stdout only — never open *.sqlite / dump.
+First-pass cost: normal work + cheap record-done (keep short_descript/work compact).
+Savings show up on mode=reuse — not by making the first pass 2–3× heavier.
+
 """
 
 from __future__ import annotations
