@@ -21,6 +21,8 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/sync_agents.py
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/task_cache.py show|set|clear
+# Subsidiary companies also ship task_memory.py (durable keyed history):
+#   propose --path / record-done — see company COMPANY_BOOT.md
 ```
 
 Holding overview: `.agents/holding/COMPANY.md`. Harness drivers: `.agents/holding/system/harness/*.toml`.
