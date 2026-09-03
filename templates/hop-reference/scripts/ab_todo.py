@@ -263,7 +263,7 @@ def run_lane_ceo(out: Path, out_rel: Path, args: argparse.Namespace, hop: bool) 
         cost += float(r["total_cost_usd"])
     ms += int(r.get("duration_ms") or 0)
     ic = parse_assign(r.get("text") or "") or "mpm-engineer"
-    if ic in {"ceo", "po-modify", "po-new", "ba", "cto"}:
+    if ic in {"ceo", "po-modify", "po-new", "ba-user", "ba-lead", "cto"}:
         ic = "mpm-engineer"
     turns.append(
         {

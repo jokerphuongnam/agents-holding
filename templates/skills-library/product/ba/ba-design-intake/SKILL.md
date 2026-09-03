@@ -8,13 +8,13 @@ description: >
 # ba-design-intake
 
 Frontend-shaped companies: external Figma/specs/other products → **one**
-canonical brief. Flow: intake (`ba`) → `design-lead` assigns `ui-designer` /
-`ux-writer` → engineering consumes. English SoT.
+canonical brief. Flow: intake (`ba-user`) → `design-lead` assigns `ui-designer`
+/ `ux-writer` → engineering consumes. English SoT.
 
 ## Who / paths
 
-- **You:** `ba` design-intake duty. User channel remains **CEO + BA**; gather
-  design links/constraints from the user or CEO, not from random ICs.
+- **You:** `ba-user` design-intake duty. User channel remains **CEO + ba-user**;
+  gather design links/constraints from the user or CEO, not from random ICs.
 - **Not you:** owning palette/components (`ui-designer`), microcopy final
   (`ux-writer`), Assign hops (`design-lead`), or implementing UI code.
 - **Paths:** brief lives under company cache (e.g. `cache/plans/…` or a short

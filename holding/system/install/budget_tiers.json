@@ -1,12 +1,11 @@
 {
   "policy": {
     "always_max_roles": [
-      "ba",
       "po-modify",
       "po-new"
     ],
     "always_max_tier": "xhigh",
-    "note": "Plan and doc writers always keep max tier/effort regardless of company budget.",
+    "note": "Plan writers always keep max tier/effort regardless of company budget. Leads stay dispatch/low.",
     "nl_aliases": {
       "low": [
         "low",
@@ -43,7 +42,10 @@
     "agents_tsv_tier_overrides": {
       "ceo": "dispatch",
       "cto": "dispatch",
-      "ba": "xhigh",
+      "ba-lead": "dispatch",
+      "ba-user": "low",
+      "ba-workflow": "low",
+      "po-lead": "dispatch",
       "po-modify": "xhigh",
       "po-new": "xhigh",
       "git": "low",
@@ -56,7 +58,7 @@
       "ux-writer": "low",
       "data": "low"
     },
-    "note": "Poor/lean budget: compress IC effort; plan+doc roles stay xhigh."
+    "note": "Poor/lean budget: compress IC effort; plan writers stay xhigh; leads stay dispatch."
   },
   "medium": {
     "tier_to_effort": {
@@ -67,11 +69,14 @@
       "xhigh": "xhigh"
     },
     "agents_tsv_tier_overrides": {
-      "ba": "xhigh",
+      "ba-lead": "dispatch",
+      "ba-user": "medium",
+      "ba-workflow": "medium",
+      "po-lead": "dispatch",
       "po-modify": "xhigh",
       "po-new": "xhigh"
     },
-    "note": "Balanced defaults; plan+doc roles always xhigh."
+    "note": "Balanced defaults; leads dispatch/low; ba ICs medium; plan writers xhigh."
   },
   "high": {
     "tier_to_effort": {
@@ -82,7 +87,10 @@
       "xhigh": "xhigh"
     },
     "agents_tsv_tier_overrides": {
-      "ba": "xhigh",
+      "ba-lead": "dispatch",
+      "ba-user": "medium",
+      "ba-workflow": "medium",
+      "po-lead": "dispatch",
       "po-modify": "xhigh",
       "po-new": "xhigh",
       "cto": "dispatch",
@@ -93,6 +101,6 @@
       "ux-writer": "high",
       "data": "high"
     },
-    "note": "Rich budget: raise IC effort; plan+doc roles stay xhigh."
+    "note": "Rich budget: raise eng IC effort; leads stay dispatch; plan writers stay xhigh."
   }
 }

@@ -15,7 +15,8 @@ Every subsidiary follows this shape (see reference:
 └── example/eval/   # hop+subagents vs subagents vs raw
 ```
 
-**Always-on staffs:** ceo, cto, ba, po-modify, po-new, git, qc-lead.  
+**Always-on staffs:** ceo, cto, ba-lead (+ ba-user, ba-workflow), po-lead (+
+po-modify, po-new), git, qc-lead; tech-lead on the seeded tech team.  
 **Optional:** tech teams (stack), data.  
 **Holding** creates the company; **subsidiary cto** refines tech teams.
 
@@ -27,4 +28,4 @@ When stack is UI-heavy (React, mobile, …), include under `system/staffs/design
 - `ux-writer`
 - `ui-designer`
 
-And use always-on `ba` for **design intake** (external designs → canonical brief).
+And use always-on `ba-user` for **design intake** (external designs → canonical brief).

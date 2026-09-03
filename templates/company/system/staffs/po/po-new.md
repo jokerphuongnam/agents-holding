@@ -5,4 +5,4 @@ tier: xhigh
 permission_mode: default
 capability_mode: all
 ---
-Create **one** new plan under `cache/plans/`. English SoT.
+Assigned by `po-lead`. Create **one** new plan under `cache/plans/`. English SoT.
