@@ -21,6 +21,9 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/sync_agents.py
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/task_cache.py show|set|clear
+# Company product hop — durable memory (after task_cache show):
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py propose --path <file> [--goal '…']
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --goal '…' --path '…' --role <ic> --summary '…'
 ```
 
 Holding overview: `.agents/holding/COMPANY.md`. Harness drivers: `.agents/holding/system/harness/*.toml`.

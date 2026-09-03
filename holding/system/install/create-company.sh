@@ -301,13 +301,22 @@ cat > "$DEST/COMPANY_BOOT.md" <<EOF
 
 User channel: \`ceo\` / \`ba-user\` only.
 
-0. **Always** \`task_cache.py show\` first. Same goal → resume cached role (no re-analysis). New goal → clear then set.
-1. Hop once only on cache miss: \`hop.py --path <file>\`
+Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
+
+0. **Always** \`task_cache.py show\` first (active pointer). Same goal → resume
+   cached role. New goal → \`clear\` then set.
+1. **Before hop:** \`task_memory.py propose --path <file> [--goal '…']\` once.
+   - **HIT** → resume/edit from memory (reuse fails/fixes); do not re-hop staffs.
+   - **MISS** → hop once: \`hop.py --path <file>\`
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
-5. Multi-company / hire → holding \`holding-ceo\`.
-6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+5. After done/fix: \`task_memory.py record-done --goal … --path … --role … --summary … [--fails … --fixes …]\`
+6. Multi-company / hire → holding \`holding-ceo\`.
+7. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+
+\`task_cache\` = current task. \`task_memory\` = durable keyed SQLite under
+\`cache/cache/task_memory.sqlite\` (local/gitignored). Never \`dump\` into prompts.
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately
