@@ -17,7 +17,9 @@ Before any hop / ORG / skills browse:
 python3 …/task_cache.py show
 # MANDATORY one-shot before work (own --staff only) — prefer resolve over index+get
 python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] [--with-snippets]
-# after finish: slim record-done (path+task only) if new or pattern changed
+# after finish: record-done ONLY if new or new fail/fix/refs; else SKIP
+# record-done ONLY if mode=new OR you learned a new/changed fail/fix/refs
+# If resolve fit and nothing new → SKIP record-done
 python3 …/task_memory.py record-done --staff <ic> --path … --goal … --summary … --fails … --fixes … --refs 'file:start-end;…' --short-descript 'pattern…'
 ```
 
