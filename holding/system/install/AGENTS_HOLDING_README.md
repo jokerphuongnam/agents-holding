@@ -96,12 +96,20 @@ git init   # optional
   --name my-app \
   --budget medium \
   --tech "typescript,react,nestjs" \
-  --project-root "$PWD"
+  --project-root "$PWD" \
+  --packages "frontend:react,backend:nestjs"
 
 .agents/my-app-company/system/install/company_os.sh all
+
+# Multi-package: teams (one company) or companies (one root per package)
+~/.agents/holding/system/install/create-workspace.sh \
+  --parent "$PWD" --topology teams --name my-app --budget medium \
+  --package frontend:react --package backend:nestjs
 ```
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
+
+**Topologies:** `teams` = packages share one company at the parent; `companies` = each package is its own `--project-root` (see parent `.agents/WORKSPACE.md`).
 
 ---
 
@@ -132,6 +140,8 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
 | `--budget` | Effort map for harness + hop tiers |
 | `--tech` | Tags matched against `templates/skills-library/MANIFEST.json` |
 | `--project-root` | Project directory that should own the subsidiary |
+| `--packages` | `path[:tech],…` → tech teams + hop routes (monorepo `teams`) |
+| `--topology` | `teams` (default). Use `create-workspace.sh` for `companies` |
 
 Then:
 

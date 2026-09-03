@@ -34,3 +34,10 @@ medium. Plan writers `po-new` / `po-modify` = always xhigh.
 
 Tech teams are added after CTO selects the stack (see `CTO_TECH_SEED.md` if
 present). Do not invent Marlin-specific teams unless this is a Marlin company.
+
+**Monorepo (`teams`):** packages under this company’s `--project-root` are tech
+**teams** only (hop routes by path prefix). There is still **one** `ceo`, `cto`,
+BA/PO/QC, and `git` for the whole workspace — do not spawn per-package ceos.
+Cross-package work stays with `cto` / `tech-lead`.
+True multi-**company** handoffs only when holding registered sibling companies
+(see parent `.agents/WORKSPACE.md`, topology `companies`).

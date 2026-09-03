@@ -32,7 +32,10 @@ Create a subsidiary (after hire deal or self-serve):
 ```bash
 .agents/holding/system/install/create-company.sh \
   --name my-app --budget medium --tech "react,nestjs" \
-  --project-root /path/to/project
+  --project-root /path/to/project \
+  --packages "frontend:react,backend:nestjs"
+
+# Or: create-workspace.sh --parent … --topology teams|companies --package …
 ```
 
 Boot card: [`COMPANY_BOOT.md`](COMPANY_BOOT.md).  
