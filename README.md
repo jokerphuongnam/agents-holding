@@ -23,7 +23,7 @@ Re-run the same command anytime after you push updates.
 | Capability | What it does |
 | --- | --- |
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
-| **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
+| **Factory** | `create-company.sh` / `create-workspace.sh` clone Company OS into a project (teams or companies topology; SoT in `templates/workspace/`) |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
@@ -82,9 +82,9 @@ Two supported ways (same factory under the hood):
 
 After `curl …/install.sh | bash`, open any runtime on a project folder (or home) and talk to **`holding-ceo`**:
 
-> Create a new company for this project. Budget medium. Tech: TypeScript, React, NestJS. Project root is `/path/to/project`. Name it `my-app`.
+> Create a new company for this project. Budget medium. Tech: TypeScript, React, NestJS. Project root is `/path/to/project`. Name it `my-app`. If this folder has frontend + backend, use topology teams unless I ask to split companies.
 
-`holding-ceo` Assigns **`holding-hr`**. HR deals with you on name, budget, `--tech` tags, roles/skills, then runs (or asks you to confirm) `create-company.sh` + `company_os.sh all`.
+`holding-ceo` Assigns **`holding-hr`**. HR locks **topology** (`teams` \| `companies`) when there are multiple packages, then runs `create-company.sh` / `create-workspace.sh` + each `company_os.sh all`.
 
 ### 2) Self-serve script
 
@@ -92,16 +92,25 @@ After `curl …/install.sh | bash`, open any runtime on a project folder (or hom
 mkdir -p /path/to/project && cd /path/to/project
 git init   # optional
 
+# Single company (optional --packages for monorepo teams)
 ~/.agents/holding/system/install/create-company.sh \
   --name my-app \
   --budget medium \
   --tech "typescript,react,nestjs" \
-  --project-root "$PWD"
+  --project-root "$PWD" \
+  --packages "frontend:react,backend:nestjs"
 
 .agents/my-app-company/system/install/company_os.sh all
+
+# Or multi-package helper (teams | companies)
+~/.agents/holding/system/install/create-workspace.sh \
+  --parent "$PWD" --topology teams --name my-app --budget medium \
+  --package frontend:react --package backend:nestjs
 ```
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
+
+**`companies` topology:** one `--project-root` per package (e.g. `…/frontend`, `…/backend`) so runtime adapters do not clobber each other. Parent `.agents/WORKSPACE.md` lists siblings.
 
 ---
 
@@ -111,10 +120,10 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
 
 **A1 — Via agents**
 
-1. User → **`holding-ceo`**: new company + budget + tech hints + `--project-root`.
-2. **`holding-ceo` → `holding-hr`**: options brief (roster, skills-library tags).
-3. **`holding-hr` ↔ user**: negotiate name / budget / tech / roles until you **confirm/lock**.
-4. HR executes factory + `company_os.sh all`, then returns the subsidiary path.
+1. User → **`holding-ceo`**: new company/workspace + budget + tech + packages + topology + root(s).
+2. **`holding-ceo` → `holding-hr`**: options brief (roster, skills-library tags, topology).
+3. **`holding-hr` ↔ user**: negotiate until you **confirm/lock** (include topology when multi-package).
+4. HR executes factory + `company_os.sh all`, then returns the subsidiary path(s).
 
 **A2 — Via script (self-serve)**
 
@@ -123,7 +132,14 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
   --name <slug> \
   --budget low|medium|high \
   --tech "tag1,tag2,..." \
-  --project-root /path/to/project
+  --project-root /path/to/project \
+  [--packages "frontend:react,backend:nestjs"]
+
+# Multi-package parent → teams (one company) or companies (N roots)
+~/.agents/holding/system/install/create-workspace.sh \
+  --parent /path/to/parent --topology teams|companies \
+  [--name <slug>] --budget medium \
+  --package frontend:react --package backend:nestjs
 ```
 
 | Flag | Meaning |
@@ -132,6 +148,8 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
 | `--budget` | Effort map for harness + hop tiers |
 | `--tech` | Tags matched against `templates/skills-library/MANIFEST.json` |
 | `--project-root` | Project directory that should own the subsidiary |
+| `--packages` | Monorepo slices → tech teams + hop routes (`teams`) |
+| `--topology` | `teams` (default) \| `companies` (via `create-workspace.sh`) |
 
 Then:
 

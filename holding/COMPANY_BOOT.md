@@ -14,7 +14,13 @@ Grok, Codex, Claude, … are **runtimes** — they do not own the conglomerate.
 | **Create-company or hire deal** (budget, name, tech, roles, skills) | **`holding-hr`** (after `holding-ceo` routes) |
 
 Creating a company is supported **via chat** (ceo → hr ↔ you → factory) **or**
-self-serve `create-company.sh` — same factory.
+self-serve `create-company.sh` / `create-workspace.sh` — same factory.
+
+When the parent folder has **multiple packages** (frontend/backend/…), HR must
+lock **topology** before factory:
+
+- **`teams`** (default) — one company at the parent; packages = teams
+- **`companies`** — one company per package root (never two companies on the same root)
 
 Subsidiary product chat stays with that company’s `ceo` / `ba-user` — not holding ICs.
 
@@ -41,9 +47,12 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 3. Act as the **role** hop returns (or the parent assigned).
 4. Load **one** skill path from hop (`skill:`) when present.
 5. Cascade:
-   - New company → **`holding-ceo`** → **`holding-hr`** ↔ user → lock → `create-company.sh` + `company_os.sh all`.
+   - New company / monorepo workspace → **`holding-ceo`** → **`holding-hr`** ↔ user →
+     lock **topology + packages + roots** → `create-company.sh` or
+     `create-workspace.sh` + each `company_os.sh all`.
    - Shortage → **`holding-ceo`** → **`holding-hr`** ↔ user → lock → HR writes into that company.
-   - Multi-company → **`holding-ceo`** → **`holding-coordinator`** / subsidiary `ceo`(s).
+   - Multi-company (`companies` topology) → **`holding-ceo`** → **`holding-coordinator`** / subsidiary `ceo`(s).
+     Same-folder packages under **`teams`** stay in-company (`cto` / `tech-lead`), not holding.
 6. Short briefs only (goal / path / done-when). English SoT only.
 7. **Habits (optional):** HR may `habit_cache.py propose` once (new-company /
    restaff) for a compact prior — never open the SQLite blob; never skip lock.
