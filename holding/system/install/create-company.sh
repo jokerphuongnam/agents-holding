@@ -307,7 +307,7 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
    cached role. New goal → \`clear\` then set.
 1. **Memory — ALWAYS index first** (per-staff table; mandatory):
    \`\`\`bash
-   python3 …/task_memory.py index --staff <ic> --path <file> [--goal '…']
+   python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…']
    \`\`\`
    - \`mode=new\` → start fresh (no get). When finished **MUST**
      \`record-done --staff <ic> …\` (creates cache).
