@@ -21,12 +21,11 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/sync_agents.py
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/task_cache.py show|set|clear
-# Company product hop — durable per-staff memory (ALWAYS index first):
-python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py index --staff <ic> --path <file> [--goal '…']
-# mode=reuse only:
-python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py get --staff <ic> --key <key>
-# after finish (new OR reuse-with-changes; upsert overwrites):
-python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --staff <ic> --goal '…' --path '…' --summary '…'
+# Company product hop — durable per-staff memory (CEO prefetches):
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
+# paste into IC brief; on reuse IC must NOT re-call task_memory; SKIP record-done unless new fail/fix/refs
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --staff <ic> --goal '…' --path '…' --summary '…' --fails '…' --fixes '…' --refs 'file:start-end' --short-descript 'pattern…'
+
 ```
 
 

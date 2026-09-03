@@ -11,65 +11,45 @@ In-company CEO. User channel with `ba-user` only (product).
 
 Scripts: `.agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/`
 
-Before any hop / ORG / skills browse:
-
 ```bash
 python3 …/task_cache.py show
-# MANDATORY one-shot before work (own --staff only) — prefer resolve over index+get
+
+# Parent prefetch (YOU run this — paste stdout into IC brief)
 python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
-# paste stdout into IC brief; on reuse IC does NOT call task_memory again
-# after finish: record-done ONLY if new or new fail/fix/refs; else SKIP
-# record-done ONLY if mode=new OR you learned a new/changed fail/fix/refs
-# If resolve fit and nothing new → SKIP record-done
-python3 …/task_memory.py record-done --staff <ic> --path … --goal … --summary … --fails … --fixes … --refs 'file:start-end;…' --short-descript 'pattern…'
+
+# IC on mode=reuse: do NOT call task_memory again; apply fails/fixes/refs only.
+# record-done ONLY if mode=new OR a new/changed fail/fix/refs was learned; else SKIP.
+python3 …/task_memory.py record-done --staff <ic> --path … --goal … \
+  --summary '…' --fails '…' --fixes '…' --refs 'file:start-end;…' \
+  --short-descript 'pattern…'
 ```
 
-1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
-2. **Always index first** (`--staff` = IC `name:`). Never skip.
-   - `mode=new` → hop/implement from scratch; **must** `record-done` when finished.
-   - `mode=candidates` → pick a key whose `short_descript` **fits this ask**
-     (equivalent tasks OK — not identical goal/path). If none fit → treat as new.
-     If one fits → `get` → use `work`; if changed → **must** `record-done` (overwrites).
-3. New user goal → `task_cache.py clear`, then index gate, then `task_cache.py set`.
+1. If **task_cache** has the **same goal/paths** → resume `active_role` (short brief).
+2. **Always** `resolve --brief` as CEO/lead before spawning the IC (`--staff` = IC `name:`).
+   - `mode=new` → IC implements; **must** slim `record-done` (fails/fixes/refs only).
+   - `mode=reuse` → paste brief into IC; IC applies distilled fails/fixes; **SKIP**
+     `record-done` unless a new fail/fix/refs was learned.
+3. New user goal → `task_cache.py clear`, then resolve gate, then `task_cache.py set`.
 4. After hop/assign → `task_cache.py set` / `patch`.
 
-**Why memory exists:** reuse prior `work` (especially recorded fails/fixes) so
-*later* passes cost far fewer tokens/time. **First pass is not 2–3× more
-expensive** — normal work + a cheap `record-done` (short `short_descript` +
-compact `work` one-liner). Do not re-analyze or paste essays into cache just
-to save. Always **index first**; **record-done** after new work or changed reuse.
+**Parent prefetch (required for ~40% savings after similar tasks):** if the IC
+re-runs `resolve`/`record-done` every hop, ceremony eats the win. CEO/lead must
+prefetch `--brief` and keep reuse hops free of memory CLI calls.
 
-**Equivalence (not 1-1 identical):** exact same task is rare/hard to match.
-Prefer reusable *patterns* in `short_descript` (e.g. "Screens with List +
-nav bar empty-state") so a later *different* screen that shares the shape can
-reuse fails/fixes. Details differ; the pattern transfers.
+**Distill only:** `work` = `fails` + `fixes` + `refs=file:start-end` — never full
+files / unrelated chrome. Prefer pattern `short_descript` (equivalent tasks OK).
 
-**Known + related bugs:** cache also stores `fails`/`fixes` so later equivalent
-asks do **not** rediscover the same footguns. No-cache reality: you often
-re-hit old bugs and only partially re-fix them. Related bugs transfer via
-`short_descript` fit — not only identical tasks or identical files.
+**Known + related bugs:** cache exists so later equivalent asks do not rediscover
+paid-for footguns (no-cache often re-hits or only partially re-fixes them).
 
-**Distill only (never full-file cache):** `work` = `fails` + `fixes` + `refs=file:start-end;…`.
-After `resolve`, prefer `snippets` / those line ranges — do **not** paste whole siblings.
-Cache exists to keep the essence and avoid known bugs; if it costs more than
-re-fixing the same bug, the usage is wrong (too much ceremony or caching too much).
-
-**Parent prefetch (required for savings):** CEO/lead runs
-`task_memory.py resolve --staff <ic> --path … --goal … --brief` **once** and
-pastes those few lines into the IC brief. On `mode=reuse`, the IC must **not**
-call task_memory again — only apply fails/fixes/refs. Call `record-done` only
-if mode was new or a new fail/fix/refs was learned. If the IC re-runs resolve
-every task, cache will not save tokens.
-
-**Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
-other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.
+**Staff I/O:** stdout TSV only; own `--staff` table only; never open sqlite/`dump`.
 
 ## Dispatch rules (token-efficient)
 
-1. Hop **once** only when task_cache miss **and** task_memory `mode=new`.
+1. Hop **once** only when task_cache miss **and** resolve `mode=new`.
 2. Assign **one** IC. Exact owned paths.
 3. IC loads **at most one** customs `SKILL.md`.
-4. Prefer a **fitting** memory candidate + patch over re-scaffolding from zero.
+4. On reuse: IC follows pasted brief — no re-scaffold from zero.
 5. Budget **low**: minimal tests; no e2e unless asked.
 
 ## Escalation
