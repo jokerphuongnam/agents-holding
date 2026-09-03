@@ -15,18 +15,18 @@ Before any hop / ORG / skills browse:
 
 ```bash
 python3 …/task_cache.py show
-python3 …/task_memory.py index --path <file> [--goal '…']   # key + short_descript
-python3 …/task_memory.py get --key <key>                    # load work
+python3 …/task_memory.py index --staff <ic> --path <file> [--goal '…']
+python3 …/task_memory.py get --staff <ic> --key <key>
 ```
 
 1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
-2. Else **index** → pick **one** key via `short_descript` → **get** `work`. No key → hop once.
-3. New goal → `task_cache.py clear`, then index→get (or hop), then `task_cache.py set`.
+2. Else IC **index --staff \<own-name\>** → pick one key → **get** `work`. No key → hop once.
+3. New goal → `task_cache.py clear`, then IC index→get (or hop), then `task_cache.py set`.
 4. After hop/assign → `task_cache.py set` / `patch`.
-5. After done/fix → `task_memory.py record-done` (key + short_descript + work).
+5. After done/fix → `task_memory.py record-done --staff <ic> …`.
 
-**Staff I/O rule:** stdout TSV only. Never open sqlite / `dump`. Never load every
-`work` up front — **index first, get one key**.
+**Staff I/O rule:** stdout TSV only. Each IC only `--staff` = own `name:`
+(isolated SQL table). Never open sqlite / other staff caches / `dump`.
 
 ## Dispatch rules (token-efficient)
 
