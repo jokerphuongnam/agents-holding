@@ -325,9 +325,9 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 \`task_memory\` = durable per-staff SQLite at \`cache/cache/task_memory.sqlite\`
 (created on first index/record; local/gitignored).
 
-**Why cache:** on \`mode=reuse\`, load prior \`work\` (incl. known fails/fixes) so the
-IC patches instead of re-deriving from zero — **less time and tokens** on bugs
-already solved. \`mode=new\` still records so the next pass is cheap.
+**Why cache:** later \`mode=reuse\` loads prior fails/fixes and cuts tokens/time.
+**First pass ≈ normal work + a little** for \`record-done\` (short descript +
+compact \`work\` line) — not 2–3× cost. Never dump long essays into cache.
 
 **Staff I/O:** stdout TSV only. Fields: \`key\`, \`short_descript\`, \`work\`.
 Forbidden: open \`*.sqlite\`, other staff tables, or \`dump\` (needs \`--i-am-human\`).
@@ -350,8 +350,9 @@ if [[ -f "$TM" ]]; then
     cat > "$DEST/cache/cache/TASK_MEMORY.md" <<'NOTE'
 # task_memory (local)
 
-Purpose: save tokens/time on repeat work — especially bugs already fixed.
-`mode=reuse` → get prior `work` (fails/fixes) and patch; do not re-derive from zero.
+Purpose: save tokens/time on *later* passes (known fails/fixes).
+First pass ≈ normal work + cheap record-done (compact lines) — not 2–3× cost.
+`mode=reuse` → get prior `work` and patch; do not re-derive from zero.
 
 SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
 Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
