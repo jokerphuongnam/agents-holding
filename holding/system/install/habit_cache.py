@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Holding user-habit cache (SQLite, local-only).
 
-Single-user prefs for new-company + restaff. Agents MUST use this CLI —
-never open the DB or dump all rows into a prompt. Fetch by key only.
+Two-step agent I/O (low token):
+  1) index  → key + short_descript (pick which habit applies)
+  2) get    → load that key's `work` (payload HR actually uses)
+
+Staffs/agents read CLI stdout only — never open *.sqlite / dump.
 
 Store (gitignored):
   <holding>/cache/user_habits.sqlite
-  override: HABIT_CACHE_DB=/path/to/file.sqlite
-
-Agent-facing output is compact TSV / one-liners (low token).
-Staffs/agents read CLI stdout only — never open the SQLite file.
+  override: HABIT_CACHE_DB=…
 """
 
 from __future__ import annotations
@@ -22,10 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Optional
 
+SCHEMA_VERSION = "2"
 
-SCHEMA_VERSION = "1"
-
-# kind values
 KIND_STRUCTURE = "structure"
 KIND_DEFAULTS = "defaults"
 KIND_CHANGE = "change"
@@ -38,7 +36,6 @@ def utc_now() -> str:
 
 
 def holding_root() -> Path:
-    """…/holding — script lives at holding/system/install/habit_cache.py."""
     return Path(__file__).resolve().parents[2]
 
 
@@ -60,26 +57,52 @@ def connect(db: Path) -> sqlite3.Connection:
             key TEXT PRIMARY KEY,
             family TEXT,
             kind TEXT NOT NULL,
-            value TEXT NOT NULL,
+            short_descript TEXT NOT NULL DEFAULT '',
+            work TEXT NOT NULL DEFAULT '',
             weight REAL NOT NULL DEFAULT 1,
             updated_at TEXT NOT NULL
         )
         """
     )
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_habits_family ON habits(family)"
-    )
+    _migrate(conn)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_habits_family ON habits(family)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_habits_kind ON habits(kind)")
-    # schema marker
-    cur = conn.execute("SELECT value FROM habits WHERE key = ?", ("meta:schema",))
-    row = cur.fetchone()
+    row = conn.execute("SELECT 1 FROM habits WHERE key = ?", ("meta:schema",)).fetchone()
     if row is None:
         conn.execute(
-            "INSERT INTO habits(key, family, kind, value, weight, updated_at) VALUES (?,?,?,?,?,?)",
-            ("meta:schema", "", KIND_META, SCHEMA_VERSION, 0, utc_now()),
+            "INSERT INTO habits(key, family, kind, short_descript, work, weight, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            ("meta:schema", "", KIND_META, "schema version", SCHEMA_VERSION, 0, utc_now()),
         )
-        conn.commit()
+    else:
+        conn.execute(
+            "UPDATE habits SET work = ?, updated_at = ? WHERE key = ?",
+            (SCHEMA_VERSION, utc_now(), "meta:schema"),
+        )
+    conn.commit()
     return conn
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(habits)").fetchall()}
+    if "value" in cols and "work" not in cols:
+        conn.execute("ALTER TABLE habits ADD COLUMN work TEXT NOT NULL DEFAULT ''")
+        conn.execute("UPDATE habits SET work = value")
+    if "short_descript" not in cols:
+        conn.execute(
+            "ALTER TABLE habits ADD COLUMN short_descript TEXT NOT NULL DEFAULT ''"
+        )
+    cols2 = {r[1] for r in conn.execute("PRAGMA table_info(habits)").fetchall()}
+    if "work" not in cols2:
+        conn.execute("ALTER TABLE habits ADD COLUMN work TEXT NOT NULL DEFAULT ''")
+    conn.execute(
+        """
+        UPDATE habits SET short_descript = 'legacy:' || key
+        WHERE key != 'meta:schema'
+          AND (short_descript IS NULL OR short_descript = '')
+        """
+    )
+    conn.commit()
 
 
 def kind_of_key(key: str) -> str:
@@ -97,56 +120,64 @@ def kind_of_key(key: str) -> str:
 
 
 def family_of_key(key: str) -> str:
-    # structure:mobile | defaults:web | change:mobile:add_ic | company:slug:shape
     parts = key.split(":")
     if len(parts) < 2:
         return ""
-    if parts[0] in ("structure", "defaults") and len(parts) >= 2:
-        return parts[1]
-    if parts[0] == "change" and len(parts) >= 2:
+    if parts[0] in ("structure", "defaults", "change") and len(parts) >= 2:
         return parts[1]
     return ""
 
 
-def print_row(key: str, value: str, weight: float, updated_at: str, *, with_meta: bool) -> None:
-    if with_meta:
-        print(f"{key}\t{value}\tw={weight:g}\t@{updated_at}")
-    else:
-        # agent default: key + value only
-        print(f"{key}\t{value}")
+def cmd_index(conn: sqlite3.Connection, prefix: str, family: str, intent: str) -> int:
+    print("col\tkey\tshort_descript")
+    q = "SELECT key, short_descript FROM habits WHERE key != 'meta:schema'"
+    args: list[str] = []
+    if prefix:
+        q += " AND key LIKE ?"
+        args.append(prefix + "%")
+    if family:
+        q += " AND family = ?"
+        args.append(family)
+    if intent in ("new-company", "new", "create"):
+        q += " AND (kind IN ('structure','defaults','change') OR key LIKE 'structure:%' OR key LIKE 'defaults:%' OR key LIKE 'change:%')"
+    elif intent in ("restaff", "shortage", "reorg", "hire"):
+        q += " AND (kind IN ('company','change','structure') OR key LIKE 'company:%' OR key LIKE 'change:%' OR key LIKE 'structure:%')"
+    q += " ORDER BY key"
+    rows = conn.execute(q, args).fetchall()
+    for r in rows:
+        sd = (r["short_descript"] or "").replace("\t", " ").strip() or "—"
+        print(f"index\t{r['key']}\t{sd}")
+    print(f"count\t{len(rows)}")
+    print("next\tget --key <key>  # load work for chosen key")
+    print("rule\tstaffs read TSV stdout only — never open sqlite")
+    return 0
 
 
 def cmd_get(conn: sqlite3.Connection, key: str, with_meta: bool) -> int:
     row = conn.execute(
-        "SELECT key, value, weight, updated_at FROM habits WHERE key = ?", (key,)
+        "SELECT key, short_descript, work, weight, updated_at, family, kind FROM habits WHERE key = ?",
+        (key,),
     ).fetchone()
     if row is None:
         print(f"MISS\t{key}", file=sys.stderr)
         return 1
-    print_row(row["key"], row["value"], row["weight"], row["updated_at"], with_meta=with_meta)
-    return 0
-
-
-def cmd_keys(conn: sqlite3.Connection, prefix: str) -> int:
-    if prefix:
-        rows = conn.execute(
-            "SELECT key, weight, updated_at FROM habits WHERE key LIKE ? ORDER BY key",
-            (prefix + "%",),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            "SELECT key, weight, updated_at FROM habits WHERE key != 'meta:schema' ORDER BY key"
-        ).fetchall()
-    print("key\tweight\tupdated_at")
-    for r in rows:
-        print(f"{r['key']}\t{r['weight']:g}\t{r['updated_at']}")
+    print(f"key\t{row['key']}")
+    print(f"short_descript\t{(row['short_descript'] or '').strip() or '—'}")
+    print(f"work\t{(row['work'] or '').strip()}")
+    if with_meta:
+        print(f"kind\t{row['kind']}")
+        print(f"family\t{row['family'] or ''}")
+        print(f"weight\t{row['weight']:g}")
+        print(f"updated_at\t{row['updated_at']}")
+    print("rule\tuse `work` to act; do not re-open sqlite")
     return 0
 
 
 def upsert(
     conn: sqlite3.Connection,
     key: str,
-    value: str,
+    short_descript: str,
+    work: str,
     *,
     family: Optional[str] = None,
     kind: Optional[str] = None,
@@ -156,13 +187,14 @@ def upsert(
     fam = family if family is not None else family_of_key(key)
     knd = kind if kind is not None else kind_of_key(key)
     existing = conn.execute(
-        "SELECT weight FROM habits WHERE key = ?", (key,)
+        "SELECT weight, short_descript, work FROM habits WHERE key = ?", (key,)
     ).fetchone()
     if existing is None:
         w = 1.0 if weight is None else float(weight)
         conn.execute(
-            "INSERT INTO habits(key, family, kind, value, weight, updated_at) VALUES (?,?,?,?,?,?)",
-            (key, fam, knd, value, w, utc_now()),
+            "INSERT INTO habits(key, family, kind, short_descript, work, weight, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (key, fam, knd, short_descript, work, w, utc_now()),
         )
     else:
         if weight is not None:
@@ -171,9 +203,11 @@ def upsert(
             w = float(existing["weight"]) + 1.0
         else:
             w = float(existing["weight"])
+        sd = short_descript if short_descript else (existing["short_descript"] or "")
+        wk = work if work else (existing["work"] or "")
         conn.execute(
-            "UPDATE habits SET family=?, kind=?, value=?, weight=?, updated_at=? WHERE key=?",
-            (fam, knd, value, w, utc_now(), key),
+            "UPDATE habits SET family=?, kind=?, short_descript=?, work=?, weight=?, updated_at=? WHERE key=?",
+            (fam, knd, sd, wk, w, utc_now(), key),
         )
     conn.commit()
 
@@ -181,7 +215,8 @@ def upsert(
 def cmd_record(
     conn: sqlite3.Connection,
     key: str,
-    value: str,
+    short_descript: str,
+    work: str,
     family: Optional[str],
     weight: Optional[float],
     bump: bool,
@@ -189,12 +224,19 @@ def cmd_record(
     if key == "meta:schema":
         print("error: meta:schema is reserved", file=sys.stderr)
         return 2
-    upsert(conn, key, value, family=family, weight=weight, bump=bump)
-    row = conn.execute(
-        "SELECT key, value, weight, updated_at FROM habits WHERE key = ?", (key,)
-    ).fetchone()
-    print_row(row["key"], row["value"], row["weight"], row["updated_at"], with_meta=True)
-    return 0
+    if not short_descript.strip() or not work.strip():
+        print("error: --short-descript and --work required", file=sys.stderr)
+        return 2
+    upsert(
+        conn,
+        key,
+        short_descript.strip(),
+        work.strip(),
+        family=family,
+        weight=weight,
+        bump=bump,
+    )
+    return cmd_get(conn, key, with_meta=True)
 
 
 def cmd_clear(conn: sqlite3.Connection, key: Optional[str], family: Optional[str], all_: bool) -> int:
@@ -219,141 +261,49 @@ def cmd_clear(conn: sqlite3.Connection, key: Optional[str], family: Optional[str
     return 2
 
 
-def top_changes(conn: sqlite3.Connection, family: str, limit: int = 3) -> list[sqlite3.Row]:
-    return conn.execute(
-        """
-        SELECT key, value, weight, updated_at FROM habits
-        WHERE kind = ? AND family = ?
-        ORDER BY weight DESC, updated_at DESC
-        LIMIT ?
-        """,
-        (KIND_CHANGE, family, limit),
-    ).fetchall()
-
-
-def get_optional(conn: sqlite3.Connection, key: str) -> Optional[sqlite3.Row]:
-    return conn.execute(
-        "SELECT key, value, weight, updated_at FROM habits WHERE key = ?", (key,)
-    ).fetchone()
-
-
-def cmd_propose(
-    conn: sqlite3.Connection,
-    intent: str,
-    family: str,
-    slug: Optional[str],
-) -> int:
-    """Print only the prior lines needed for this intent (low token)."""
+def cmd_propose(conn: sqlite3.Connection, intent: str, family: str, slug: Optional[str]) -> int:
+    """Filtered index for intent — key + short_descript only."""
     family = (family or "").strip().lower() or "general"
     intent = intent.strip().lower()
     print(f"intent\t{intent}")
     print(f"family\t{family}")
     if slug:
         print(f"slug\t{slug}")
-
-    hits = 0
-
-    def emit(row: Optional[sqlite3.Row], label: str) -> None:
-        nonlocal hits
-        if row is None:
-            print(f"{label}\tMISS")
-            return
-        hits += 1
-        print(f"{label}\t{row['key']}\t{row['value']}")
-
-    if intent in ("new-company", "new", "create"):
-        emit(get_optional(conn, f"structure:{family}"), "structure")
-        emit(get_optional(conn, f"defaults:{family}"), "defaults")
-        changes = top_changes(conn, family, 3)
-        if not changes:
-            print("change_top\tMISS")
-        else:
-            # one compact line: pattern:weight|…
-            parts = []
-            for r in changes:
-                # change:mobile:add_ic → add_ic
-                pat = r["key"].split(":")[-1] if ":" in r["key"] else r["key"]
-                parts.append(f"{pat}:{r['weight']:g}")
-            print("change_top\t" + "|".join(parts))
-            for r in changes:
-                print(f"change\t{r['key']}\t{r['value']}")
-                hits += 1
-
-    elif intent in ("restaff", "shortage", "reorg", "hire"):
-        if not slug:
-            print("error: --slug required for restaff", file=sys.stderr)
-            return 2
-        emit(get_optional(conn, f"company:{slug}:shape"), "shape")
-        emit(get_optional(conn, f"company:{slug}:last_restaff"), "last_restaff")
-        # fallback structure prior for the family
-        emit(get_optional(conn, f"structure:{family}"), "structure_fallback")
-        changes = top_changes(conn, family, 3)
-        if not changes:
-            print("change_top\tMISS")
-        else:
-            parts = []
-            for r in changes:
-                pat = r["key"].split(":")[-1] if ":" in r["key"] else r["key"]
-                parts.append(f"{pat}:{r['weight']:g}")
-            print("change_top\t" + "|".join(parts))
-            for r in changes:
-                print(f"change\t{r['key']}\t{r['value']}")
-                hits += 1
-    else:
-        print(
-            "error: --intent must be new-company|restaff",
-            file=sys.stderr,
-        )
+    if intent in ("restaff", "shortage", "reorg", "hire") and not slug:
+        print("error: --slug required for restaff", file=sys.stderr)
         return 2
-
-    print(f"hits\t{hits}")
-    print("note\tprior only — lock with user before create-company / writing staffs")
-    return 0 if hits else 0  # MISS-only is still OK (empty prior)
-
-
-def cmd_dump(conn: sqlite3.Connection) -> int:
-    """Human debug — do not use in agent prompts."""
-    rows = conn.execute(
-        "SELECT key, family, kind, value, weight, updated_at FROM habits ORDER BY key"
-    ).fetchall()
-    print("key\tfamily\tkind\tweight\tupdated_at\tvalue")
-    for r in rows:
-        print(
-            f"{r['key']}\t{r['family']}\t{r['kind']}\t{r['weight']:g}\t{r['updated_at']}\t{r['value']}"
-        )
+    # index by family + intent kinds
+    cmd_index(conn, "", family, intent)
+    if slug:
+        # also list company-specific keys
+        rows = conn.execute(
+            "SELECT key, short_descript FROM habits WHERE key LIKE ? ORDER BY key",
+            (f"company:{slug}:%",),
+        ).fetchall()
+        for r in rows:
+            print(f"index\t{r['key']}\t{(r['short_descript'] or '—').strip()}")
+    print("note\tprior only — pick one key → get --key; lock with user before writes")
     return 0
 
 
 def cmd_record_bundle(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
-    """After user lock: write structure/defaults/change and/or company shape."""
     n = 0
     family = (args.family or "").strip().lower() or "general"
     if args.structure:
-        upsert(
-            conn,
-            f"structure:{family}",
-            args.structure,
-            family=family,
-            kind=KIND_STRUCTURE,
-            bump=True,
-        )
+        sd = args.structure_sd or f"when creating/structuring a {family} company"
+        upsert(conn, f"structure:{family}", sd, args.structure, family=family, kind=KIND_STRUCTURE, bump=True)
         n += 1
     if args.defaults:
-        upsert(
-            conn,
-            f"defaults:{family}",
-            args.defaults,
-            family=family,
-            kind=KIND_DEFAULTS,
-            bump=True,
-        )
+        sd = args.defaults_sd or f"when choosing budget/tech defaults for {family}"
+        upsert(conn, f"defaults:{family}", sd, args.defaults, family=family, kind=KIND_DEFAULTS, bump=True)
         n += 1
     if args.change_pattern:
-        # value may be empty → store pattern name as reminder
         val = args.change_value or args.change_pattern
+        sd = args.change_sd or f"when restaff pattern={args.change_pattern} on {family}"
         upsert(
             conn,
             f"change:{family}:{args.change_pattern}",
+            sd,
             val,
             family=family,
             kind=KIND_CHANGE,
@@ -361,9 +311,11 @@ def cmd_record_bundle(conn: sqlite3.Connection, args: argparse.Namespace) -> int
         )
         n += 1
     if args.slug and args.company_shape:
+        sd = args.shape_sd or f"when restaffing company {args.slug}"
         upsert(
             conn,
             f"company:{args.slug}:shape",
+            sd,
             args.company_shape,
             family=family,
             kind=KIND_COMPANY,
@@ -371,9 +323,11 @@ def cmd_record_bundle(conn: sqlite3.Connection, args: argparse.Namespace) -> int
         )
         n += 1
     if args.slug and args.last_restaff:
+        sd = f"when recalling last restaff of {args.slug}"
         upsert(
             conn,
             f"company:{args.slug}:last_restaff",
+            sd,
             args.last_restaff,
             family=family,
             kind=KIND_COMPANY,
@@ -390,59 +344,76 @@ def cmd_record_bundle(conn: sqlite3.Connection, args: argparse.Namespace) -> int
     print(f"recorded\t{n}\tfamily\t{family}")
     if args.slug:
         print(f"slug\t{args.slug}")
+    print("next\tindex / propose → get --key")
+    return 0
+
+
+def cmd_dump(conn: sqlite3.Connection) -> int:
+    rows = conn.execute(
+        "SELECT key, family, kind, short_descript, work, weight, updated_at FROM habits ORDER BY key"
+    ).fetchall()
+    print("key\tfamily\tkind\tweight\tupdated_at\tshort_descript\twork")
+    for r in rows:
+        print(
+            f"{r['key']}\t{r['family']}\t{r['kind']}\t{r['weight']:g}\t{r['updated_at']}\t"
+            f"{r['short_descript']}\t{r['work']}"
+        )
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Holding habit cache (SQLite). Agents: get/propose by key only."
+        description="Holding habit cache. index (key+short_descript) → get (work)."
     )
-    p.add_argument(
-        "--db",
-        default="",
-        help="SQLite path (default: <holding>/cache/user_habits.sqlite or HABIT_CACHE_DB)",
-    )
+    p.add_argument("--db", default="")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    g = sub.add_parser("get", help="Fetch one key (MISS → exit 1)")
-    g.add_argument("--key", required=True)
-    g.add_argument("--meta", action="store_true", help="Include weight + updated_at")
+    ix = sub.add_parser("index", help="Step1: key + short_descript")
+    ix.add_argument("--prefix", default="")
+    ix.add_argument("--family", default="")
+    ix.add_argument("--intent", default="", help="new-company|restaff filter")
 
-    k = sub.add_parser("keys", help="List keys only (optional prefix)")
+    k = sub.add_parser("keys", help="Alias of index --prefix")
     k.add_argument("--prefix", default="")
 
-    r = sub.add_parser("record", help="Upsert one key=value")
+    g = sub.add_parser("get", help="Step2: short_descript + work for one key")
+    g.add_argument("--key", required=True)
+    g.add_argument("--meta", action="store_true")
+
+    r = sub.add_parser("record", help="Upsert key with short_descript + work")
     r.add_argument("--key", required=True)
-    r.add_argument("--value", required=True)
+    r.add_argument("--short-descript", required=True)
+    r.add_argument("--work", required=True)
     r.add_argument("--family", default="")
     r.add_argument("--weight", type=float, default=None)
-    r.add_argument("--bump", action="store_true", help="Increment weight on update")
+    r.add_argument("--bump", action="store_true")
 
-    rb = sub.add_parser(
-        "record-bundle",
-        help="After lock: write structure/defaults/change and/or company shape",
-    )
+    rb = sub.add_parser("record-bundle", help="After lock: write structure/defaults/change/company")
     rb.add_argument("--family", required=True)
     rb.add_argument("--structure", default="")
+    rb.add_argument("--structure-sd", default="")
     rb.add_argument("--defaults", default="")
-    rb.add_argument("--change-pattern", default="", help="e.g. add_ic, add_lead, bump_budget")
+    rb.add_argument("--defaults-sd", default="")
+    rb.add_argument("--change-pattern", default="")
     rb.add_argument("--change-value", default="")
+    rb.add_argument("--change-sd", default="")
     rb.add_argument("--slug", default="")
     rb.add_argument("--company-shape", default="")
+    rb.add_argument("--shape-sd", default="")
     rb.add_argument("--last-restaff", default="")
 
-    pr = sub.add_parser("propose", help="Compact prior for new-company|restaff")
-    pr.add_argument("--intent", required=True, help="new-company | restaff")
-    pr.add_argument("--family", required=True, help="mobile|web|backend|general|…")
-    pr.add_argument("--slug", default="", help="Required for restaff")
+    pr = sub.add_parser("propose", help="Filtered index for new-company|restaff")
+    pr.add_argument("--intent", required=True)
+    pr.add_argument("--family", required=True)
+    pr.add_argument("--slug", default="")
 
-    c = sub.add_parser("clear", help="Delete keys")
+    c = sub.add_parser("clear")
     c.add_argument("--key", default="")
     c.add_argument("--family", default="")
     c.add_argument("--all", action="store_true")
 
-    d = sub.add_parser("dump", help="Human/debug ONLY — agents must not run this")
-    d.add_argument("--i-am-human", action="store_true", help="Required gate for dump")
+    d = sub.add_parser("dump", help="Human/debug ONLY")
+    d.add_argument("--i-am-human", action="store_true")
     sub.add_parser("path", help="Print DB path")
     return p
 
@@ -450,22 +421,23 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[Iterable[str]] = None) -> int:
     args = build_parser().parse_args(list(argv) if argv is not None else None)
     db = Path(args.db).expanduser() if args.db else default_db_path()
-
     if args.cmd == "path":
         print(db)
         return 0
-
     conn = connect(db)
     try:
+        if args.cmd == "index":
+            return cmd_index(conn, args.prefix, args.family, args.intent)
+        if args.cmd == "keys":
+            return cmd_index(conn, args.prefix, "", "")
         if args.cmd == "get":
             return cmd_get(conn, args.key, args.meta)
-        if args.cmd == "keys":
-            return cmd_keys(conn, args.prefix)
         if args.cmd == "record":
             return cmd_record(
                 conn,
                 args.key,
-                args.value,
+                args.short_descript,
+                args.work,
                 args.family or None,
                 args.weight,
                 args.bump,
@@ -477,9 +449,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.cmd == "clear":
             return cmd_clear(conn, args.key or None, args.family or None, args.all)
         if args.cmd == "dump":
-            if not getattr(args, "i_am_human", False):
+            if not args.i_am_human:
                 print(
-                    "error: dump is human-only; agents use propose/get. "
+                    "error: dump is human-only; agents use index→get. "
                     "Re-run with --i-am-human if debugging locally.",
                     file=sys.stderr,
                 )

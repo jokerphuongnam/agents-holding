@@ -305,9 +305,7 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 
 0. **Always** \`task_cache.py show\` first (active pointer). Same goal → resume
    cached role. New goal → \`clear\` then set.
-1. **Before hop:** \`task_memory.py propose --path <file> [--goal '…']\` once.
-   - **HIT** → resume/edit from memory (reuse fails/fixes); do not re-hop staffs.
-   - **MISS** → hop once: \`hop.py --path <file>\`
+1. **Memory (2-step):** \`task_memory.py index --path <file> [--goal]\` → pick one key from \`short_descript\` → \`get --key\` for \`work\`. No key → hop once: \`hop.py --path <file>\`
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
@@ -318,9 +316,9 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 \`task_cache\` = current task. \`task_memory\` = durable keyed SQLite under
 \`cache/cache/task_memory.sqlite\` (local/gitignored).
 
-**All staffs:** read **only** script stdout (compact TSV). Forbidden: open
-\`*.sqlite\`, \`sqlite3\`, or \`dump\` in prompts. Use \`propose\` / \`get\` /
-\`record-done\`.
+**All staffs:** stdout TSV only (\`index\` → \`get\`). Fields: \`key\`,
+\`short_descript\` (when to use), \`work\` (payload to act). Forbidden: open
+\`*.sqlite\`, \`sqlite3\`, or \`dump\`.
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately
