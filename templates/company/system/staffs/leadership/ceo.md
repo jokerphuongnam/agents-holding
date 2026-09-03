@@ -41,6 +41,11 @@ Prefer reusable *patterns* in `short_descript` (e.g. "Screens with List +
 nav bar empty-state") so a later *different* screen that shares the shape can
 reuse fails/fixes. Details differ; the pattern transfers.
 
+**Known + related bugs:** cache also stores `fails`/`fixes` so later equivalent
+asks do **not** rediscover the same footguns. No-cache reality: you often
+re-hit old bugs and only partially re-fix them. Related bugs transfer via
+`short_descript` fit — not only identical tasks or identical files.
+
 **Distill only (never full-file cache):** `work` = `fails` + `fixes` + `refs=file:start-end;…`.
 After `resolve`, prefer `snippets` / those line ranges — do **not** paste whole siblings.
 Cache exists to keep the essence and avoid known bugs; if it costs more than

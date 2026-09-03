@@ -15,7 +15,13 @@ Match equivalent patterns (e.g. List+nav Screens), not identical tasks — exact
 
 work payload is DISTILLED only — never paste full files:
   summary=…|fails=…|fixes=…|refs=path:start-end;path:start-end
-Use `snippets` to print only those line ranges. Cache = essence + avoid known bugs.
+Use `snippets` to print only those line ranges.
+
+Cache value (real projects):
+  1) reusable pattern refs (not whole sibling files with unrelated chrome)
+  2) known bugs already fixed — no-cache often re-hits / only partially re-fixes them
+  3) similar/related bugs via short_descript equivalence — transfer fails/fixes
+If a run "with cache" costs more than re-hitting the same bugs, usage is wrong.
 
 """
 
@@ -586,15 +592,23 @@ def cmd_resolve(
     print(f"key\t{pick['key']}")
     print(f"short_descript\t{(pick['short_descript'] or '').strip() or '—'}")
     print(f"work\t{work}")
+    # Surface known bugs explicitly (main win vs no-cache re-fixing from scratch)
+    for field in ("fails", "fixes", "summary"):
+        m = re.search(rf"(?:^|\|){field}=([^|]*)", work)
+        if m and m.group(1).strip():
+            print(f"{field}\t{m.group(1).strip()}")
     print(f"candidates\t{len(cands)}")
     refs = parse_refs(work)
     if refs:
         print("refs\t" + ";".join(f"{p}:{a}-{b}" for p, a, b in refs))
     print(
-        "next\tread ONLY refs via snippets (or those line ranges); apply fails/fixes; "
-        "do NOT paste/copy whole sibling files; record-done only if pattern changed"
+        "next\tAVOID re-hitting `fails`; apply `fixes`; read ONLY refs/snippets; "
+        "do NOT copy whole siblings; record-done if you learn a related bug/fix"
     )
-    print("rule\tcache is distilled essence + known bugs — never full-file cache")
+    print(
+        "rule\tcache = pattern refs + known/related bugs — never full-file; "
+        "no-cache often re-breaks or only partially re-fixes the same issues"
+    )
     if with_snippets and refs:
         print_snippets(refs)
     elif with_snippets and not refs:
