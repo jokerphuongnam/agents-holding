@@ -275,7 +275,7 @@
         "ba",
         "requirements"
       ],
-      "target": "product/ba",
+      "target": "ba/ba-user",
       "always_for_roles": []
     },
     {
@@ -287,7 +287,7 @@
         "figma",
         "ux"
       ],
-      "target": "product/ba",
+      "target": "ba/ba-user",
       "always_for_roles": []
     },
     {
@@ -298,7 +298,7 @@
         "ac",
         "acceptance"
       ],
-      "target": "product/po-modify",
+      "target": "po/po-modify",
       "always_for_roles": []
     },
     {
@@ -309,7 +309,7 @@
         "plan",
         "roadmap"
       ],
-      "target": "product/po-new",
+      "target": "po/po-new",
       "always_for_roles": []
     },
     {

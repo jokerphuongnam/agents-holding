@@ -91,7 +91,7 @@ python3 .agents/holding/system/install/apply_budget_harness.py \
 Same script either way (writes `system/harness/*.toml` `[tier_to_effort]`,
 hop `agents.tsv` tiers, `BUDGET_APPLIED.json`). HR is optional help, not a lock.
 
-**Invariant:** plan/doc writers (`ba`, `po-new`, `po-modify`) always stay at
+**Invariant:** plan/doc writers (`po-new`, `po-modify`) always stay at
 `policy.always_max_tier` (`xhigh`) — even on **low**.
 
 ## Language
