@@ -12,4 +12,4 @@ adapters wherever each harness `[paths]` says.
 
 **Tech seed notes:** `{{TECH_HINTS}}`
 
-**Language:** SoT English; user chat = user’s language. User channel: `ceo` + `ba`.
+**Language:** SoT English; user chat = user’s language. User channel: `ceo` + `ba-user`.

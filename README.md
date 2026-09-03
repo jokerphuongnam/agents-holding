@@ -2,7 +2,7 @@
 
 **Conglomerate Company OS** for AI coding agents — Grok, Codex, Claude, …
 
-One **holding** coordinates many **subsidiary** companies (one per product). You talk to holding for budget and hiring; each subsidiary runs product work through its own `ceo` / `ba`.
+One **holding** coordinates many **subsidiary** companies (one per product). You talk to holding for budget and hiring; each subsidiary runs product work through its own `ceo` / `ba-user`.
 
 ## Install
 
@@ -25,7 +25,7 @@ Re-run the same command anytime after you push updates.
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
 | **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
-| **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`ba`, `po-*`) always stay max |
+| **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
 | **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
 
@@ -99,7 +99,7 @@ git init   # optional
 .agents/my-app-company/system/install/company_os.sh all
 ```
 
-Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba`** for product work.
+Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
 
 ---
 
@@ -148,7 +148,7 @@ python3 ~/.agents/holding/system/install/apply_budget_harness.py \
 /path/to/project/.agents/<slug>-company/system/install/company_os.sh all
 ```
 
-**Invariant:** `ba`, `po-new`, `po-modify` always keep max tier (`xhigh`), even on `low`.
+**Invariant:** `po-new`, `po-modify` always keep max tier (`xhigh`), even on `low`.
 
 ### C. Hiring — always through holding
 
@@ -187,7 +187,7 @@ Never hop straight from one subsidiary IC to another company’s IC.
 
 | Topic | Role |
 | --- | --- |
-| Product work inside a company | that company’s `ceo` / `ba` |
+| Product work inside a company | that company’s `ceo` / `ba-user` |
 | Conglomerate status / routing | `holding-ceo` |
 | Hiring deal | `holding-hr` |
 | Cross-company handoff notes | `holding-coordinator` (via ceo) |
@@ -247,7 +247,7 @@ See `templates/skills-library/MANIFEST.json` and `SOURCES.md`.
 1. Install `agents-holding` → `~/.agents`
 2. `create-company` with `--project-root` + `--tech`
 3. `company_os.sh all` in the project
-4. Chat with subsidiary `ceo` / `ba`
+4. Chat with subsidiary `ceo` / `ba-user`
 
 ### Existing codebase
 
