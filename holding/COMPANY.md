@@ -44,6 +44,38 @@ Each company (holding or subsidiary) keeps a SoT (`system/`, `cache/`, `example/
 (holding export dirs, `.grok/agents`, …) — polish SoT only. Prefer no
 repo-root `AGENTS.md`.
 
+## Workspace topologies (one parent folder, many packages)
+
+A parent folder often has several packages (`frontend/`, `backend/`, `apps/web/`, …).
+The user chooses how holding maps them:
+
+| Topology | Meaning | `--project-root` |
+| --- | --- | --- |
+| **`teams` (default)** | One `.agents/<slug>-company/`; packages = **tech teams only** + hop routes. **Shared once:** `ceo`, `cto`, BA/PO/QC, `git` (and design when UI-shaped). Not one ceo per package. | Parent (monorepo root) |
+| **`companies`** | Each package = full subsidiary (own ceo/cto/BA/…); handoffs via `holding-ceo` | **One root per package** (e.g. `…/frontend`, `…/backend`) |
+
+**Why separate roots for `companies`:** runtime adapters (`.grok/agents`, `.claude/`)
+are flat per project root — two companies sharing one root **overwrite** each other.
+Namespaced adapters are out of scope for v1.
+
+Self-serve:
+
+```bash
+# Monorepo → one company, FE/BE as teams
+~/.agents/holding/system/install/create-workspace.sh \
+  --parent /path/to/shop --topology teams --name shop --budget medium \
+  --package frontend:react --package backend:nestjs
+
+# Sibling companies (separate roots under the same parent)
+~/.agents/holding/system/install/create-workspace.sh \
+  --parent /path/to/shop --topology companies --budget medium \
+  --package frontend:shop-web:react --package backend:shop-api:nestjs
+```
+
+`create-company.sh --packages "frontend:react,backend:nestjs"` is the single-company
+path (implies `teams`). Parent registry: `<parent>/.agents/WORKSPACE.md`
+(rendered from `templates/workspace/`).
+
 ## Holding responsibilities
 
 1. **Coordinate** work that spans two or more companies.

@@ -31,12 +31,144 @@ DESIGN = [
 ]
 
 
-def tech_roles(tech: str) -> tuple[list[tuple], list[tuple[str, str]], list[tuple[str, str]]]:
-    """Return (extra agents rows, roster pairs, route prefixes)."""
+def parse_packages(raw: str) -> list[tuple[str, str]]:
+    """Parse ``frontend:react,backend:nestjs`` or ``frontend,backend`` → [(path, tech)]."""
+    out: list[tuple[str, str]] = []
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if ":" in part:
+            path, tech = part.split(":", 1)
+            out.append((path.strip().strip("/"), tech.strip()))
+        else:
+            out.append((part.strip().strip("/"), ""))
+    return out
+
+
+def _norm_prefix(path: str) -> str:
+    p = path.strip().strip("/")
+    return f"{p}/" if p else ""
+
+
+def _kind_for_package(path: str, tech: str) -> str:
+    """Classify package as frontend | backend | mobile | data | unknown."""
+    blob = f"{path} {tech}".lower().replace("\\", "/")
+    if any(k in blob for k in ("ios", "android", "flutter", "swiftui", "compose", "mobile")):
+        return "mobile"
+    if any(k in blob for k in ("data", "analytics", "bi", "warehouse")):
+        return "data"
+    if any(
+        k in blob
+        for k in (
+            "backend", "server", "services", "api", "nestjs", "express", "fastapi",
+            "django", "rails", "spring", "node",
+        )
+    ):
+        return "backend"
+    if any(
+        k in blob
+        for k in (
+            "frontend", "web", "react", "vue", "angular", "next", "nuxt", "svelte",
+            "typescript", "javascript",
+        )
+    ):
+        return "frontend"
+    # path heuristics
+    base = path.lower().replace("\\", "/").split("/")[-1]
+    if base in ("frontend", "web", "client", "ui", "app"):
+        return "frontend"
+    if base in ("backend", "server", "api", "services"):
+        return "backend"
+    if base in ("mobile", "ios", "android"):
+        return "mobile"
+    return "unknown"
+
+
+def tech_roles(
+    tech: str,
+    packages: list[tuple[str, str]] | None = None,
+) -> tuple[list[tuple], list[tuple[str, str]], list[tuple[str, str]]]:
+    """Return (extra agents rows, roster pairs, route prefixes).
+
+    When ``packages`` is set, force engineer roles + routes for those paths
+    even if ``--tech`` is thin (monorepo teams topology).
+    """
     t = (tech or "").lower()
     agents: list[tuple] = []
     roster: list[tuple[str, str]] = []
     routes: list[tuple[str, str]] = []
+    have: set[str] = set()
+
+    def add_frontend(extra_prefixes: list[str] | None = None) -> None:
+        if "frontend-engineer" not in have:
+            agents.append(
+                ("frontend-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
+                 "Frontend app code (React/Vue/etc per CTO seed). Not design system.")
+            )
+            roster.append(("tech-lead", "frontend-engineer"))
+            roster.append(("ceo", "tech-lead"))
+            have.add("frontend-engineer")
+        prefs = list(extra_prefixes or [])
+        prefs.extend(["src/", "apps/web/", "apps/frontend/", "web/", "frontend/"])
+        for pref in prefs:
+            if pref:
+                routes.append((pref, "frontend-engineer"))
+
+    def add_mobile(extra_prefixes: list[str] | None = None) -> None:
+        if "mobile-engineer" not in have:
+            agents.append(
+                ("mobile-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
+                 "Mobile app code (iOS/Android/Flutter per CTO seed). Not design system.")
+            )
+            roster.append(("tech-lead", "mobile-engineer"))
+            roster.append(("ceo", "tech-lead"))
+            have.add("mobile-engineer")
+        prefs = list(extra_prefixes or [])
+        prefs.extend(["apps/mobile/", "apps/ios/", "apps/android/", "mobile/", "ios/", "android/"])
+        for pref in prefs:
+            if pref:
+                routes.append((pref, "mobile-engineer"))
+
+    def add_backend(extra_prefixes: list[str] | None = None) -> None:
+        if "backend-engineer" not in have:
+            agents.append(
+                ("backend-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
+                 "Backend/API services per CTO seed. Cross-company API asks go via holding.")
+            )
+            roster.append(("tech-lead", "backend-engineer"))
+            roster.append(("ceo", "tech-lead"))
+            have.add("backend-engineer")
+        prefs = list(extra_prefixes or [])
+        prefs.extend(["apps/api/", "apps/backend/", "backend/", "server/", "services/"])
+        for pref in prefs:
+            if pref:
+                routes.append((pref, "backend-engineer"))
+
+    def add_data() -> None:
+        if "data" not in have:
+            agents.append(
+                ("data", "medium", "default", "all", "", "", "", "0",
+                 "Bench/analytics reports for this company; cite files; no invented numbers.")
+            )
+            roster.append(("ceo", "data"))
+            have.add("data")
+
+    # Package-forced teams (monorepo)
+    for path, pkg_tech in packages or []:
+        kind = _kind_for_package(path, pkg_tech)
+        pref = _norm_prefix(path)
+        if kind == "frontend":
+            add_frontend([pref] if pref else None)
+        elif kind == "backend":
+            add_backend([pref] if pref else None)
+        elif kind == "mobile":
+            add_mobile([pref] if pref else None)
+        elif kind == "data":
+            add_data()
+        else:
+            # Unknown path: still route to frontend-engineer as a safe default IC
+            add_frontend([pref] if pref else None)
 
     frontend = any(k in t for k in ("react", "vue", "angular", "frontend", "next", "nuxt", "svelte"))
     mobile = any(k in t for k in ("ios", "android", "flutter", "swiftui", "compose", "mobile"))
@@ -44,43 +176,23 @@ def tech_roles(tech: str) -> tuple[list[tuple], list[tuple[str, str]], list[tupl
     ts_js = any(k in t for k in ("typescript", "javascript", "ts", "js"))
 
     if frontend or ts_js or "react" in t or "vue" in t:
-        agents.append(
-            ("frontend-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
-             "Frontend app code (React/Vue/etc per CTO seed). Not design system.")
-        )
-        roster.append(("tech-lead", "frontend-engineer"))
-        roster.append(("ceo", "tech-lead"))
-        for pref in ("src/", "apps/web/", "apps/frontend/", "web/", "frontend/"):
-            routes.append((pref, "frontend-engineer"))
-
+        add_frontend()
     if mobile or "android" in t or "ios" in t:
-        agents.append(
-            ("mobile-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
-             "Mobile app code (iOS/Android/Flutter per CTO seed). Not design system.")
-        )
-        roster.append(("tech-lead", "mobile-engineer"))
-        roster.append(("ceo", "tech-lead"))
-        for pref in ("apps/mobile/", "apps/ios/", "apps/android/", "mobile/", "ios/", "android/"):
-            routes.append((pref, "mobile-engineer"))
-
+        add_mobile()
     if node_be:
-        agents.append(
-            ("backend-engineer", "medium", "default", "all", "", "tech-lead", "qc-lead", "0",
-             "Backend/API services per CTO seed. Cross-company API asks go via holding.")
-        )
-        roster.append(("tech-lead", "backend-engineer"))
-        roster.append(("ceo", "tech-lead"))
-        for pref in ("apps/api/", "apps/backend/", "backend/", "server/", "services/"):
-            routes.append((pref, "backend-engineer"))
-
+        add_backend()
     if any(k in t for k in ("data", "analytics", "bi", "warehouse")):
-        agents.append(
-            ("data", "medium", "default", "all", "", "", "", "0",
-             "Bench/analytics reports for this company; cite files; no invented numbers.")
-        )
-        roster.append(("ceo", "data"))
+        add_data()
 
-    return agents, roster, routes
+    # de-dupe routes preserving order
+    seen_r: set[tuple[str, str]] = set()
+    routes_u: list[tuple[str, str]] = []
+    for p, a in routes:
+        if (p, a) not in seen_r:
+            seen_r.add((p, a))
+            routes_u.append((p, a))
+
+    return agents, roster, routes_u
 
 
 def is_frontend(tech: str) -> bool:
@@ -107,6 +219,11 @@ def main() -> int:
     ap.add_argument("--dest", required=True, help="company root")
     ap.add_argument("--budget", default="medium")
     ap.add_argument("--tech", default="")
+    ap.add_argument(
+        "--packages",
+        default="",
+        help="Comma list path[:tech] e.g. frontend:react,backend:nestjs — forces teams/routes",
+    )
     ap.add_argument("--budget-json", required=True)
     args = ap.parse_args()
 
@@ -118,6 +235,12 @@ def main() -> int:
     overrides = dict(budget_cfg.get("agents_tsv_tier_overrides") or {})
     for role in policy.get("always_max_roles") or ("po-modify", "po-new"):
         overrides[role] = policy.get("always_max_tier") or "xhigh"
+
+    packages = parse_packages(args.packages)
+    # Merge package tech tags into effective tech for design/heuristic detection
+    pkg_tech_bits = [tech for _, tech in packages if tech]
+    effective_tech = ",".join(x for x in [args.tech, *pkg_tech_bits] if x)
+    pkg_kinds = {_kind_for_package(p, t) for p, t in packages}
 
     agents = list(ALWAYS)
     roster: list[tuple[str, str]] = [
@@ -135,7 +258,8 @@ def main() -> int:
     ]
     routes: list[tuple[str, str]] = []
 
-    if is_frontend(args.tech):
+    want_design = is_frontend(effective_tech) or bool(pkg_kinds & {"frontend", "mobile"})
+    if want_design:
         agents.extend(DESIGN)
         roster.extend(
             [
@@ -145,7 +269,7 @@ def main() -> int:
             ]
         )
 
-    extra_a, extra_r, extra_routes = tech_roles(args.tech)
+    extra_a, extra_r, extra_routes = tech_roles(effective_tech, packages)
     agents.extend(extra_a)
     roster.extend(extra_r)
     routes.extend(extra_routes)
