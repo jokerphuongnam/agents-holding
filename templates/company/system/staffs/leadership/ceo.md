@@ -15,25 +15,31 @@ Before any hop / ORG / skills browse:
 
 ```bash
 python3 …/task_cache.py show
+# MANDATORY before work — IC own --staff only
 python3 …/task_memory.py index --staff <ic> --path <file> [--goal '…']
+# only if mode=reuse:
 python3 …/task_memory.py get --staff <ic> --key <key>
+# always after finish (new OR reuse-with-changes) — upsert overwrites
+python3 …/task_memory.py record-done --staff <ic> …
 ```
 
 1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
-2. Else IC **index --staff \<own-name\>** → pick one key → **get** `work`. No key → hop once.
-3. New goal → `task_cache.py clear`, then IC index→get (or hop), then `task_cache.py set`.
+2. **Always index first** (`--staff` = IC `name:`). Never skip.
+   - `mode=new` → hop/implement from scratch; **must** `record-done` when finished.
+   - `mode=reuse` → pick key via `short_descript` → `get` → work from `work`;
+     when finished, **if anything changed** → **must** `record-done` again (overwrites).
+3. New user goal → `task_cache.py clear`, then index gate, then `task_cache.py set`.
 4. After hop/assign → `task_cache.py set` / `patch`.
-5. After done/fix → `task_memory.py record-done --staff <ic> …`.
 
-**Staff I/O rule:** stdout TSV only. Each IC only `--staff` = own `name:`
-(isolated SQL table). Never open sqlite / other staff caches / `dump`.
+**Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
+other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.
 
 ## Dispatch rules (token-efficient)
 
-1. Hop **once** only when task_cache miss **and** task_memory miss / weak.
+1. Hop **once** only when task_cache miss **and** task_memory `mode=new`.
 2. Assign **one** IC. Exact owned paths.
 3. IC loads **at most one** customs `SKILL.md`.
-4. Prefer memory HIT + patch over re-scaffolding from zero.
+4. Prefer memory `mode=reuse` + patch over re-scaffolding from zero.
 5. Budget **low**: minimal tests; no e2e unless asked.
 
 ## Escalation
