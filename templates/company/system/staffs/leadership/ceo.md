@@ -15,17 +15,18 @@ Before any hop / ORG / skills browse:
 
 ```bash
 python3 …/task_cache.py show
-python3 …/task_memory.py propose --path <file> --goal '…'
+python3 …/task_memory.py index --path <file> [--goal '…']   # key + short_descript
+python3 …/task_memory.py get --key <key>                    # load work
 ```
 
-1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief; no full re-route).
-2. Else if **task_memory** HIT for path/goal (fail/fix lines) → resume/edit that surface; reuse fixes; hop only if ownership unclear.
-3. New goal → `task_cache.py clear`, then memory propose; on MISS hop once; then `task_cache.py set`.
+1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
+2. Else **index** → pick **one** key via `short_descript` → **get** `work`. No key → hop once.
+3. New goal → `task_cache.py clear`, then index→get (or hop), then `task_cache.py set`.
 4. After hop/assign → `task_cache.py set` / `patch`.
-5. After done/verified fix → `task_memory.py record-done --goal … --path … --role … --summary … [--fails … --fixes …]`.
+5. After done/fix → `task_memory.py record-done` (key + short_descript + work).
 
-**Staff I/O rule:** every role reads **only** CLI stdout (TSV lines). Do not open
-`*.sqlite`, run `sqlite3`, or `dump`. Use `propose` / `get` / `record-done` only.
+**Staff I/O rule:** stdout TSV only. Never open sqlite / `dump`. Never load every
+`work` up front — **index first, get one key**.
 
 ## Dispatch rules (token-efficient)
 
