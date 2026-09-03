@@ -38,6 +38,11 @@ expensive** — normal work + a cheap `record-done` (short `short_descript` +
 compact `work` one-liner). Do not re-analyze or paste essays into cache just
 to save. Always **index first**; **record-done** after new work or changed reuse.
 
+**Equivalence (not 1-1 identical):** exact same task is rare/hard to match.
+Prefer reusable *patterns* in `short_descript` (e.g. "Screens with List +
+nav bar empty-state") so a later *different* screen that shares the shape can
+reuse fails/fixes. Details differ; the pattern transfers.
+
 **Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
 other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.
 
