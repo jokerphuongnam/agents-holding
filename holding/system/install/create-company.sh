@@ -303,38 +303,30 @@ User channel: \`ceo\` / \`ba-user\` only.
 
 Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 
-0. **Always** \`task_cache.py show\` first (active pointer). Same goal → resume
-   cached role. New goal → \`clear\` then set.
-1. **Memory — ALWAYS index first** (per-staff table; mandatory):
+0. **Always** \`task_cache.py show\` first. Same goal → resume. New goal → \`clear\` then set.
+1. **Memory (parent prefetch — required for savings):**
    \`\`\`bash
-   python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…']
+   python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
    \`\`\`
-   - \`mode=new\` → start fresh (no get). When finished **MUST**
-     \`record-done --staff <ic> …\` (creates cache).
-   - \`mode=candidates\` → pick a key whose \`short_descript\` **fits this ask**
-     (equivalent tasks OK — not identical). If none fit → treat as new.
-     If one fits → \`get --staff <ic> --key <key>\` → use \`work\`. If changed,
-     **MUST** \`record-done\` again (upsert **overwrites**).
-   - Each IC only \`--staff\` = own \`name:\` (e.g. ux-writer ≠ rest-api-dev).
+   Paste that stdout into the IC brief.
+   - \`mode=new\` → IC implements; **MUST** slim \`record-done\` (fails/fixes/refs only).
+   - \`mode=reuse\` → IC applies fails/fixes/refs from the brief; **MUST NOT** call
+     \`task_memory\` again; **SKIP** \`record-done\` unless a new fail/fix/refs was learned.
+   - Each IC only \`--staff\` = own \`name:\`. Never full-file cache.
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
 5. Multi-company / hire → holding \`holding-ceo\`.
 6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 
-\`task_cache\` = current task pointer (JSON).
-\`task_memory\` = durable per-staff SQLite at \`cache/cache/task_memory.sqlite\`
-(created on first index/record; local/gitignored).
+\`task_cache\` = active pointer. \`task_memory\` = per-staff SQLite
+\`cache/cache/task_memory.sqlite\` (local/gitignored).
 
-**Why cache:** later passes reuse a **fitting** prior (equivalent ask) to cut
-tokens/time on known fails/fixes. First pass ≈ normal work + a little for
-\`record-done\` — not 2–3×. Never dump long essays into cache.
+**Savings target:** after ~3 equivalent tasks, expect on the order of **~40%**
+fewer tokens vs no-memory hops when CEO prefetches \`--brief\` and ICs skip
+re-resolve/re-record (measured playground; first task still pays a small record cost).
 
-**Equivalence:** not identical tasks — pattern reuse (e.g. Screens with List +
-nav bar). Write \`short_descript\` for the *shape*, so similar screens can share fails/fixes.
-
-**Staff I/O:** stdout TSV only. Fields: \`key\`, \`short_descript\`, \`work\`.
-Forbidden: open \`*.sqlite\`, other staff tables, or \`dump\` (needs \`--i-am-human\`).
+**Staff I/O:** stdout TSV only. Forbidden: open \`*.sqlite\` / other staff tables / \`dump\`.
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately
@@ -354,18 +346,25 @@ if [[ -f "$TM" ]]; then
     cat > "$DEST/cache/cache/TASK_MEMORY.md" <<'NOTE'
 # task_memory (local)
 
-Purpose: save tokens/time on *later* passes (known fails/fixes).
-First pass ≈ normal work + cheap record-done (compact lines) — not 2–3× cost.
-`mode=candidates` → pick a key whose short_descript fits (equivalent OK, not
-identical); get `work` and patch. If none fit → treat as new.
-Write short_descript as a *pattern*
-work is distilled: fails|fixes|refs=file:start-end (never full files).
-resolve [--with-snippets] prints essence; snippets reads only those lines.
-If resolve fit and no new fail/fix/refs → SKIP record-done.
-CEO/lead: resolve --brief once and paste into IC brief; IC on reuse must not re-call task_memory. (e.g. Screens+List+nav empty-state), not a one-off screen name.
+Purpose: cut tokens/time on *later equivalent* tasks (~40% after ~3 similar
+hops when used correctly — first hop still pays a small record cost).
 
-SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
-Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
+## Correct usage (do this)
+
+1. CEO/lead: `task_memory.py resolve --staff <ic> --path … --goal … --brief`
+2. Paste that brief into the IC spawn prompt.
+3. `mode=reuse` → IC applies fails/fixes/refs only; **no** task_memory CLI;
+   **SKIP** `record-done` unless a new fail/fix/refs was learned.
+4. `mode=new` → IC implements; slim `record-done` with
+   `fails|fixes|refs=file:start-end` and a *pattern* `short_descript`
+   (e.g. Screens+List+nav empty-state) — never full files / unrelated chrome.
+
+## Wrong usage (kills savings)
+
+- IC re-runs resolve/record every hop
+- Caching whole sibling files into `work`
+
+SQLite: `task_memory.sqlite` (per-staff tables). Local/gitignored.
 Read CLI stdout only — never open the DB.
 NOTE
   fi
