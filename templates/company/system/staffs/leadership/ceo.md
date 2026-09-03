@@ -26,8 +26,9 @@ python3 …/task_memory.py record-done --staff <ic> …
 1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
 2. **Always index first** (`--staff` = IC `name:`). Never skip.
    - `mode=new` → hop/implement from scratch; **must** `record-done` when finished.
-   - `mode=reuse` → pick key via `short_descript` → `get` → work from `work`;
-     when finished, **if anything changed** → **must** `record-done` again (overwrites).
+   - `mode=candidates` → pick a key whose `short_descript` **fits this ask**
+     (equivalent tasks OK — not identical goal/path). If none fit → treat as new.
+     If one fits → `get` → use `work`; if changed → **must** `record-done` (overwrites).
 3. New user goal → `task_cache.py clear`, then index gate, then `task_cache.py set`.
 4. After hop/assign → `task_cache.py set` / `patch`.
 
@@ -45,7 +46,7 @@ other staff caches / `dump`. **Index → (get?) → work → record-done** is ma
 1. Hop **once** only when task_cache miss **and** task_memory `mode=new`.
 2. Assign **one** IC. Exact owned paths.
 3. IC loads **at most one** customs `SKILL.md`.
-4. Prefer memory `mode=reuse` + patch over re-scaffolding from zero.
+4. Prefer a **fitting** memory candidate + patch over re-scaffolding from zero.
 5. Budget **low**: minimal tests; no e2e unless asked.
 
 ## Escalation
