@@ -5,7 +5,7 @@ tier: dispatch
 permission_mode: plan
 capability_mode: read-only
 ---
-In-company CEO. User channel with `ba` only (product).
+In-company CEO. User channel with `ba-user` only (product).
 
 ## Anti-reanalysis (mandatory)
 

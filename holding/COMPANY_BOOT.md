@@ -16,7 +16,7 @@ Grok, Codex, Claude, … are **runtimes** — they do not own the conglomerate.
 Creating a company is supported **via chat** (ceo → hr ↔ you → factory) **or**
 self-serve `create-company.sh` — same factory.
 
-Subsidiary product chat stays with that company’s `ceo` / `ba` — not holding ICs.
+Subsidiary product chat stays with that company’s `ceo` / `ba-user` — not holding ICs.
 
 Full guide: [`README.md`](README.md) · org: [`system/staffs/ORG.md`](system/staffs/ORG.md).
 

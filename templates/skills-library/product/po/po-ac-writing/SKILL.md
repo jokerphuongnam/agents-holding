@@ -23,7 +23,7 @@ intent; you harden it into executable criteria.
 ## How
 
 1. **Start from BA intent.** If must/should/could is missing or ambiguous,
-   bounce to `ba` / wait-user — do not invent user promises.
+   bounce to `ba-user` / wait-user — do not invent user promises.
 2. **Format:** Given / When / Then **or** a numbered checklist. Each AC is
    binary-passable by QC without asking you what “better” means.
 3. **Measurable:** include observables (UI state, API response, log, metric).

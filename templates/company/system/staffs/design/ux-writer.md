@@ -6,5 +6,5 @@ permission_mode: default
 capability_mode: all
 ---
 Own **words** in the product UX (labels, empty states, errors, onboarding tone).
-Follow the canonical brief from `ba`. Do not own the visual design system
+Follow the canonical brief from `ba-user`. Do not own the visual design system
 (`ui-designer`) or app code. English SoT docs; user-facing locale per brief.
