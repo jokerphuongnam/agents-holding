@@ -4,6 +4,10 @@ __pycache__/
 holding/cache/export/
 holding/cache/cache/**
 !holding/cache/cache/.gitkeep
+# Single-user habit prefs (SQLite) — never commit
+holding/cache/user_habits.sqlite
+holding/cache/user_habits.sqlite-*
+holding/cache/user_habits/
 *.tmp
 **/node_modules/
 templates/starters/**/node_modules/
