@@ -128,6 +128,8 @@ holding/cache/cache/**
 holding/cache/user_habits.sqlite
 holding/cache/user_habits.sqlite-*
 holding/cache/user_habits/
+**/cache/cache/task_memory.sqlite
+**/cache/cache/task_memory.sqlite-*
 *.tmp
 EOF
 
