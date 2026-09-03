@@ -91,7 +91,7 @@ User may rename, drop skills, change slice, or raise budget (low→high).
 | medium, normal | **medium** |
 | rich, generous, unlimited | **high** |
 
-Plan/doc roles (`ba`, `po-new`, `po-modify`) always stay **`xhigh`**.
+Plan/doc roles (`po-new`, `po-modify`) always stay **`xhigh`**.
 
 ```bash
 python3 .agents/holding/system/install/apply_budget_harness.py \
