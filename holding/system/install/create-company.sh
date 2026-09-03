@@ -301,13 +301,32 @@ cat > "$DEST/COMPANY_BOOT.md" <<EOF
 
 User channel: \`ceo\` / \`ba-user\` only.
 
-0. **Always** \`task_cache.py show\` first. Same goal → resume cached role (no re-analysis). New goal → clear then set.
-1. Hop once only on cache miss: \`hop.py --path <file>\`
+Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
+
+0. **Always** \`task_cache.py show\` first. Same goal → resume. New goal → \`clear\` then set.
+1. **Memory (parent prefetch — required for savings):**
+   \`\`\`bash
+   python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
+   \`\`\`
+   Paste that stdout into the IC brief.
+   - \`mode=new\` → IC implements; **MUST** slim \`record-done\` (fails/fixes/refs only).
+   - \`mode=reuse\` → IC applies fails/fixes/refs from the brief; **MUST NOT** call
+     \`task_memory\` again; **SKIP** \`record-done\` unless a new fail/fix/refs was learned.
+   - Each IC only \`--staff\` = own \`name:\`. Never full-file cache.
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
 5. Multi-company / hire → holding \`holding-ceo\`.
 6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+
+\`task_cache\` = active pointer. \`task_memory\` = per-staff SQLite
+\`cache/cache/task_memory.sqlite\` (local/gitignored).
+
+**Savings target:** after ~3 equivalent tasks, expect on the order of **~40%**
+fewer tokens vs no-memory hops when CEO prefetches \`--brief\` and ICs skip
+re-resolve/re-record (measured playground; first task still pays a small record cost).
+
+**Staff I/O:** stdout TSV only. Forbidden: open \`*.sqlite\` / other staff tables / \`dump\`.
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately
@@ -315,6 +334,43 @@ TC="$DEST/system/skills/defaults/marlin-hop/scripts/task_cache.py"
 if [[ -f "$TC" ]]; then
   python3 "$TC" set     --goal "Company ready — wait for user product ask"     --path "backend/" --path "frontend/"     --role ceo     --note "Prefer task_cache resume; do not re-browse ORG/skills each turn." >/dev/null || true
   echo "[create-company] seeded task_cache"
+fi
+
+# Ensure task_memory CLI is present + executable (from hop-reference)
+TM="$DEST/system/skills/defaults/marlin-hop/scripts/task_memory.py"
+if [[ -f "$TM" ]]; then
+  chmod +x "$TM"
+  mkdir -p "$DEST/cache/cache"
+  # Touch placeholder note only — DB is created on first index/record-done
+  if [[ ! -f "$DEST/cache/cache/TASK_MEMORY.md" ]]; then
+    cat > "$DEST/cache/cache/TASK_MEMORY.md" <<'NOTE'
+# task_memory (local)
+
+Purpose: cut tokens/time on *later equivalent* tasks (~40% after ~3 similar
+hops when used correctly — first hop still pays a small record cost).
+
+## Correct usage (do this)
+
+1. CEO/lead: `task_memory.py resolve --staff <ic> --path … --goal … --brief`
+2. Paste that brief into the IC spawn prompt.
+3. `mode=reuse` → IC applies fails/fixes/refs only; **no** task_memory CLI;
+   **SKIP** `record-done` unless a new fail/fix/refs was learned.
+4. `mode=new` → IC implements; slim `record-done` with
+   `fails|fixes|refs=file:start-end` and a *pattern* `short_descript`
+   (e.g. Screens+List+nav empty-state) — never full files / unrelated chrome.
+
+## Wrong usage (kills savings)
+
+- IC re-runs resolve/record every hop
+- Caching whole sibling files into `work`
+
+SQLite: `task_memory.sqlite` (per-staff tables). Local/gitignored.
+Read CLI stdout only — never open the DB.
+NOTE
+  fi
+  echo "[create-company] task_memory ready: $TM"
+else
+  echo "[create-company] warn: task_memory.py missing from hop-reference" >&2
 fi
 
 echo "[create-company] done: $DEST"

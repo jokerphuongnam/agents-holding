@@ -8,6 +8,9 @@ holding/cache/cache/**
 holding/cache/user_habits.sqlite
 holding/cache/user_habits.sqlite-*
 holding/cache/user_habits/
+# Per-company durable task memory (also under each company's cache/cache/)
+**/cache/cache/task_memory.sqlite
+**/cache/cache/task_memory.sqlite-*
 *.tmp
 **/node_modules/
 templates/starters/**/node_modules/
