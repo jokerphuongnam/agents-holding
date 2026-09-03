@@ -305,7 +305,7 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 
 0. **Always** \`task_cache.py show\` first (active pointer). Same goal → resume
    cached role. New goal → \`clear\` then set.
-1. **Memory (per-staff, 2-step):** \`task_memory.py index --staff <ic> --path <file>\` → pick key via \`short_descript\` → \`get --staff <ic> --key\` for \`work\`. Each IC only own table. No key → hop once.
+1. **Memory (mandatory index first):** \`index --staff <ic>\` → \`mode=new\` (must \`record-done\` after) or \`mode=reuse\` (\`get\` then \`record-done\` again if changed; upsert overwrites). Own table only.
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`

@@ -266,8 +266,23 @@ def cmd_index(
         sd = (r["short_descript"] or "").replace("\t", " ").strip() or "—"
         print(f"index\t{r['key']}\t{sd}")
     print(f"count\t{len(rows)}")
-    print(f"next\tget --staff {staff} --key <key>")
-    print("rule\tstaffs read own table via TSV only — never open sqlite / other staff tables")
+    # Mandatory gate: index decides new vs reuse before any work
+    if len(rows) == 0:
+        print("mode\tnew")
+        print(
+            f"next\tdo the work (no get). When finished MUST "
+            f"record-done --staff {staff} (creates cache)."
+        )
+    else:
+        print("mode\treuse")
+        print(
+            f"next\tpick one key → get --staff {staff} --key <key> → work from `work`. "
+            f"When finished, if anything changed MUST record-done again (upsert overwrites)."
+        )
+    print(
+        "rule\tALWAYS index first. Never skip index. "
+        "Staffs read own table via TSV only — never open sqlite / other staff tables"
+    )
     return 0
 
 
@@ -469,7 +484,11 @@ def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
             print(f"recorded\tstaff={staff}\t{xk}")
 
     print(f"recorded_n\t{n}")
-    print(f"next\tindex --staff {staff} → get --staff {staff} --key …")
+    print("upsert\toverwrite")  # always replaces prior row for same staff+key
+    print(
+        f"next\tnext task: index --staff {staff} first "
+        f"(new→record after; reuse→get then record if changed)"
+    )
     return 0 if n else 2
 
 
