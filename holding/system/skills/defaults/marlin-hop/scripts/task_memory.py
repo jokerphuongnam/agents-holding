@@ -448,6 +448,86 @@ def cmd_propose(conn: sqlite3.Connection, staff: str, path: str, goal: str) -> i
     return cmd_index(conn, staff, "", path, goal)
 
 
+def _collect_candidates(
+    conn: sqlite3.Connection, staff: str, path: str, goal: str
+) -> list[sqlite3.Row]:
+    """Same matching as index, but return row objects (includes work)."""
+    t = ensure_staff_table(conn, staff)
+    rows: list[sqlite3.Row] = []
+    seen: set[str] = set()
+
+    def add(r: sqlite3.Row) -> None:
+        if r["key"] not in seen:
+            seen.add(r["key"])
+            rows.append(r)
+
+    all_rows = conn.execute(
+        f"""
+        SELECT key, short_descript, weight, path_prefix, kind, work FROM {t}
+        ORDER BY weight DESC, updated_at DESC
+        """
+    ).fetchall()
+    tokens = _goal_tokens(goal) if goal else []
+    if path or goal:
+        for r in all_rows:
+            pp = r["path_prefix"] or ""
+            k = r["key"]
+            sd = (r["short_descript"] or "").lower()
+            wk = (r["work"] or "").lower()
+            hit = False
+            if path and (
+                k == f"path:{path}"
+                or _path_related(path, pp)
+                or (k.startswith("path:") and _path_related(path, k[5:]))
+            ):
+                hit = True
+            if tokens:
+                blob = f"{k} {sd} {wk}"
+                if any(tok in blob for tok in tokens):
+                    hit = True
+            if hit:
+                add(r)
+    else:
+        for r in all_rows:
+            add(r)
+    return rows
+
+
+def cmd_resolve(conn: sqlite3.Connection, staff: str, path: str, goal: str) -> int:
+    """One-shot cheap gate: NEW or chosen key+work (no separate index+get)."""
+    print(f"staff\t{staff}")
+    if path:
+        print(f"path\t{path}")
+    if goal:
+        print(f"goal\t{goal}")
+    cands = _collect_candidates(conn, staff, path, goal)
+    # Prefer task/path rows over fail/fix splinters for the chosen work payload
+    ranked = sorted(
+        cands,
+        key=lambda r: (
+            0 if r["kind"] == KIND_TASK else 1 if r["kind"] == KIND_PATH else 2,
+            -float(r["weight"] or 0),
+        ),
+    )
+    if not ranked:
+        print("mode\tnew")
+        print("next\tdo work; then record-done --staff … (cheap one-liner)")
+        print("rule\tone CLI call only — do not also index/get")
+        return 0
+    pick = ranked[0]
+    print("mode\treuse")
+    print(f"key\t{pick['key']}")
+    print(f"short_descript\t{(pick['short_descript'] or '').strip() or '—'}")
+    print(f"work\t{(pick['work'] or '').strip()}")
+    print(f"candidates\t{len(cands)}")
+    print(
+        "next\tapply `work` pattern to this equivalent ask; "
+        "record-done only if you changed the pattern"
+    )
+    print("rule\tone CLI call only — do not also index/get unless resolve missed")
+    return 0
+
+
 def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
     staff = require_staff(args.staff or args.role)
     goal = (args.goal or "").strip()
@@ -461,6 +541,7 @@ def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
     fails = (args.fails or "").strip()
     fixes = (args.fixes or "").strip()
     plan = (args.plan or "").strip()
+    slim = not getattr(args, "full", False)
 
     work_parts = []
     if summary:
@@ -477,45 +558,57 @@ def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
     work = "|".join(work_parts)
 
     n = 0
-    if goal:
-        tid = args.task_id.strip() if args.task_id else slugify(goal)
-        sd = args.short_descript.strip() if args.short_descript else f"when goal≈{goal}"
-        upsert(conn, staff, f"task:{tid}", sd, work, kind=KIND_TASK, path_prefix=path, bump=True)
-        n += 1
-        print(f"recorded\tstaff={staff}\ttask:{tid}\t{sd}")
+    sd = (
+        args.short_descript.strip()
+        if args.short_descript
+        else (f"when List+nav empty/204 pattern under {path or 'app'}")
+    )
 
+    # Default slim: one path row (+ optional one task row). fails/fixes live inside work.
     if path:
-        sd = (
-            args.short_descript.strip()
-            if args.short_descript
-            else f"when working under {path}"
-        )
         upsert(conn, staff, f"path:{path}", sd, work, kind=KIND_PATH, path_prefix=path, bump=True)
         n += 1
         print(f"recorded\tstaff={staff}\tpath:{path}\t{sd}")
 
+    if goal:
+        tid = args.task_id.strip() if args.task_id else slugify(goal)
+        upsert(conn, staff, f"task:{tid}", sd, work, kind=KIND_TASK, path_prefix=path, bump=True)
+        n += 1
+        print(f"recorded\tstaff={staff}\ttask:{tid}\t{sd}")
+
+    if not slim and path:
         if fails:
             fk = f"fail:{slugify(path)}:{slugify(fails)[:24]}"
-            fsd = f"when hit: {fails}"
-            fwork = f"fails={fails}" + (f"|fixes={fixes}" if fixes else "") + f"|role={role}"
-            upsert(conn, staff, fk, fsd, fwork, kind=KIND_FAIL, path_prefix=path, bump=True)
+            upsert(
+                conn,
+                staff,
+                fk,
+                f"when hit: {fails}",
+                f"fails={fails}" + (f"|fixes={fixes}" if fixes else "") + f"|role={role}",
+                kind=KIND_FAIL,
+                path_prefix=path,
+                bump=True,
+            )
             n += 1
             print(f"recorded\tstaff={staff}\t{fk}")
-
         if fixes:
             xk = f"fix:{slugify(path)}:{slugify(fixes)[:24]}"
-            xsd = f"when applying fix for path {path}"
-            xwork = f"fixes={fixes}" + (f"|fails={fails}" if fails else "") + f"|role={role}"
-            upsert(conn, staff, xk, xsd, xwork, kind=KIND_FIX, path_prefix=path, bump=True)
+            upsert(
+                conn,
+                staff,
+                xk,
+                f"when applying fix for path {path}",
+                f"fixes={fixes}" + (f"|fails={fails}" if fails else "") + f"|role={role}",
+                kind=KIND_FIX,
+                path_prefix=path,
+                bump=True,
+            )
             n += 1
             print(f"recorded\tstaff={staff}\t{xk}")
 
     print(f"recorded_n\t{n}")
-    print("upsert\toverwrite")  # always replaces prior row for same staff+key
-    print(
-        f"next\tnext task: index --staff {staff} first "
-        f"(new→record after; reuse→get then record if changed)"
-    )
+    print("upsert\toverwrite")
+    print(f"next\tnext task: resolve --staff {staff} --path … [--goal …] (one shot)")
     return 0 if n else 2
 
 
@@ -603,11 +696,24 @@ def build_parser() -> argparse.ArgumentParser:
     rd.add_argument("--plan", default="")
     rd.add_argument("--task-id", default="")
     rd.add_argument("--short-descript", default="")
+    rd.add_argument(
+        "--full",
+        action="store_true",
+        help="Also write separate fail:/fix: rows (default slim: path+task only)",
+    )
 
     pr = sub.add_parser("propose", help="Filtered index for one staff")
     add_staff(pr)
     pr.add_argument("--path", default="")
     pr.add_argument("--goal", default="")
+
+    rs = sub.add_parser(
+        "resolve",
+        help="One-shot: NEW or best-fitting key+work (prefer over index+get)",
+    )
+    add_staff(rs)
+    rs.add_argument("--path", default="")
+    rs.add_argument("--goal", default="")
 
     c = sub.add_parser("clear")
     add_staff(c)
@@ -638,7 +744,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.cmd == "dump":
             if not args.i_am_human:
                 print(
-                    "error: dump is human-only; agents use index --staff → get. "
+                    "error: dump is human-only; agents use resolve --staff. "
                     "Re-run with --i-am-human if debugging locally.",
                     file=sys.stderr,
                 )
@@ -668,6 +774,8 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
             return cmd_record_done(conn, args)
         if args.cmd == "propose":
             return cmd_propose(conn, staff, args.path, args.goal)
+        if args.cmd == "resolve":
+            return cmd_resolve(conn, staff, args.path, args.goal)
         if args.cmd == "clear":
             return cmd_clear(conn, staff, args.key or None, args.prefix or None, args.all)
         print(f"unknown cmd: {args.cmd}", file=sys.stderr)
