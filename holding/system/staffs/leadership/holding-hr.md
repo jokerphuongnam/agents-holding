@@ -39,13 +39,13 @@ CEO hands you either:
 - **Shortage / re-hire:** target company slug, shortage text, optional feature
   context (e.g. call feature → need Swift).
 
-0. **Habit prior (optional, low-token):** call `habit_cache.py propose` **once**
-   for this intent — do **not** open the SQLite file or `dump` into the prompt.
-   Habits are **prior only**; user lock still required. See **User habit cache**.
+0. **Habit prior (optional, 2-step):** `habit_cache.py propose` (or `index`) →
+   pick **one** key from `key` + `short_descript` → `get --key` for `work`.
+   Do **not** open SQLite / `dump`. Prior only; user lock still required.
 1. Inventory that company (`staffs/`, hop TSV, customs, `BUDGET_APPLIED.json`,
    skills-library `MANIFEST.json`).
 2. **Open the hiring deal with the user** (options + recommendations; mention
-   when a line came from habit prior).
+   when a line came from habit `work`).
 3. Negotiate until user **confirms/locks**.
 4. Execute SoT + harness; remind `company_os.sh all`.
 5. **`habit_cache.py record-bundle`** (or `record`) with the **locked** outcome.
@@ -54,27 +54,24 @@ CEO hands you either:
 ## User habit cache
 
 Local single-user prefs (gitignored SQLite). Supports **new company** and
-**restaff / org change** on an existing company. Fetch **by key** only.
+**restaff**. Two-step I/O: **index → get**.
 
 ```bash
 HC=".agents/holding/system/install/habit_cache.py"
-# system home: ~/.agents/holding/system/install/habit_cache.py
+# ~/.agents/holding/system/install/habit_cache.py
 
-# New company prior (family = mobile|web|backend|general|…)
+# 1) key + short_descript only
 python3 "$HC" propose --intent new-company --family mobile
-
-# Restaff / shortage prior
 python3 "$HC" propose --intent restaff --family mobile --slug calldemoapp-company
 
-# One key only (even cheaper when you already know the key)
+# 2) load work for the chosen key
 python3 "$HC" get --key structure:mobile
-python3 "$HC" keys --prefix change:mobile:
 
-# After user lock — record what they actually chose
+# After user lock
 python3 "$HC" record-bundle --family mobile \
   --structure 'teams=ba,po,design,mobile,qc|channel=ceo+ba-user|tech-lead@mobile' \
   --defaults 'budget=medium;tech=ios,swiftui' \
-  --change-pattern add_ic --change-value 'prefer split *-dev over generic engineer' \
+  --change-pattern add_ic --change-value 'prefer split *-dev' \
   --slug calldemoapp-company \
   --company-shape 'ba/ po/ design/ mobile(+tech-lead) qc/ cross-cut/git' \
   --last-restaff 'added rest-api-dev; locked B'
@@ -83,9 +80,9 @@ python3 "$HC" record-bundle --family mobile \
 | Rule | |
 | --- | --- |
 | Store | `<holding>/cache/user_habits.sqlite` — **never commit** |
-| Agent I/O | `propose` / `get` / `keys` only — never `dump` in prompts |
+| Fields | `key`, `short_descript` (when to use), `work` (payload to act on) |
+| Agent I/O | stdout TSV only — never open sqlite; never load all `work` up front |
 | Lock | Habits never auto-run `create-company` or write staffs |
-| Family | Keep mobile / web / backend priors separate |
 
 Key shapes: `structure:<family>`, `defaults:<family>`,
 `change:<family>:<pattern>`, `company:<slug>:shape`,

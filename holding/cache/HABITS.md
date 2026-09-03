@@ -1,10 +1,10 @@
 # User habit cache (local only)
 
-SQLite file `user_habits.sqlite` in this directory is **single-user hobby
-prefs** — how you usually structure new companies and restaff old ones.
+SQLite `user_habits.sqlite` here is single-user prefs (gitignore).
 
-- **Gitignored.** Never commit the DB.
-- **API:** `../system/install/habit_cache.py` (`propose` / `get` / `record-bundle`).
-- Agents fetch **by key** only; do not open the DB or paste `dump` into prompts.
-- Habits are **prior** for `holding-hr`; user lock still required before factory
-  writes.
+## Agent I/O (2-step)
+
+1. `habit_cache.py index|propose` → `key` + `short_descript` only  
+2. `habit_cache.py get --key …` → load `work` for that key  
+
+Staffs read CLI stdout only — never open the DB. `dump` needs `--i-am-human`.
