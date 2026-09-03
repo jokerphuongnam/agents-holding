@@ -305,20 +305,28 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 
 0. **Always** \`task_cache.py show\` first (active pointer). Same goal → resume
    cached role. New goal → \`clear\` then set.
-1. **Memory (mandatory index first):** \`index --staff <ic>\` → \`mode=new\` (must \`record-done\` after) or \`mode=reuse\` (\`get\` then \`record-done\` again if changed; upsert overwrites). Own table only.
+1. **Memory — ALWAYS index first** (per-staff table; mandatory):
+   \`\`\`bash
+   python3 …/task_memory.py index --staff <ic> --path <file> [--goal '…']
+   \`\`\`
+   - \`mode=new\` → làm mới (no get). When finished **MUST**
+     \`record-done --staff <ic> …\` (creates cache).
+   - \`mode=reuse\` → pick key via \`short_descript\` →
+     \`get --staff <ic> --key <key>\` → work from \`work\`. If anything changed,
+     **MUST** \`record-done\` again (upsert **overwrites**).
+   - Each IC only \`--staff\` = own \`name:\` (e.g. ux-writer ≠ rest-api-dev).
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
 3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
 4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
-5. After done/fix: \`task_memory.py record-done --goal … --path … --role … --summary … [--fails … --fixes …]\`
-6. Multi-company / hire → holding \`holding-ceo\`.
-7. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+5. Multi-company / hire → holding \`holding-ceo\`.
+6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 
-\`task_cache\` = current task. \`task_memory\` = durable keyed SQLite under
-\`cache/cache/task_memory.sqlite\` (local/gitignored).
+\`task_cache\` = current task pointer (JSON).
+\`task_memory\` = durable per-staff SQLite at \`cache/cache/task_memory.sqlite\`
+(created on first index/record; local/gitignored).
 
-**All staffs:** stdout TSV only (\`index\` → \`get\`). Fields: \`key\`,
-\`short_descript\` (when to use), \`work\` (payload to act). Forbidden: open
-\`*.sqlite\`, \`sqlite3\`, or \`dump\`.
+**Staff I/O:** stdout TSV only. Fields: \`key\`, \`short_descript\`, \`work\`.
+Forbidden: open \`*.sqlite\`, other staff tables, or \`dump\` (needs \`--i-am-human\`).
 EOF
 
 # Seed task_cache pointer so CEO resume works immediately
@@ -326,6 +334,26 @@ TC="$DEST/system/skills/defaults/marlin-hop/scripts/task_cache.py"
 if [[ -f "$TC" ]]; then
   python3 "$TC" set     --goal "Company ready — wait for user product ask"     --path "backend/" --path "frontend/"     --role ceo     --note "Prefer task_cache resume; do not re-browse ORG/skills each turn." >/dev/null || true
   echo "[create-company] seeded task_cache"
+fi
+
+# Ensure task_memory CLI is present + executable (from hop-reference)
+TM="$DEST/system/skills/defaults/marlin-hop/scripts/task_memory.py"
+if [[ -f "$TM" ]]; then
+  chmod +x "$TM"
+  mkdir -p "$DEST/cache/cache"
+  # Touch placeholder note only — DB is created on first index/record-done
+  if [[ ! -f "$DEST/cache/cache/TASK_MEMORY.md" ]]; then
+    cat > "$DEST/cache/cache/TASK_MEMORY.md" <<'NOTE'
+# task_memory (local)
+
+SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
+Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
+Read CLI stdout only — never open the DB.
+NOTE
+  fi
+  echo "[create-company] task_memory ready: $TM"
+else
+  echo "[create-company] warn: task_memory.py missing from hop-reference" >&2
 fi
 
 echo "[create-company] done: $DEST"

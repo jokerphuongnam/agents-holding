@@ -21,10 +21,14 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/sync_agents.py
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/task_cache.py show|set|clear
-# Company product hop — durable memory (after task_cache show):
-python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py propose --path <file> [--goal '…']
-python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --goal '…' --path '…' --role <ic> --summary '…'
+# Company product hop — durable per-staff memory (ALWAYS index first):
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py index --staff <ic> --path <file> [--goal '…']
+# mode=reuse only:
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py get --staff <ic> --key <key>
+# after finish (new OR reuse-with-changes; upsert overwrites):
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --staff <ic> --goal '…' --path '…' --summary '…'
 ```
+
 
 Holding overview: `.agents/holding/COMPANY.md`. Harness drivers: `.agents/holding/system/harness/*.toml`.
 
