@@ -33,9 +33,10 @@ factory, not subsidiary invention.
 
 CEO hands you either:
 
-- **New company:** slug, budget (`low|medium|high`), tech hints, `--project-root`
-  — propose roster + `--tech` tags, then after confirm/lock run
-  `create-company.sh` + `company_os.sh all`.
+- **New company / workspace:** slug(s), budget (`low|medium|high`), tech hints,
+  parent folder, **topology** (`teams` \| `companies`), package list
+  — propose roster + `--tech` tags + roots, then after confirm/lock run
+  `create-company.sh` or `create-workspace.sh` + each `company_os.sh all`.
 - **Shortage / re-hire:** target company slug, shortage text, optional feature
   context (e.g. call feature → need Swift).
 
@@ -90,7 +91,25 @@ Key shapes: `structure:<family>`, `defaults:<family>`,
 
 ## Deal with the user (must cover)
 
-For each proposed person / change, lock all of:
+### New workspace / multi-package parent (lock first)
+
+When the parent has (or will have) several packages (`frontend/`, `backend/`, …),
+lock topology **before** roster polish:
+
+| Field | Meaning |
+| --- | --- |
+| **Topology** | `teams` (one company at parent; **one** ceo/cto/BA/PO/QC; packages = tech teams only) **or** `companies` (full formula per package root) |
+| **Packages** | List `path[:tech]` (and slug when `companies`) |
+| **Roots** | `teams` → parent only; `companies` → **distinct** root per package (never share — adapters collide) |
+| **Factory** | `create-workspace.sh` preferred for multi-package; `create-company.sh --packages` for single-company teams |
+
+Default recommendation: **`teams`** unless the user wants hard isolation or
+separate product contracts per package.
+
+Habit `work` may include `topology=teams|companies;packages=…` under
+`structure:<family>`.
+
+### For each proposed person / change, lock all of:
 
 | Field | Meaning |
 | --- | --- |
