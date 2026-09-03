@@ -5,8 +5,9 @@ Complements task_cache.py:
   - task_cache  = active pointer (current goal/role) — JSON
   - task_memory = durable keyed memory of past work, fail modes, fixes
 
-Agents MUST use this CLI — never open the DB or dump all rows into a prompt.
-Fetch by key (or propose for a path/goal) only.
+Agents / staffs MUST use this CLI stdout only (compact TSV).
+Forbidden for agents: opening the DB file, sqlite3 shell, read_file on *.sqlite,
+or pasting `dump` into prompts. Fetch by key (or propose for a path/goal) only.
 
 Store (under company cache/cache/, typically gitignored):
   <company>/cache/cache/task_memory.sqlite
@@ -319,6 +320,7 @@ def cmd_propose(
         "note\tHIT → resume/edit from memory; skip full re-hop when role/path still valid. "
         "MISS → hop once. Always refresh task_cache active pointer."
     )
+    print("rule\tstaffs read this TSV only — never open sqlite")
     return 0
 
 
@@ -463,8 +465,16 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--prefix", default="")
     c.add_argument("--all", action="store_true")
 
-    sub.add_parser("dump", help="Human debug — do not paste into agent prompts")
-    sub.add_parser("path", help="Print DB path")
+    d = sub.add_parser(
+        "dump",
+        help="Human/debug ONLY — agents must not run this or paste output",
+    )
+    d.add_argument(
+        "--i-am-human",
+        action="store_true",
+        help="Required gate so agents do not call dump by mistake",
+    )
+    sub.add_parser("path", help="Print DB path (path only — still do not open the file)")
     return p
 
 
@@ -498,6 +508,13 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.cmd == "clear":
             return cmd_clear(conn, args.key or None, args.prefix or None, args.all)
         if args.cmd == "dump":
+            if not getattr(args, "i_am_human", False):
+                print(
+                    "error: dump is human-only; agents use propose/get. "
+                    "Re-run with --i-am-human if debugging locally.",
+                    file=sys.stderr,
+                )
+                return 2
             return cmd_dump(conn)
         print(f"unknown cmd: {args.cmd}", file=sys.stderr)
         return 2
