@@ -15,12 +15,10 @@ Before any hop / ORG / skills browse:
 
 ```bash
 python3 …/task_cache.py show
-# MANDATORY before work — IC own --staff only
-python3 …/task_memory.py index --staff <ic> --path <file> [--goal '…']
-# only if mode=reuse:
-python3 …/task_memory.py get --staff <ic> --key <key>
-# always after finish (new OR reuse-with-changes) — upsert overwrites
-python3 …/task_memory.py record-done --staff <ic> …
+# MANDATORY one-shot before work (own --staff only) — prefer resolve over index+get
+python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…']
+# after finish: slim record-done (path+task only) if new or pattern changed
+python3 …/task_memory.py record-done --staff <ic> --path … --goal … --summary … --fails … --fixes … --short-descript 'pattern…'
 ```
 
 1. If **task_cache** has the **same goal/paths** → **resume** `active_role` (short brief).
