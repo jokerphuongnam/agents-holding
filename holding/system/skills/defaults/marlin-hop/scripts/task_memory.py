@@ -581,9 +581,10 @@ def cmd_resolve(
     if not ranked:
         print("mode\tnew")
         print(
-            "next\tdo work; record-done with fails/fixes + refs=file:start-end "
+            "next\tdo work; MUST record-done with fails/fixes + refs=file:start-end "
             "(distill only — never cache full files)"
         )
+        print("record\trequired")
         print("rule\tone CLI call — do not also index/get")
         return 0
     pick = ranked[0]
@@ -603,11 +604,13 @@ def cmd_resolve(
         print("refs\t" + ";".join(f"{p}:{a}-{b}" for p, a, b in refs))
     print(
         "next\tAVOID re-hitting `fails`; apply `fixes`; read ONLY refs/snippets; "
-        "do NOT copy whole siblings; record-done if you learn a related bug/fix"
+        "do NOT copy whole siblings"
     )
+    print("record\tskip_unless_new_fail_or_fix")
     print(
-        "rule\tcache = pattern refs + known/related bugs — never full-file; "
-        "no-cache often re-breaks or only partially re-fixes the same issues"
+        "rule\tIf resolve already fit and you learned no new fail/fix/refs → "
+        "SKIP record-done. Only record when mode=new or you add/change "
+        "fails/fixes/refs. Cache = distilled essence + known bugs — never full-file."
     )
     if with_snippets and refs:
         print_snippets(refs)
