@@ -28,7 +28,7 @@ Re-run the same command anytime after you push updates.
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
 | **Habit cache (local)** | SQLite prefs for how *you* usually structure / restaff companies — `habit_cache.py` get-by-key; **gitignored**, not shared |
-| **Company task memory** | Per-staff SQLite shipped with every company — **index first**; reuse known fails/fixes to cut tokens/time on repeat bugs |
+| **Company task memory** | Per-staff SQLite — **index first**; first pass +tiny `record-done`, later reuse cuts tokens on known fixes |
 | **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
 
 ---
