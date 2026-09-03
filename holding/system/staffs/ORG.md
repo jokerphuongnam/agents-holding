@@ -28,14 +28,24 @@ scripts stay holding-side tools, not subsidiary HR.
 user / subsidiary
  └─ holding-ceo
      ├─ new company (chat) OR staffing shortage
-     │    └─ holding-hr ↔ USER (budget, name, tech/roles, skills, duties, project-root)
-     │         → confirm/lock → create-company.sh / hire SoT (+ company_os)
+     │    └─ holding-hr ↔ USER (budget, name, tech/roles, skills, duties,
+     │         topology teams|companies, packages, project-root(s))
+     │         → confirm/lock → create-company.sh / create-workspace.sh / hire SoT
      ├─ multi-company task → Assign subsidiary ceo(s) / coordinator
      └─ single-company product → that company's ceo (existing hop)
 ```
 
-**Create company:** chat with `holding-ceo` (Assign `holding-hr`) **or** self-serve
-`create-company.sh` — same factory.
+**Create company / workspace:** chat with `holding-ceo` (Assign `holding-hr`) **or**
+self-serve `create-company.sh` / `create-workspace.sh` — same factory.
+
+### Workspace topologies
+
+| Topology | When | Roots |
+| --- | --- | --- |
+| **`teams`** | One product monorepo; **one** `ceo`/`cto`/BA/PO/QC/`git` for the whole workspace; FE/BE/mobile are tech teams (engineers + routes) only | One `--project-root` = parent |
+| **`companies`** | User wants hard isolation / separate product contracts per package (each gets its own full formula) | **One `--project-root` per package** (adapters collide if shared) |
+
+Parent registry file: `<parent>/.agents/WORKSPACE.md`.
 
 ### Hiring example
 
@@ -49,7 +59,13 @@ Subsidiary: *“holding-ceo, call feature — need one Swift developer.”*
 ### Cross-company API ask (canonical)
 
 Example subsidiaries: `todo-backend-company`, `todo-react-company`,
-`todo-android-company`, `todo-ios-company`.
+`todo-android-company`, `todo-ios-company` — each created with **its own**
+`--project-root` (e.g. `…/backend`, `…/web`, `…/android`, `…/ios`), typically via
+`create-workspace.sh --topology companies`.
+
+If the same packages instead live under **`teams`** topology (one company at the
+monorepo parent), FE↔BE stays **in-company** (`cto` / `tech-lead`) — do **not**
+route through holding.
 
 When a **frontend** company needs a **new/changed backend API** (mobile screens
 often differ from web → different payloads/endpoints):

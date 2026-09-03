@@ -24,6 +24,8 @@ NAME=""
 BUDGET="medium"
 TECH=""
 PROJECT_ROOT=""
+TOPOLOGY="teams"
+PACKAGES=""
 DRY=0
 
 usage() {
@@ -31,14 +33,24 @@ usage() {
 Create a subsidiary Company OS tree from templates/company.
 
   create-company.sh --name <slug> --budget low|medium|high […] \
-    [--tech "a,b,c"] [--project-root <path>] [--dry-run]
+    [--tech "a,b,c"] [--project-root <path>] \
+    [--topology teams|companies] [--packages "frontend:react,backend:nestjs"] \
+    [--dry-run]
 
 Result:
   (default)           <agents-home>/<slug>-company/
   --project-root DIR  DIR/.agents/<slug>-company/
 
+Topology (workspace layout):
+  teams (default)  One company; --packages become tech teams + hop routes
+                   under the same --project-root (monorepo-friendly).
+  companies        Do not use this script alone for multi-package splits —
+                   run create-workspace.sh --topology companies instead
+                   (one --project-root per package; avoids adapter clobber).
+
 Holding may live in-repo (.agents/holding) or system (~/.agents/holding).
-Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script.
+Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script
+  (or create-workspace.sh for multi-package parents).
 
 Always-on staffs: ceo, cto, ba-lead (+ ba-user, ba-workflow), po-lead (+ po-*),
 git, qc-lead, tech-lead (on seeded tech team, not cross-cut).
@@ -52,6 +64,8 @@ while [[ $# -gt 0 ]]; do
     --budget) BUDGET="${2:-}"; shift 2 ;;
     --tech) TECH="${2:-}"; shift 2 ;;
     --project-root) PROJECT_ROOT="${2:-}"; shift 2 ;;
+    --topology) TOPOLOGY="${2:-}"; shift 2 ;;
+    --packages) PACKAGES="${2:-}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown arg: $1" >&2; usage; exit 2 ;;
@@ -69,6 +83,47 @@ case "$BUDGET" in
   low|medium|high) ;;
   *) echo "error: --budget must be low|medium|high " >&2; exit 2 ;;
 esac
+
+TOPOLOGY="$(echo "$TOPOLOGY" | tr '[:upper:]' '[:lower:]')"
+case "$TOPOLOGY" in
+  teams) ;;
+  companies)
+    echo "error: --topology companies needs create-workspace.sh (one project-root per package)" >&2
+    echo "hint: $HOLDING_INSTALL/create-workspace.sh --topology companies --parent <dir> --package …" >&2
+    exit 2
+    ;;
+  *)
+    echo "error: --topology must be teams|companies" >&2
+    exit 2
+    ;;
+esac
+
+# Merge package tech tags into TECH when user only passed --packages
+if [[ -n "$PACKAGES" ]]; then
+  PKG_TECH_EXTRA=""
+  IFS=',' read -r -a _PKG_TECH_ARR <<< "$PACKAGES"
+  for part in "${_PKG_TECH_ARR[@]}"; do
+    part="$(echo "$part" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [[ -z "$part" ]] && continue
+    if [[ "$part" == *:* ]]; then
+      bit="${part#*:}"
+    else
+      bit="$(basename "$part")"
+    fi
+    if [[ -n "$PKG_TECH_EXTRA" ]]; then
+      PKG_TECH_EXTRA="${PKG_TECH_EXTRA},${bit}"
+    else
+      PKG_TECH_EXTRA="$bit"
+    fi
+  done
+  if [[ -n "$PKG_TECH_EXTRA" ]]; then
+    if [[ -n "$TECH" ]]; then
+      TECH="${TECH},${PKG_TECH_EXTRA}"
+    else
+      TECH="$PKG_TECH_EXTRA"
+    fi
+  fi
+fi
 
 SLUG="$NAME"
 [[ "$SLUG" == *-company ]] || SLUG="${SLUG}-company"
@@ -90,6 +145,7 @@ if [[ ! -d "$TEMPLATE" || ! -f "$BUDGET_JSON" ]]; then
 fi
 
 echo "[create-company] slug=$SLUG budget=$BUDGET tech=${TECH:-—}"
+echo "[create-company] topology=$TOPOLOGY packages=${PACKAGES:-—}"
 echo "[create-company] agents-home=$AGENTS_HOME"
 echo "[create-company] dest=$DEST"
 
@@ -192,6 +248,28 @@ fi
 if echo "$TECH_L" | grep -Eq 'node|express|nestjs|backend|fastapi|django|rails|spring'; then
   seed_eng backend-engineer "Backend/API services per CTO seed. Cross-company API via holding." "backend"
 fi
+# --packages path names force teams even when tech tags are thin
+if [[ -n "$PACKAGES" ]]; then
+  IFS=',' read -r -a _PKG_ARR <<< "$PACKAGES"
+  for part in "${_PKG_ARR[@]}"; do
+    part="$(echo "$part" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [[ -z "$part" ]] && continue
+    path_part="${part%%:*}"
+    path_part="$(echo "$path_part" | sed 's#^/*##;s#/*$##')"
+    base="$(basename "$path_part" | tr '[:upper:]' '[:lower:]')"
+    case "$base" in
+      frontend|web|client|ui|app)
+        seed_eng frontend-engineer "Frontend app code per CTO seed. Not design system." "frontend"
+        ;;
+      backend|server|api|services)
+        seed_eng backend-engineer "Backend/API services per CTO seed. Cross-company API via holding." "backend"
+        ;;
+      mobile|ios|android)
+        seed_eng mobile-engineer "Mobile app code per CTO seed. Not design system." "mobile"
+        ;;
+    esac
+  done
+fi
 # No stack hint yet: keep tech-lead reachable under cross-cut until CTO seeds a team
 if [[ -z "$TECH_LEAD_DIR" ]]; then
   seed_tech_lead_once "cross-cut"
@@ -212,11 +290,16 @@ if [[ -d "$REF_HOP" ]]; then
     cp -R "$REF_HOP/scripts" "$DEST/system/skills/defaults/marlin-hop/" 2>/dev/null || true
     cp "$REF_HOP/SKILL.md" "$DEST/system/skills/defaults/marlin-hop/" 2>/dev/null || true
   fi
-  python3 "$HOLDING_INSTALL/seed_company_hop_data.py" \
-    --dest "$DEST" \
-    --budget "$BUDGET" \
-    --tech "$TECH" \
+  SEED_ARGS=(
+    --dest "$DEST"
+    --budget "$BUDGET"
+    --tech "$TECH"
     --budget-json "$BUDGET_JSON"
+  )
+  if [[ -n "$PACKAGES" ]]; then
+    SEED_ARGS+=(--packages "$PACKAGES")
+  fi
+  python3 "$HOLDING_INSTALL/seed_company_hop_data.py" "${SEED_ARGS[@]}"
   # Re-apply so agents.tsv gets budget overrides + always-max plan/doc roles
   python3 "$HOLDING_INSTALL/apply_budget_harness.py" \
     --dest "$DEST" --budget "$BUDGET" --budget-json "$BUDGET_JSON"
@@ -282,7 +365,9 @@ cat > "$DEST/CTO_TECH_SEED.md" <<EOF
 # CTO tech seed — $TITLE
 
 **Budget:** $BUDGET
+**Topology:** $TOPOLOGY (packages under this root are **teams**, not sibling companies)
 **Hints from holding/user:** ${TECH:-_(none)_}
+**Packages:** ${PACKAGES:-_(none — infer from tech / CTO)_}
 **Skills tags used:** ${SKILLS_TECH:-_(none)_}
 
 CTO: propose tech teams and \`system/skills/customs/<team>/<role>/\` skills next.
@@ -290,11 +375,50 @@ If UI-heavy, keep design staffs (design-lead, ux-writer, ui-designer) and
 use ba-user for design intake → canonical brief.
 Do not invent stack the user did not ask for.
 
+When **Packages** is set, treat each path as a team-owned slice (hop \`route.tsv\`
+already maps those prefixes). Cross-package work stays **in-company**
+(cto / tech-lead) — escalate to holding only for true multi-**company** work.
+
 ## Budget policy
 
 - **low:** prefer Express+Vite starter if seeded; **one** API unit suite + **one** FE RTL smoke; **no e2e** unless user asks. Load **one** customs skill per IC.
 - **medium/high:** Nest or richer stacks OK; more tests OK.
 EOF
+
+# Workspace registry (teams topology under this project root)
+PARENT_FOR_WS=""
+if [[ -n "$PROJECT_ROOT" ]]; then
+  PARENT_FOR_WS="$PROJECT_ROOT"
+else
+  PARENT_FOR_WS="$(cd "$DEST/.." && pwd)"
+fi
+mkdir -p "$DEST/cache"
+WS_COMPANY_TMPL="$AGENTS_HOME/templates/workspace/COMPANY_CACHE_WORKSPACE.md"
+if [[ -f "$WS_COMPANY_TMPL" ]]; then
+  TOPOLOGY="$TOPOLOGY" PARENT="$PARENT_FOR_WS" COMPANY_SLUG="$SLUG" \
+  PACKAGES="${PACKAGES:-_(none)_}" \
+  python3 - "$WS_COMPANY_TMPL" <<'PY' > "$DEST/cache/WORKSPACE.md"
+import os, sys
+from pathlib import Path
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+for key in ("TOPOLOGY", "PARENT", "COMPANY_SLUG", "PACKAGES"):
+    text = text.replace("{{" + key + "}}", os.environ.get(key, ""))
+sys.stdout.write(text)
+PY
+else
+  cat > "$DEST/cache/WORKSPACE.md" <<EOF
+# Workspace — $TITLE
+
+| Field | Value |
+| --- | --- |
+| Topology | \`$TOPOLOGY\` |
+| Company | \`$SLUG\` |
+| Project root | \`$PARENT_FOR_WS\` |
+| Packages | ${PACKAGES:-_(none)_} |
+
+**teams:** one shared ceo/cto/BA/PO/QC/git; packages = tech teams only.
+EOF
+fi
 
 cat > "$DEST/COMPANY_BOOT.md" <<EOF
 # $TITLE — boot (keep short)
