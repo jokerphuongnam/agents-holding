@@ -16,7 +16,8 @@ Before any hop / ORG / skills browse:
 ```bash
 python3 …/task_cache.py show
 # MANDATORY one-shot before work (own --staff only) — prefer resolve over index+get
-python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] [--with-snippets]
+python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
+# paste stdout into IC brief; on reuse IC does NOT call task_memory again
 # after finish: record-done ONLY if new or new fail/fix/refs; else SKIP
 # record-done ONLY if mode=new OR you learned a new/changed fail/fix/refs
 # If resolve fit and nothing new → SKIP record-done
@@ -52,6 +53,13 @@ re-hit old bugs and only partially re-fix them. Related bugs transfer via
 After `resolve`, prefer `snippets` / those line ranges — do **not** paste whole siblings.
 Cache exists to keep the essence and avoid known bugs; if it costs more than
 re-fixing the same bug, the usage is wrong (too much ceremony or caching too much).
+
+**Parent prefetch (required for savings):** CEO/lead runs
+`task_memory.py resolve --staff <ic> --path … --goal … --brief` **once** and
+pastes those few lines into the IC brief. On `mode=reuse`, the IC must **not**
+call task_memory again — only apply fails/fixes/refs. Call `record-done` only
+if mode was new or a new fail/fix/refs was learned. If the IC re-runs resolve
+every task, cache will not save tokens.
 
 **Staff I/O rule:** stdout TSV only. Own `--staff` table only. Never open sqlite /
 other staff caches / `dump`. **Index → (get?) → work → record-done** is mandatory.

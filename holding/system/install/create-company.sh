@@ -361,7 +361,8 @@ identical); get `work` and patch. If none fit → treat as new.
 Write short_descript as a *pattern*
 work is distilled: fails|fixes|refs=file:start-end (never full files).
 resolve [--with-snippets] prints essence; snippets reads only those lines.
-If resolve fit and no new fail/fix/refs → SKIP record-done. (e.g. Screens+List+nav empty-state), not a one-off screen name.
+If resolve fit and no new fail/fix/refs → SKIP record-done.
+CEO/lead: resolve --brief once and paste into IC brief; IC on reuse must not re-call task_memory. (e.g. Screens+List+nav empty-state), not a one-off screen name.
 
 SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
 Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
