@@ -10,7 +10,8 @@ Two-step agent I/O (low token):
 
 Staffs/agents read CLI stdout only — never open *.sqlite / dump.
 First-pass cost: normal work + cheap record-done (keep short_descript/work compact).
-Savings show up on mode=reuse — not by making the first pass 2–3× heavier.
+Savings show up on mode=candidates — not by making the first pass 2–3× heavier.
+Match equivalent patterns (e.g. List+nav Screens), not identical tasks — exact 1-1 is rare.
 
 """
 

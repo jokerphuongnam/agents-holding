@@ -330,6 +330,9 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 tokens/time on known fails/fixes. First pass ≈ normal work + a little for
 \`record-done\` — not 2–3×. Never dump long essays into cache.
 
+**Equivalence:** not identical tasks — pattern reuse (e.g. Screens with List +
+nav bar). Write \`short_descript\` for the *shape*, so similar screens can share fails/fixes.
+
 **Staff I/O:** stdout TSV only. Fields: \`key\`, \`short_descript\`, \`work\`.
 Forbidden: open \`*.sqlite\`, other staff tables, or \`dump\` (needs \`--i-am-human\`).
 EOF
@@ -355,6 +358,7 @@ Purpose: save tokens/time on *later* passes (known fails/fixes).
 First pass ≈ normal work + cheap record-done (compact lines) — not 2–3× cost.
 `mode=candidates` → pick a key whose short_descript fits (equivalent OK, not
 identical); get `work` and patch. If none fit → treat as new.
+Write short_descript as a *pattern* (e.g. Screens+List+nav empty-state), not a one-off screen name.
 
 SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
 Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
