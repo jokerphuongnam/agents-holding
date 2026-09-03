@@ -562,13 +562,18 @@ def cmd_resolve(
     goal: str,
     *,
     with_snippets: bool,
+    brief: bool,
 ) -> int:
-    """One-shot cheap gate: NEW or chosen key+work (no separate index+get)."""
-    print(f"staff\t{staff}")
-    if path:
-        print(f"path\t{path}")
-    if goal:
-        print(f"goal\t{goal}")
+    """One-shot cheap gate: NEW or chosen key+work (no separate index+get).
+
+    --brief: minimal lines for CEO/parent to paste into a spawn brief (lowest tokens).
+    """
+    if not brief:
+        print(f"staff\t{staff}")
+        if path:
+            print(f"path\t{path}")
+        if goal:
+            print(f"goal\t{goal}")
     cands = _collect_candidates(conn, staff, path, goal)
     # Prefer task/path rows over fail/fix splinters for the chosen work payload
     ranked = sorted(
@@ -580,38 +585,46 @@ def cmd_resolve(
     )
     if not ranked:
         print("mode\tnew")
-        print(
-            "next\tdo work; MUST record-done with fails/fixes + refs=file:start-end "
-            "(distill only — never cache full files)"
-        )
         print("record\trequired")
-        print("rule\tone CLI call — do not also index/get")
+        if not brief:
+            print(
+                "next\tdo work; MUST record-done with fails/fixes + refs=file:start-end "
+                "(distill only — never cache full files)"
+            )
+            print("rule\tone CLI call — do not also index/get")
         return 0
     pick = ranked[0]
     work = (pick["work"] or "").strip()
     print("mode\treuse")
     print(f"key\t{pick['key']}")
-    print(f"short_descript\t{(pick['short_descript'] or '').strip() or '—'}")
-    print(f"work\t{work}")
+    if not brief:
+        print(f"short_descript\t{(pick['short_descript'] or '').strip() or '—'}")
+        print(f"work\t{work}")
     # Surface known bugs explicitly (main win vs no-cache re-fixing from scratch)
     for field in ("fails", "fixes", "summary"):
         m = re.search(rf"(?:^|\|){field}=([^|]*)", work)
         if m and m.group(1).strip():
             print(f"{field}\t{m.group(1).strip()}")
-    print(f"candidates\t{len(cands)}")
+    if not brief:
+        print(f"candidates\t{len(cands)}")
     refs = parse_refs(work)
     if refs:
         print("refs\t" + ";".join(f"{p}:{a}-{b}" for p, a, b in refs))
-    print(
-        "next\tAVOID re-hitting `fails`; apply `fixes`; read ONLY refs/snippets; "
-        "do NOT copy whole siblings"
-    )
     print("record\tskip_unless_new_fail_or_fix")
-    print(
-        "rule\tIf resolve already fit and you learned no new fail/fix/refs → "
-        "SKIP record-done. Only record when mode=new or you add/change "
-        "fails/fixes/refs. Cache = distilled essence + known bugs — never full-file."
-    )
+    if brief:
+        print(
+            "hint\tapply fails/fixes; open only refs lines; SKIP record if nothing new"
+        )
+    else:
+        print(
+            "next\tAVOID re-hitting `fails`; apply `fixes`; read ONLY refs/snippets; "
+            "do NOT copy whole siblings"
+        )
+        print(
+            "rule\tIf resolve already fit and you learned no new fail/fix/refs → "
+            "SKIP record-done. Only record when mode=new or you add/change "
+            "fails/fixes/refs. Cache = distilled essence + known bugs — never full-file."
+        )
     if with_snippets and refs:
         print_snippets(refs)
     elif with_snippets and not refs:
@@ -844,6 +857,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also print only refs= line ranges (no full-file dump)",
     )
+    rs.add_argument(
+        "--brief",
+        action="store_true",
+        help="Minimal stdout for CEO/parent spawn brief (fails/fixes/refs only)",
+    )
 
     sn = sub.add_parser(
         "snippets",
@@ -918,6 +936,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
                 args.path,
                 args.goal,
                 with_snippets=bool(getattr(args, "with_snippets", False)),
+                brief=bool(getattr(args, "brief", False)),
             )
         if args.cmd == "snippets":
             return cmd_snippets(conn, staff, args.key)
