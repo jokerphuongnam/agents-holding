@@ -45,6 +45,9 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
    - Shortage → **`holding-ceo`** → **`holding-hr`** ↔ user → lock → HR writes into that company.
    - Multi-company → **`holding-ceo`** → **`holding-coordinator`** / subsidiary `ceo`(s).
 6. Short briefs only (goal / path / done-when). English SoT only.
+7. **Habits (optional):** HR may `habit_cache.py propose` once (new-company /
+   restaff) for a compact prior — never open the SQLite blob; never skip lock.
+   Data is local/gitignored (`cache/user_habits.sqlite`).
 
 ## Portable vs vendor
 

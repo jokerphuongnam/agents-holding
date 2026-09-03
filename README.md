@@ -27,6 +27,7 @@ Re-run the same command anytime after you push updates.
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
+| **Habit cache (local)** | SQLite prefs for how *you* usually structure / restaff companies — `habit_cache.py` get-by-key; **gitignored**, not shared |
 | **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
 
 ---
