@@ -14,6 +14,11 @@ adapters wherever each harness `[paths]` says.
 
 **Language:** SoT English; user chat = user’s language. User channel: `ceo` + `ba-user`.
 
+**Dispatch:** product asks → `product-lead` first. Cross-team → always
+**## Result / Escalate up to CEO**, then CEO spawns down with slim brief
+(`goal` + `paths` + optional `plan_dir` + `read`) — never ship full plan
+bodies through the staff chain.
+
 **Packages under this project root** (e.g. `frontend/`, `backend/`) are **teams**
 in this company unless holding created sibling companies (`companies` topology
 with separate roots). See `cache/WORKSPACE.md` when present.

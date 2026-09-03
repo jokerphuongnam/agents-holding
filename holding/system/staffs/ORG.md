@@ -95,12 +95,18 @@ Every company cloned from `templates/company/` **must** include:
 
 | Role / team | Notes |
 | --- | --- |
-| `ceo` | In-company dispatch |
+| `ceo` | In-company dispatch; product → `product-lead` first; cross-team up-then-down |
 | `cto` | Architecture / tech selection with user+holding |
-| BA team (`ba-lead` → `ba-user`, `ba-workflow`) | Lead assigns; `ba-user` clarifies with user; `ba-workflow` owns Jira/tools |
-| PO team (`po-lead` → `po-modify`, `po-new`) | Lead assigns; writers own plans / AC |
+| `product-lead` | Product lane only: `ba-user` / `po-*`; `## Result` up to CEO (never spawn eng) |
+| BA team (`ba-lead` → `ba-user`, `ba-workflow`) | Under product-lead; `ba-user` clarifies with user; `ba-workflow` owns Jira/tools |
+| PO (`po-new`, `po-modify`; optional `po-lead`) | Writers own plans / AC; default Assign from `product-lead` |
 | `git` | Commit / branch gate |
 | QC team | Always present — shape adapts: one `qc-lead` + embedded `*-qc`, or a larger QC org |
+
+**Strict + cheap (mandatory in every subsidiary):** each staff one lane — no
+lateral cross-team spawn. Need another team → **up to CEO** with slim brief
+(`goal` + `paths` + optional `plan_dir` + `read`) — **never** paste full plans
+through a long staff chain. CEO hops and spawns down; IC opens those loci.
 
 ## Optional / tech-shaped teams
 
