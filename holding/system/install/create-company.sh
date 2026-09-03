@@ -358,7 +358,9 @@ Purpose: save tokens/time on *later* passes (known fails/fixes).
 First pass ≈ normal work + cheap record-done (compact lines) — not 2–3× cost.
 `mode=candidates` → pick a key whose short_descript fits (equivalent OK, not
 identical); get `work` and patch. If none fit → treat as new.
-Write short_descript as a *pattern* (e.g. Screens+List+nav empty-state), not a one-off screen name.
+Write short_descript as a *pattern*
+work is distilled: fails|fixes|refs=file:start-end (never full files).
+resolve [--with-snippets] prints essence; snippets reads only those lines. (e.g. Screens+List+nav empty-state), not a one-off screen name.
 
 SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
 Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
