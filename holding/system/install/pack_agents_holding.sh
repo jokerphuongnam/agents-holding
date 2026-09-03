@@ -58,6 +58,8 @@ rsync_or_cp() {
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete --exclude '.DS_Store' --exclude '__pycache__/' --exclude '*.pyc' \
       --exclude 'cache/export/' --exclude 'cache/cache/' \
+      --exclude 'cache/user_habits.sqlite' --exclude 'cache/user_habits.sqlite-*' \
+      --exclude 'cache/user_habits/' \
       "$src" "$dst"
   else
     rm -rf "$dst"
@@ -123,6 +125,9 @@ __pycache__/
 holding/cache/export/
 holding/cache/cache/**
 !holding/cache/cache/.gitkeep
+holding/cache/user_habits.sqlite
+holding/cache/user_habits.sqlite-*
+holding/cache/user_habits/
 *.tmp
 EOF
 
