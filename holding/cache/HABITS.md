@@ -5,6 +5,7 @@ prefs** — how you usually structure new companies and restaff old ones.
 
 - **Gitignored.** Never commit the DB.
 - **API:** `../system/install/habit_cache.py` (`propose` / `get` / `record-bundle`).
-- Agents fetch **by key** only; do not open the DB or paste `dump` into prompts.
+- Agents/staffs read **CLI stdout (TSV) only** — never open the DB or paste `dump`.
+- `dump` requires `--i-am-human` (debug for people, not agents).
 - Habits are **prior** for `holding-hr`; user lock still required before factory
   writes.

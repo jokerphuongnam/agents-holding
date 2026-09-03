@@ -9,6 +9,7 @@ Store (gitignored):
   override: HABIT_CACHE_DB=/path/to/file.sqlite
 
 Agent-facing output is compact TSV / one-liners (low token).
+Staffs/agents read CLI stdout only — never open the SQLite file.
 """
 
 from __future__ import annotations
@@ -440,7 +441,8 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--family", default="")
     c.add_argument("--all", action="store_true")
 
-    sub.add_parser("dump", help="Human debug dump (do not paste into agent prompts)")
+    d = sub.add_parser("dump", help="Human/debug ONLY — agents must not run this")
+    d.add_argument("--i-am-human", action="store_true", help="Required gate for dump")
     sub.add_parser("path", help="Print DB path")
     return p
 
@@ -475,6 +477,13 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.cmd == "clear":
             return cmd_clear(conn, args.key or None, args.family or None, args.all)
         if args.cmd == "dump":
+            if not getattr(args, "i_am_human", False):
+                print(
+                    "error: dump is human-only; agents use propose/get. "
+                    "Re-run with --i-am-human if debugging locally.",
+                    file=sys.stderr,
+                )
+                return 2
             return cmd_dump(conn)
         print(f"unknown cmd: {args.cmd}", file=sys.stderr)
         return 2

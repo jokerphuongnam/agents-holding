@@ -24,7 +24,8 @@ python3 …/task_memory.py propose --path <file> --goal '…'
 4. After hop/assign → `task_cache.py set` / `patch`.
 5. After done/verified fix → `task_memory.py record-done --goal … --path … --role … --summary … [--fails … --fixes …]`.
 
-Never open `task_memory.sqlite` or paste `dump` into prompts — `get` / `propose` only.
+**Staff I/O rule:** every role reads **only** CLI stdout (TSV lines). Do not open
+`*.sqlite`, run `sqlite3`, or `dump`. Use `propose` / `get` / `record-done` only.
 
 ## Dispatch rules (token-efficient)
 
