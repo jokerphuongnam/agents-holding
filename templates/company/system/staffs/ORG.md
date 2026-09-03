@@ -2,11 +2,11 @@
 
 Canonical: this `system/staffs/` tree. Spawn by `name:` frontmatter.
 
-**Always-on (formula):** `ceo`, `cto`, `ba`, `po-modify`, `po-new`, `git`, QC
-(`qc-lead` + adapt). **Optional:** tech teams (from CTO/stack), `data`,
-**design** (when UI-heavy — see holding ORG).
+**Always-on (formula):** `ceo`, `cto`, `ba-lead` (+ `ba-user` / `ba-workflow`),
+`po-lead` (+ `po-new` / `po-modify`), `git`, QC (`qc-lead` + adapt). **Optional:**
+tech teams (from CTO/stack), `data`, **design** (when UI-heavy — see holding ORG).
 
-**User channel (product):** only `ceo` and `ba` address the user.
+**User channel (product):** only `ceo` and `ba-user` address the user.
 
 **Hiring:** this company does **not** recruit. Shortage → notify
 `holding-ceo` only (*“we lack staff like …”*). `holding-hr` deals with the
@@ -19,10 +19,18 @@ to “fill a gap.”
 system/staffs/
 ├── ORG.md
 ├── leadership/     ceo, cto
-├── product/        ba, po-modify, po-new
+├── ba/             ba-lead, ba-user, ba-workflow
+├── po/             po-lead, po-new, po-modify
 ├── qc/             qc-lead (+ embed *-qc as the company grows)
-└── cross-cut/      git, tech-lead, …
+└── cross-cut/      git
 ```
+
+`tech-lead` lives on the **seeded tech team** folder (`frontend/`, `mobile/`,
+or `backend/`) — not under `cross-cut/`. `git` stays cross-cut.
+
+**Tiers (default):** leads (`ba-lead`, `po-lead`, `design-lead`, `qc-lead`,
+`tech-lead`) = `dispatch` (effort low). BA ICs `ba-user` / `ba-workflow` =
+medium. Plan writers `po-new` / `po-modify` = always xhigh.
 
 Tech teams are added after CTO selects the stack (see `CTO_TECH_SEED.md` if
 present). Do not invent Marlin-specific teams unless this is a Marlin company.

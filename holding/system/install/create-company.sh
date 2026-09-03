@@ -40,7 +40,9 @@ Result:
 Holding may live in-repo (.agents/holding) or system (~/.agents/holding).
 Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script.
 
-Always-on staffs: ceo, cto, ba, po-*, git, qc-lead, tech-lead.
+Always-on staffs: ceo, cto, ba-lead (+ ba-user, ba-workflow), po-lead (+ po-*),
+git, qc-lead, tech-lead (on seeded tech team, not cross-cut).
+Leads = dispatch/low; ba-user/ba-workflow = medium; po-* writers = xhigh.
 USAGE
 }
 
@@ -139,9 +141,31 @@ if echo "$TECH_L" | grep -Eq 'react|vue|angular|ios|android|flutter|swiftui|comp
 fi
 
 # Tech engineer stub cards (thin) when hints match
+TECH_LEAD_DIR=""
+seed_tech_lead_once() {
+  local dir="$1"
+  if [[ -n "$TECH_LEAD_DIR" ]]; then
+    return 0
+  fi
+  TECH_LEAD_DIR="$dir"
+  mkdir -p "$DEST/system/staffs/$dir"
+  cat > "$DEST/system/staffs/$dir/tech-lead.md" <<EOF
+---
+name: tech-lead
+description: Slice design. Not CTO. Not a default coder.
+tier: dispatch
+permission_mode: plan
+capability_mode: read-only
+---
+Slice design inside **${dir}**. Escalate architecture to \`cto\`. Dispatch
+engineers on this team. Do not implement product.
+EOF
+}
+
 seed_eng() {
   local role="$1" blurb="$2" dir="$3"
   mkdir -p "$DEST/system/staffs/$dir"
+  seed_tech_lead_once "$dir"
   cat > "$DEST/system/staffs/$dir/${role}.md" <<EOF
 ---
 name: ${role}
@@ -158,14 +182,19 @@ needs to company ceo → holding-ceo.
 EOF
 }
 
-if echo "$TECH_L" | grep -Eq 'react|vue|angular|frontend|next|typescript|javascript'; then
-  seed_eng frontend-engineer "Frontend app code per CTO seed. Not design system." "frontend"
-fi
+# Prefer mobile → frontend → backend for where tech-lead card lives
 if echo "$TECH_L" | grep -Eq 'ios|android|flutter|swiftui|compose|mobile'; then
   seed_eng mobile-engineer "Mobile app code per CTO seed. Not design system." "mobile"
 fi
+if echo "$TECH_L" | grep -Eq 'react|vue|angular|frontend|next|typescript|javascript'; then
+  seed_eng frontend-engineer "Frontend app code per CTO seed. Not design system." "frontend"
+fi
 if echo "$TECH_L" | grep -Eq 'node|express|nestjs|backend|fastapi|django|rails|spring'; then
   seed_eng backend-engineer "Backend/API services per CTO seed. Cross-company API via holding." "backend"
+fi
+# No stack hint yet: keep tech-lead reachable under cross-cut until CTO seeds a team
+if [[ -z "$TECH_LEAD_DIR" ]]; then
+  seed_tech_lead_once "cross-cut"
 fi
 
 # Bootstrap hop: scripts/SKILL only — then seed company-local hop data (no Marlin roster)
@@ -258,7 +287,7 @@ cat > "$DEST/CTO_TECH_SEED.md" <<EOF
 
 CTO: propose tech teams and \`system/skills/customs/<team>/<role>/\` skills next.
 If UI-heavy, keep design staffs (design-lead, ux-writer, ui-designer) and
-use ba for design intake → canonical brief.
+use ba-user for design intake → canonical brief.
 Do not invent stack the user did not ask for.
 
 ## Budget policy
@@ -270,7 +299,7 @@ EOF
 cat > "$DEST/COMPANY_BOOT.md" <<EOF
 # $TITLE — boot (keep short)
 
-User channel: \`ceo\` / \`ba\` only.
+User channel: \`ceo\` / \`ba-user\` only.
 
 0. **Always** \`task_cache.py show\` first. Same goal → resume cached role (no re-analysis). New goal → clear then set.
 1. Hop once only on cache miss: \`hop.py --path <file>\`

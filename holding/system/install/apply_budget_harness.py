@@ -2,7 +2,7 @@
 """Apply holding budget to a subsidiary's harness/*.toml and hop agents.tsv.
 
 Used by create-company and by holding-hr on re-budget (poor→low, rich→high).
-Plan/doc roles (ba, po-*) always get always_max_tier from policy.
+Plan writers (po-*) always get always_max_tier from policy. Leads stay dispatch.
 """
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def apply_agents_tsv(path: Path, overrides: dict[str, str]) -> int:
 
 def merge_overrides(budget_cfg: dict, policy: dict) -> dict[str, str]:
     overrides = dict(budget_cfg.get("agents_tsv_tier_overrides") or {})
-    max_roles = policy.get("always_max_roles") or ["ba", "po-modify", "po-new"]
+    max_roles = policy.get("always_max_roles") or ["po-modify", "po-new"]
     max_tier = policy.get("always_max_tier") or "xhigh"
     for role in max_roles:
         overrides[role] = max_tier

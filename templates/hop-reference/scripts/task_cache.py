@@ -4,7 +4,7 @@
 SoT for roles/routing stays in agents.tsv + hop. This cache only stores the
 **active user task** so CEO/BA can resume without re-analyzing the whole tree.
 
-Cascade still applies (user→ceo/ba→…). Cache skips *re-derivation*, not ranks.
+Cascade still applies (user→ceo/ba-user→…). Cache skips *re-derivation*, not ranks.
 
 Files (gitignored under .agents/marlin-language-company/):
   .agents/marlin-language-company/cache/cache/task.json       machine-readable
@@ -152,7 +152,7 @@ def render_md(data: dict) -> str:
             "   (short brief; do not re-run BA/full hop analysis).",
             "2. If the user changes goal/paths or says “new task” → `task_cache.py clear`",
             "   then full cascade from the top.",
-            "3. Only `ceo` / `ba` talk to the user; cache text stays English.",
+            "3. Only `ceo` / `ba-user` talk to the user; cache text stays English.",
             "",
         ]
     )

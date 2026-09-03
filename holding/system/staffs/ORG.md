@@ -6,7 +6,7 @@ Conglomerate personnel. Spawn by `name:` frontmatter.
 
 | Topic | Who talks to the user |
 | --- | --- |
-| Product work inside a company | that company’s `ceo` / `ba` |
+| Product work inside a company | that company’s `ceo` / `ba-user` |
 | Conglomerate / multi-company | `holding-ceo` |
 | **Hiring / staffing deal** | **`holding-hr`** (after `holding-ceo` routes the shortage) |
 
@@ -81,8 +81,8 @@ Every company cloned from `templates/company/` **must** include:
 | --- | --- |
 | `ceo` | In-company dispatch |
 | `cto` | Architecture / tech selection with user+holding |
-| BA team (`ba`) | Clarify ask |
-| PO team (`po-modify`, `po-new`) | Plans / AC |
+| BA team (`ba-lead` → `ba-user`, `ba-workflow`) | Lead assigns; `ba-user` clarifies with user; `ba-workflow` owns Jira/tools |
+| PO team (`po-lead` → `po-modify`, `po-new`) | Lead assigns; writers own plans / AC |
 | `git` | Commit / branch gate |
 | QC team | Always present — shape adapts: one `qc-lead` + embedded `*-qc`, or a larger QC org |
 
@@ -104,11 +104,11 @@ If the subsidiary is primarily **UI/UX** (React, mobile, etc.), CTO should seed 
 | `design-lead` | Assign one design IC per hop; quality bar for UX/UI consistency |
 | `ux-writer` | User-facing copy, microcopy, tone — clearer UX through words |
 | `ui-designer` | Design system for the project: color, type, iconography, components |
-| `ba` (design intake) | Same always-on `ba`, with a **design-intake** duty: read designs from
+| `ba-user` (design intake) | Always-on BA IC, with a **design-intake** duty: read designs from
   external sources (Figma/specs/other products) and produce a **canonical brief**
   for the company (what to build, constraints, glossary) — not invent pixels |
 
-**Flow:** external design / research → `ba` (canonical brief) → `design-lead`
+**Flow:** external design / research → `ba-user` (canonical brief) → `design-lead`
 Assigns `ui-designer` / `ux-writer` as needed → engineering consumes the system
 and copy. Engineering does **not** invent a parallel design system.
 

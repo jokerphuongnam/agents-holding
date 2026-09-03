@@ -10,15 +10,18 @@ from pathlib import Path
 
 ALWAYS = [
     # name, tier, perm, cap, skill, lead, qc, routing, blurb
-    # ba / po-* default xhigh — plan & doc writers always max (budget policy reinforces)
-    ("ba", "xhigh", "plan", "read-only", "", "", "", "1", "Clarify ask; docs/briefs. Many paths → describe + wait-user. Do not cut scope."),
+    # Leads stay dispatch (maps low). Plan writers po-* stay xhigh via budget policy.
+    ("ba-lead", "dispatch", "plan", "read-only", "", "", "", "1", "BA lead — assign ba-user vs ba-workflow. Not user channel."),
+    ("ba-user", "medium", "plan", "read-only", "", "ba-lead", "", "1", "Clarify ask with user; design intake. User channel with ceo."),
+    ("ba-workflow", "medium", "default", "all", "", "ba-lead", "", "0", "Jira/tickets/process tooling. Not user channel."),
     ("ceo", "dispatch", "plan", "read-only", "marlin-hop", "", "", "1", "Dispatch only. hop then spawn IC/lead. Do not code."),
     ("cto", "dispatch", "plan", "read-only", "", "", "", "1", "Multi-team architecture; recommend tech teams. Do not code."),
     ("git", "low", "default", "all", "", "", "", "0", "git add/commit/branch/push/gitignore gate."),
-    ("po-modify", "xhigh", "default", "all", "", "", "", "0", "AC + update existing cache/plans/. Not new plan files."),
-    ("po-new", "xhigh", "default", "all", "", "", "", "0", "Create one new plan under cache/plans/."),
+    ("po-lead", "dispatch", "plan", "read-only", "", "", "", "1", "PO lead — assign po-new vs po-modify. Does not write plans."),
+    ("po-modify", "xhigh", "default", "all", "", "po-lead", "", "0", "AC + update existing cache/plans/. Not new plan files."),
+    ("po-new", "xhigh", "default", "all", "", "po-lead", "", "0", "Create one new plan under cache/plans/."),
     ("qc-lead", "dispatch", "plan", "read-only", "", "", "", "1", "Assign matching *-qc; adapt QC shape to this company."),
-    ("tech-lead", "dispatch", "plan", "read-only", "", "", "", "1", "Slice design. Not CTO. Not a default coder."),
+    ("tech-lead", "dispatch", "plan", "read-only", "", "", "", "1", "Slice design. Not CTO. Not a default coder. Lives on seeded tech team."),
 ]
 
 DESIGN = [
@@ -113,16 +116,19 @@ def main() -> int:
     policy = full_cfg.get("policy") or {}
     budget_cfg = full_cfg[args.budget]
     overrides = dict(budget_cfg.get("agents_tsv_tier_overrides") or {})
-    for role in policy.get("always_max_roles") or ("ba", "po-modify", "po-new"):
+    for role in policy.get("always_max_roles") or ("po-modify", "po-new"):
         overrides[role] = policy.get("always_max_tier") or "xhigh"
 
     agents = list(ALWAYS)
     roster: list[tuple[str, str]] = [
-        ("ceo", "ba"),
+        ("ceo", "ba-lead"),
+        ("ba-lead", "ba-user"),
+        ("ba-lead", "ba-workflow"),
         ("ceo", "cto"),
         ("ceo", "git"),
-        ("ceo", "po-modify"),
-        ("ceo", "po-new"),
+        ("ceo", "po-lead"),
+        ("po-lead", "po-modify"),
+        ("po-lead", "po-new"),
         ("ceo", "qc-lead"),
         ("ceo", "tech-lead"),
         ("cto", "tech-lead"),
@@ -173,31 +179,32 @@ def main() -> int:
 
     write_tsv(data / "agents.tsv", header, rows)
     write_tsv(data / "roster.tsv", ["parent", "child"], [[a, b] for a, b in roster_u])
-    write_tsv(data / "route.tsv", ["prefix", "agent"], [[p, a] for p, a in routes] or [["docs/", "ba"]])
+    write_tsv(data / "route.tsv", ["prefix", "agent"], [[p, a] for p, a in routes] or [["docs/", "ba-user"]])
     write_tsv(data / "section.tsv", ["needle", "agent"], [["qa summary", "qc-lead"]])
-    write_tsv(data / "cases.tsv", ["path", "agent"], [["docs/", "ba"]])
+    write_tsv(data / "cases.tsv", ["path", "agent"], [["docs/", "ba-user"]])
 
     # Soften hop self-test: generic cases only (avoid Marlin src/ expectations)
     hop_py = dest / "system" / "skills" / "defaults" / "marlin-hop" / "scripts" / "hop.py"
     if hop_py.is_file():
         text = hop_py.read_text(encoding="utf-8")
-        # Replace self_test cases block with minimal generic ones if present
         start = text.find("def self_test()")
         if start >= 0:
             end = text.find("\ndef main()", start)
             if end > start:
                 new_fn = '''def self_test() -> int:
-    # Generic company: only check agents.tsv loads and roster has ceo→ba.
+    # Generic company: agents.tsv loads; roster has ceo→ba-lead and ba-user.
     bad = 0
     if "ceo" not in AGENTS:
         print("FAIL missing ceo in agents.tsv", file=sys.stderr)
         bad += 1
-    if "ba" not in AGENTS:
-        print("FAIL missing ba in agents.tsv", file=sys.stderr)
+    if "ba-lead" not in AGENTS:
+        print("FAIL missing ba-lead in agents.tsv", file=sys.stderr)
+        bad += 1
+    if "ba-user" not in AGENTS:
+        print("FAIL missing ba-user in agents.tsv", file=sys.stderr)
         bad += 1
     print("self-test", "ok" if bad == 0 else f"{bad} failed")
     return bad
-
 
 '''
                 text = text[:start] + new_fn + text[end:]
