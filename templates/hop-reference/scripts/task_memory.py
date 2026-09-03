@@ -200,6 +200,27 @@ def require_staff(staff: Optional[str]) -> str:
     return s
 
 
+def _path_related(path: str, stored: str) -> bool:
+    """True if paths are the same area (not required to be byte-identical)."""
+    if not path or not stored:
+        return False
+    a, b = path.rstrip("/"), stored.rstrip("/")
+    if a == b or a.startswith(b + "/") or b.startswith(a + "/"):
+        return True
+    # share a meaningful parent segment (e.g. …/Screens/Foo vs …/Screens/)
+    as_, bs = a.split("/"), b.split("/")
+    if len(as_) >= 2 and len(bs) >= 2 and as_[:2] == bs[:2]:
+        return True
+    return False
+
+
+def _goal_tokens(goal: str) -> list[str]:
+    parts = re.findall(r"[a-z0-9]{3,}", goal.lower())
+    # drop ultra-common noise
+    stop = {"the", "and", "for", "with", "from", "that", "this", "when", "into"}
+    return [p for p in parts if p not in stop][:12]
+
+
 def cmd_index(
     conn: sqlite3.Connection,
     staff: str,
@@ -207,6 +228,7 @@ def cmd_index(
     path: str,
     goal: str,
 ) -> int:
+    """List candidate keys. Reuse = equivalent/fitting short_descript, not 1-1 identical task."""
     t = ensure_staff_table(conn, staff)
     print(f"staff\t{staff}")
     print(f"table\t{t}")
@@ -220,32 +242,32 @@ def cmd_index(
             seen.add(r["key"])
             rows.append(r)
 
+    all_rows = conn.execute(
+        f"""
+        SELECT key, short_descript, weight, path_prefix, kind, work FROM {t}
+        ORDER BY weight DESC, updated_at DESC
+        """
+    ).fetchall()
+
     if path or goal:
-        if path:
-            for r in conn.execute(
-                f"""
-                SELECT key, short_descript, weight, path_prefix, kind FROM {t}
-                ORDER BY weight DESC, updated_at DESC
-                """
-            ).fetchall():
-                pp = r["path_prefix"] or ""
-                k = r["key"]
-                if k == f"path:{path}" or (pp and (path == pp or path.startswith(pp))):
-                    add(r)
-                elif r["kind"] in (KIND_FAIL, KIND_FIX) and pp and (
-                    path == pp or path.startswith(pp)
-                ):
-                    add(r)
-        if goal:
-            token = slugify(goal)
-            for r in conn.execute(
-                f"""
-                SELECT key, short_descript, weight, path_prefix, kind FROM {t}
-                WHERE kind = ? AND (key LIKE ? OR short_descript LIKE ? OR work LIKE ?)
-                ORDER BY weight DESC LIMIT 20
-                """,
-                (KIND_TASK, f"%{token}%", f"%{token}%", f"%{token}%"),
-            ).fetchall():
+        tokens = _goal_tokens(goal) if goal else []
+        for r in all_rows:
+            pp = r["path_prefix"] or ""
+            k = r["key"]
+            sd = (r["short_descript"] or "").lower()
+            wk = (r["work"] or "").lower()
+            hit = False
+            if path and (
+                k == f"path:{path}"
+                or _path_related(path, pp)
+                or (k.startswith("path:") and _path_related(path, k[5:]))
+            ):
+                hit = True
+            if tokens:
+                blob = f"{k} {sd} {wk}"
+                if any(tok in blob for tok in tokens):
+                    hit = True
+            if hit:
                 add(r)
         if not rows and prefix:
             for r in conn.execute(
@@ -260,16 +282,14 @@ def cmd_index(
         ).fetchall():
             add(r)
     else:
-        for r in conn.execute(
-            f"SELECT key, short_descript FROM {t} ORDER BY key"
-        ).fetchall():
+        for r in all_rows:
             add(r)
 
     for r in rows:
         sd = (r["short_descript"] or "").replace("\t", " ").strip() or "—"
         print(f"index\t{r['key']}\t{sd}")
     print(f"count\t{len(rows)}")
-    # Mandatory gate: index decides new vs reuse before any work
+    # Mandatory gate: index first. Candidates = possible equivalents, not exact clones.
     if len(rows) == 0:
         print("mode\tnew")
         print(
@@ -277,13 +297,16 @@ def cmd_index(
             f"record-done --staff {staff} (creates cache)."
         )
     else:
-        print("mode\treuse")
+        print("mode\tcandidates")
         print(
-            f"next\tpick one key → get --staff {staff} --key <key> → work from `work`. "
-            f"When finished, if anything changed MUST record-done again (upsert overwrites)."
+            f"next\tpick ONE key whose short_descript fits THIS ask "
+            f"(equivalent OK — not identical goal/path required). "
+            f"If none fit → treat as new. If one fits → "
+            f"get --staff {staff} --key <key> → use `work`. "
+            f"When finished, if anything changed MUST record-done (upsert overwrites)."
         )
     print(
-        "rule\tALWAYS index first. Never skip index. "
+        "rule\tALWAYS index first. Match by suitability (short_descript), not 1-1 identical tasks. "
         "Staffs read own table via TSV only — never open sqlite / other staff tables"
     )
     return 0

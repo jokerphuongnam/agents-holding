@@ -311,8 +311,9 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
    \`\`\`
    - \`mode=new\` → làm mới (no get). When finished **MUST**
      \`record-done --staff <ic> …\` (creates cache).
-   - \`mode=reuse\` → pick key via \`short_descript\` →
-     \`get --staff <ic> --key <key>\` → work from \`work\`. If anything changed,
+   - \`mode=candidates\` → pick a key whose \`short_descript\` **fits this ask**
+     (equivalent tasks OK — not identical). If none fit → treat as new.
+     If one fits → \`get --staff <ic> --key <key>\` → use \`work\`. If changed,
      **MUST** \`record-done\` again (upsert **overwrites**).
    - Each IC only \`--staff\` = own \`name:\` (e.g. ux-writer ≠ rest-api-dev).
 2. Assign **one** IC. Do **not** read all of ORG or all customs.
@@ -325,9 +326,9 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 \`task_memory\` = durable per-staff SQLite at \`cache/cache/task_memory.sqlite\`
 (created on first index/record; local/gitignored).
 
-**Why cache:** later \`mode=reuse\` loads prior fails/fixes and cuts tokens/time.
-**First pass ≈ normal work + a little** for \`record-done\` (short descript +
-compact \`work\` line) — not 2–3× cost. Never dump long essays into cache.
+**Why cache:** later passes reuse a **fitting** prior (equivalent ask) to cut
+tokens/time on known fails/fixes. First pass ≈ normal work + a little for
+\`record-done\` — not 2–3×. Never dump long essays into cache.
 
 **Staff I/O:** stdout TSV only. Fields: \`key\`, \`short_descript\`, \`work\`.
 Forbidden: open \`*.sqlite\`, other staff tables, or \`dump\` (needs \`--i-am-human\`).
@@ -352,7 +353,8 @@ if [[ -f "$TM" ]]; then
 
 Purpose: save tokens/time on *later* passes (known fails/fixes).
 First pass ≈ normal work + cheap record-done (compact lines) — not 2–3× cost.
-`mode=reuse` → get prior `work` and patch; do not re-derive from zero.
+`mode=candidates` → pick a key whose short_descript fits (equivalent OK, not
+identical); get `work` and patch. If none fit → treat as new.
 
 SQLite `task_memory.sqlite` is created on first `index` / `record-done`.
 Per-staff tables (`staff_<name>`). Agents: index → (get?) → work → record-done.
