@@ -13,6 +13,10 @@ First-pass cost: normal work + cheap record-done (keep short_descript/work compa
 Savings show up on mode=candidates — not by making the first pass 2–3× heavier.
 Match equivalent patterns (e.g. List+nav Screens), not identical tasks — exact 1-1 is rare.
 
+work payload is DISTILLED only — never paste full files:
+  summary=…|fails=…|fixes=…|refs=path:start-end;path:start-end
+Use `snippets` to print only those line ranges. Cache = essence + avoid known bugs.
+
 """
 
 from __future__ import annotations
@@ -493,7 +497,66 @@ def _collect_candidates(
     return rows
 
 
-def cmd_resolve(conn: sqlite3.Connection, staff: str, path: str, goal: str) -> int:
+def parse_refs(work: str) -> list[tuple[str, int, int]]:
+    """Parse refs=path:start-end;path:start-end from work payload."""
+    out: list[tuple[str, int, int]] = []
+    m = re.search(r"(?:^|\|)refs=([^|]*)", work or "")
+    if not m:
+        return out
+    blob = m.group(1).strip()
+    if not blob:
+        return out
+    for part in blob.split(";"):
+        part = part.strip()
+        if not part or ":" not in part:
+            continue
+        # path may contain ':' on Windows — split from right for start-end
+        try:
+            path_part, rng = part.rsplit(":", 1)
+            if "-" not in rng:
+                continue
+            a, b = rng.split("-", 1)
+            start, end = int(a), int(b)
+            if start < 1 or end < start:
+                continue
+            out.append((path_part, start, end))
+        except ValueError:
+            continue
+    return out
+
+
+def print_snippets(refs: list[tuple[str, int, int]], *, root: Optional[Path] = None) -> int:
+    """Print only cited line ranges (distilled context — not full files)."""
+    root = root or Path.cwd()
+    n = 0
+    for rel, start, end in refs:
+        path = (root / rel).resolve()
+        try:
+            path.relative_to(root.resolve())
+        except ValueError:
+            print(f"skip\t{rel}\toutside cwd", file=sys.stderr)
+            continue
+        if not path.is_file():
+            print(f"MISS_REF\t{rel}:{start}-{end}", file=sys.stderr)
+            continue
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        end = min(end, len(lines))
+        print(f"snippet\t{rel}:{start}-{end}")
+        for i in range(start - 1, end):
+            print(f"{i+1}|{lines[i]}")
+        n += 1
+    print(f"snippets_n\t{n}")
+    return 0 if n else 1
+
+
+def cmd_resolve(
+    conn: sqlite3.Connection,
+    staff: str,
+    path: str,
+    goal: str,
+    *,
+    with_snippets: bool,
+) -> int:
     """One-shot cheap gate: NEW or chosen key+work (no separate index+get)."""
     print(f"staff\t{staff}")
     if path:
@@ -511,21 +574,52 @@ def cmd_resolve(conn: sqlite3.Connection, staff: str, path: str, goal: str) -> i
     )
     if not ranked:
         print("mode\tnew")
-        print("next\tdo work; then record-done --staff … (cheap one-liner)")
-        print("rule\tone CLI call only — do not also index/get")
+        print(
+            "next\tdo work; record-done with fails/fixes + refs=file:start-end "
+            "(distill only — never cache full files)"
+        )
+        print("rule\tone CLI call — do not also index/get")
         return 0
     pick = ranked[0]
+    work = (pick["work"] or "").strip()
     print("mode\treuse")
     print(f"key\t{pick['key']}")
     print(f"short_descript\t{(pick['short_descript'] or '').strip() or '—'}")
-    print(f"work\t{(pick['work'] or '').strip()}")
+    print(f"work\t{work}")
     print(f"candidates\t{len(cands)}")
+    refs = parse_refs(work)
+    if refs:
+        print("refs\t" + ";".join(f"{p}:{a}-{b}" for p, a, b in refs))
     print(
-        "next\tapply `work` pattern to this equivalent ask; "
-        "record-done only if you changed the pattern"
+        "next\tread ONLY refs via snippets (or those line ranges); apply fails/fixes; "
+        "do NOT paste/copy whole sibling files; record-done only if pattern changed"
     )
-    print("rule\tone CLI call only — do not also index/get unless resolve missed")
+    print("rule\tcache is distilled essence + known bugs — never full-file cache")
+    if with_snippets and refs:
+        print_snippets(refs)
+    elif with_snippets and not refs:
+        print("note\tno refs= in work — add refs on next record-done", file=sys.stderr)
     return 0
+
+
+def cmd_snippets(conn: sqlite3.Connection, staff: str, key: str) -> int:
+    """Load one key and print only refs= line ranges (anti full-file read)."""
+    t = ensure_staff_table(conn, staff)
+    row = conn.execute(
+        f"SELECT key, work FROM {t} WHERE key = ?", (key,)
+    ).fetchone()
+    if row is None:
+        print(f"MISS\t{key}\tstaff={staff}", file=sys.stderr)
+        return 1
+    work = row["work"] or ""
+    print(f"staff\t{staff}")
+    print(f"key\t{row['key']}")
+    print(f"work\t{work.strip()}")
+    refs = parse_refs(work)
+    if not refs:
+        print("error: work has no refs=file:start-end — cannot snippets", file=sys.stderr)
+        return 2
+    return print_snippets(refs)
 
 
 def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
@@ -541,6 +635,7 @@ def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
     fails = (args.fails or "").strip()
     fixes = (args.fixes or "").strip()
     plan = (args.plan or "").strip()
+    refs = (getattr(args, "refs", None) or "").strip()
     slim = not getattr(args, "full", False)
 
     work_parts = []
@@ -555,7 +650,15 @@ def cmd_record_done(conn: sqlite3.Connection, args: argparse.Namespace) -> int:
         work_parts.append(f"fails={fails}")
     if fixes:
         work_parts.append(f"fixes={fixes}")
+    if refs:
+        # refs=app/Foo.jsx:40-55;app/Foo.jsx:70-78 — essence pointers, not full files
+        work_parts.append(f"refs={refs}")
     work = "|".join(work_parts)
+    if not refs:
+        print(
+            "warn\tno --refs file:start-end — prefer citing only the lines that matter",
+            file=sys.stderr,
+        )
 
     n = 0
     sd = (
@@ -697,6 +800,11 @@ def build_parser() -> argparse.ArgumentParser:
     rd.add_argument("--task-id", default="")
     rd.add_argument("--short-descript", default="")
     rd.add_argument(
+        "--refs",
+        default="",
+        help="Distilled pointers only: path:start-end;path:start-end (never full file)",
+    )
+    rd.add_argument(
         "--full",
         action="store_true",
         help="Also write separate fail:/fix: rows (default slim: path+task only)",
@@ -714,6 +822,18 @@ def build_parser() -> argparse.ArgumentParser:
     add_staff(rs)
     rs.add_argument("--path", default="")
     rs.add_argument("--goal", default="")
+    rs.add_argument(
+        "--with-snippets",
+        action="store_true",
+        help="Also print only refs= line ranges (no full-file dump)",
+    )
+
+    sn = sub.add_parser(
+        "snippets",
+        help="Print only refs= line ranges for a key (distilled read)",
+    )
+    add_staff(sn)
+    sn.add_argument("--key", required=True)
 
     c = sub.add_parser("clear")
     add_staff(c)
@@ -775,7 +895,15 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.cmd == "propose":
             return cmd_propose(conn, staff, args.path, args.goal)
         if args.cmd == "resolve":
-            return cmd_resolve(conn, staff, args.path, args.goal)
+            return cmd_resolve(
+                conn,
+                staff,
+                args.path,
+                args.goal,
+                with_snippets=bool(getattr(args, "with_snippets", False)),
+            )
+        if args.cmd == "snippets":
+            return cmd_snippets(conn, staff, args.key)
         if args.cmd == "clear":
             return cmd_clear(conn, staff, args.key or None, args.prefix or None, args.all)
         print(f"unknown cmd: {args.cmd}", file=sys.stderr)
