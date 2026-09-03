@@ -13,3 +13,7 @@ adapters wherever each harness `[paths]` says.
 **Tech seed notes:** `{{TECH_HINTS}}`
 
 **Language:** SoT English; user chat = user’s language. User channel: `ceo` + `ba-user`.
+
+**Packages under this project root** (e.g. `frontend/`, `backend/`) are **teams**
+in this company unless holding created sibling companies (`companies` topology
+with separate roots). See `cache/WORKSPACE.md` when present.
