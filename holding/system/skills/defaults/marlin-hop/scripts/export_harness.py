@@ -306,14 +306,18 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
             "role-play the chain:",
             "",
             "```text",
-            "CEO → resolve path/scope → spawn lead → lead spawns IC → spawn QC → collect results → handoff",
+            "Product: CEO → product-lead → ba-user → product-lead → (po-new|po-modify)? → ## Result → CEO → eng",
+            "Eng:     CEO → [team-lead] → IC → *-qc  (QC only after IC done)",
+            "Cross-team: always ## Result/Escalate UP to CEO, then CEO hops down.",
+            "Slim brief: goal + paths + optional plan_dir + read loci — never paste full plans.",
             "```",
             "",
             "Resolve the exact role with `hop.py --path <file> --harness codex`. Start every "
             "spawn prompt with `COMPANY_OS_ROLE: <exact hop role>` and "
             "`COMPANY_OS_PARENT: <parent role>`. The UI nickname is not the role identity. "
             "Use the generated role card under `.codex/agents/` as the brief. A dispatch "
-            "role must spawn its next role; a leaf IC must not spawn.",
+            "role must spawn its next role; a leaf IC must not spawn. Product-lead must not "
+            "spawn eng — report up to CEO with `plan_dir`/`read` only.",
             "",
         ]
     )
