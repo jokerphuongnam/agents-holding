@@ -41,3 +41,22 @@ Create a subsidiary (after hire deal or self-serve):
 Boot card: [`COMPANY_BOOT.md`](COMPANY_BOOT.md).  
 Org / hire rules: [`system/staffs/ORG.md`](system/staffs/ORG.md).  
 Layout detail: [`COMPANY.md`](COMPANY.md).
+
+## Codex runtime
+
+The Holding Company OS is the source of truth for the holding roster and routing rules.
+After a subsidiary company is generated, run its installer from that company repository:
+
+```bash
+.agents/<company-slug>/system/install/company_os.sh codex
+```
+
+This generates the Codex runtime view under `.codex/`. Codex reads the generated boot
+pointer and role cards from that workspace directory. Grok remains an independent runtime:
+
+```bash
+.agents/<company-slug>/system/install/company_os.sh grok
+```
+
+Do not edit generated runtime files by hand. Update Holding/Company source, then regenerate
+only the selected harness.
