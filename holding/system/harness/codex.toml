@@ -1,5 +1,5 @@
 # Codex runtime driver for Holding Company OS (.agents/holding/).
-# Pointer lives under holding export — not repo-root AGENTS.md, not ~/.codex/AGENTS.md.
+# Codex reads the generated runtime view from the project workspace.
 
 id = "codex"
 layout = "agents_md"
@@ -26,8 +26,8 @@ high = "Deep multi-company diagnosis; still no product code in subsidiaries."
 xhigh = "Rare; prefer plans under a subsidiary company, not holding."
 
 [paths]
-agents_md = ".agents/holding/cache/export/codex/AGENTS.md"
-export_dir = ".agents/holding/cache/export/codex"
+agents_md = ".codex/AGENTS.md"
+export_dir = ".codex/agents"
 
 [boot]
 skills_note = "Load context via hop.py skill: path under system/skills — do not paste whole catalogs."
