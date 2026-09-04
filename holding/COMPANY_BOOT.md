@@ -69,7 +69,7 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 | Runtime | Boot artifact |
 | --- | --- |
 | Grok | `.agents/holding/cache/export/grok/` + flat links under `.grok/agents` |
-| Codex | `.agents/holding/cache/export/codex/AGENTS.md` (not repo-root, not `~/.codex/AGENTS.md`) |
+| Codex | generated project `.codex/AGENTS.md` and `.codex/agents/` |
 | Claude | `.agents/holding/cache/export/claude-runtime/` tree mounts (avoids clobbering project `.claude`) |
 
 Re-generate: `.agents/holding/system/install/company_os.sh <harness|all>`
