@@ -52,6 +52,8 @@ Details: `case-a-plain/BENCH_DONE.md`, `case-b-company-os/BENCH_DONE.md`, `TOKEN
 | A (v3) vs case 1 (v1) | 39 vs 25 | 658k vs 293k (A now hits test bar; more tokens than failed chat-only) |
 | B (v3) vs case 2 (v1) | 39 vs 36 | **0.20×** tokens of naive nested LLM |
 
+Chat-by-chat narrative compare: [`CHAT_COMPARE.md`](CHAT_COMPARE.md).
+
 ## Takeaway
 
 - With **history included**: Company OS remains the efficient way to hit the full Todo bar vs naive multi-agent (v1 case 2).
