@@ -1,0 +1,25 @@
+{
+  "inputTokens": 470423,
+  "outputTokens": 8426,
+  "totalTokens": 478849,
+  "cachedReadTokens": 403328,
+  "cacheCreationTokens": 0,
+  "reasoningTokens": 4370,
+  "modelCalls": 18,
+  "apiDurationMs": 143966,
+  "costUsdTicks": 1039530960,
+  "modelUsage": {
+    "grok-4.5-build": {
+      "inputTokens": 470423,
+      "outputTokens": 8426,
+      "totalTokens": 478849,
+      "cachedReadTokens": 403328,
+      "cacheCreationTokens": 0,
+      "reasoningTokens": 4370,
+      "modelCalls": 18,
+      "apiDurationMs": 143966,
+      "costUsdTicks": 1039530960
+    }
+  },
+  "numTurns": 18
+}

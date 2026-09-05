@@ -10,7 +10,9 @@ One **holding** coordinates many **subsidiary** companies (one per product). You
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/agents-holding/main/install.sh | bash
 ```
 
-**Bench (Todo API + React, three real arms):** see [`example/eval/RESULTS.md`](example/eval/RESULTS.md) — case 3 (this library) scored highest against the full expected bar including FE unit/UI tests.
+**Bench (Todo API + React):** see [`example/eval/RESULTS.md`](example/eval/RESULTS.md) —
+**v3** plain vs Company OS (same score **39/40**; OS **−27% tokens**, **−35% wall**).
+v1 three-arm history kept under `example/eval/history-v1/` and `case-*`.
 
 That downloads from GitHub and installs into `~/.agents/holding` + `~/.agents/templates`.
 
