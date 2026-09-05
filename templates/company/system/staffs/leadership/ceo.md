@@ -58,7 +58,8 @@ files / unrelated chrome. Prefer pattern `short_descript` (equivalent tasks OK).
 5. IC unknown inside one team → that `*-lead`, then one IC.
 6. QC after IC `done` + tests in brief: one team → `*-qc`; else `qc-lead`.
 7. Child: return `## Assign` only. Parent spawns. Nested spawn fails.
-8. IC loads **at most one** customs `SKILL.md`.
+8. IC loads only **that staff’s** skills (never another role’s). Per hop, follow
+   hop/`TASK_SKILLS` for **this** task — not the whole company catalog.
 9. Budget **low**: minimal tests; no e2e unless asked.
 
 ### Spawn prompts (token-cheap)

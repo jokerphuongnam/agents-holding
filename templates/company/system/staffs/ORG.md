@@ -77,7 +77,7 @@ Split agents for **all** of these (not tokens alone):
 
 | Pillar | Old (one mega-agent) | Now (Company OS) |
 | --- | --- | --- |
-| **Load** | One agent carries many skills and reads everything | Each staff holds **1–3** skills; hop names **one** skill path |
+| **Load** | One agent carries every skill and reads everything | Each staff owns **only that staff’s skills** (count = user setup — few or many); hop names the skill path(s) for **this** task |
 | **Duty** | One agent does clarify + plan + code + QC | Each staff does **only its job**; foreign work escalates |
 | **Tokens** | Fat context every turn | Slim briefs; `plan_dir`+`read`; no plan paste through the chain |
 | **Unblock** | Mid-task need elsewhere → leave work, fix other place, resume | Escalate up; **parallel** producer + consumer |
