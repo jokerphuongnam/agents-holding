@@ -16,41 +16,10 @@ main { max-width:920px; margin:0 auto; padding:20px 16px 64px; display:flex; fle
 .row.tool .bubble { background:var(--tool); border-bottom-left-radius:4px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; color:#f0e6d2; }
 .row.reason .bubble { background:var(--reason); border-bottom-left-radius:4px; color:#cfc6e6; font-size:13px; font-style:italic; }
 .meta { font-size:11px; color:var(--muted); margin:0 0 6px; }
-details.tools { margin-top:8px; }
-details.tools summary { cursor:pointer; color:var(--muted); font-size:12px; }
 </style></head><body>
 <header><h1>Case B — Company OS chat</h1>
-<p>User on the <b>right</b> · Agent / thinking / tools on the <b>left</b>. Source: <code>chat_history.jsonl</code></p></header><main>
-<div class="row user"><div class="bubble"><div class="meta">User</div>You are running **eval-todo-bench-v3 Case B (agents-holding / Company OS plugin)**.
-
-## Workspace
-`$BENCH_V3/case-b-company-os`
-Already has: `.agents/todo-company/` (Company OS), Express+React starter under `backend/` + `frontend/`, RUN.md.
-
-## User ask (only this — vibe coding)
-Làm giúp mình một app Todo list có API backend và React frontend gọi thật được, chạy local được là được.
-
-## Process (must follow Company OS)
-1. Act as **ceo** of `.agents/todo-company/`: product ask → **product-lead** first (not ba/po direct).
-2. You may implement as the workers yourself but **follow the cascade mentally/in notes**: product-lead → ba-user if unclear → po if plan needed → ## Result up → eng (backend-engineer / frontend-engineer) → qc.
-3. Use hop scripts when useful:
-   `python3 .agents/todo-company/system/skills/defaults/marlin-hop/scripts/hop.py --roster ceo`
-4. Prefer task_cache / task_memory patterns (parent prefetch) if cheap.
-5. Slim briefs: do not paste full plans; use plan_dir + read loci if you write a plan under cache/plans/.
-6. Cross-team: escalate up (don&#x27;t lateral). Parallel header handoff if BE/FE contract needed.
-7. Staff skills: only that role&#x27;s skills (user-configured set on this company).
-
-## Build goals
-- Complete Todo API + React against real API (starter may be incomplete — finish it).
-- Persist storage, CRUD+toggle, CORS/proxy.
-- Backend tests + FE unit/UI tests — must pass.
-- RUN.md accurate.
-- Write `BENCH_DONE.md` with process notes (which roles conceptually used), test commands, gaps.
-
-## Done-when
-Same MVP bar as a real ship: API+UI local, BE+FE tests pass, docs OK, BENCH_DONE.md written.
-
-Do not read `$BENCH_V3/OUTPUT.md` as agent input.</div></div>
+<p>User on the <b>right</b> (first message = Todo ask only) · Agent / tools on the <b>left</b></p></header><main>
+<div class="row user"><div class="bubble"><div class="meta">User</div>Làm giúp mình một app Todo list có API backend và React frontend gọi thật được, chạy local được là được.</div></div>
 <div class="row reason"><div class="bubble"><div class="meta">Thinking</div>The user wants me to build a Todo list app with API backend and React frontend, following the Company OS process. Let me start by exploring the workspace and understanding the Company OS structure, th...</div></div>
 <div class="row agent"><div class="bubble"><div class="meta">Agent</div>I&#x27;ll act as CEO and kick off Company OS: inspect the workspace, then route the product ask to product-lead.</div></div>
 <div class="row tool"><div class="bubble"><div class="meta">Tool call</div>list_dir

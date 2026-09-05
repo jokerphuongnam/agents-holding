@@ -16,17 +16,9 @@ main { max-width:920px; margin:0 auto; padding:20px 16px 64px; display:flex; fle
 .row.tool .bubble { background:var(--tool); border-bottom-left-radius:4px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; color:#f0e6d2; }
 .row.reason .bubble { background:var(--reason); border-bottom-left-radius:4px; color:#cfc6e6; font-size:13px; font-style:italic; }
 .meta { font-size:11px; color:var(--muted); margin:0 0 6px; }
-details.tools { margin-top:8px; }
-details.tools summary { cursor:pointer; color:var(--muted); font-size:12px; }
 </style></head><body>
 <header><h1>Case 2 — docs</h1>
-<p>User on the <b>right</b> · Agent / thinking / tools on the <b>left</b>. Source: <code>chat_history.jsonl</code></p></header><main>
-<div class="row user"><div class="bubble"><div class="meta">User</div>Naive track ONLY — docs/tests harness notes. No coordination.
-
-cwd: $BENCH_V1/case-2-naive-subagents
-
-Write root README.md with how you *imagine* running backend+frontend+tests (you may invent paths). Optionally add a scripts/smoke.sh stub. Do not implement the full apps. Do not use agents-holding.
-Write docs/TRACK.md describing what you assumed.</div></div>
+<p>User on the <b>right</b> (first message = Todo ask only) · Agent / tools on the <b>left</b></p></header><main>
 <div class="row reason"><div class="bubble"><div class="meta">Thinking</div>The user wants me to write a root README.md with imagined instructions for running backend+frontend+tests, optionally add a scripts/smoke.sh stub, and write docs/TRACK.md describing what I assumed. Th...</div></div>
 <div class="row agent"><div class="bubble"><div class="meta">Agent</div>I&#x27;ll inspect the workspace and any existing docs so the README, TRACK notes, and optional smoke stub match what&#x27;s already here.</div></div>
 <div class="row tool"><div class="bubble"><div class="meta">Tool call</div>todo_write

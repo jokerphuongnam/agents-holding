@@ -16,45 +16,9 @@ main { max-width:920px; margin:0 auto; padding:20px 16px 64px; display:flex; fle
 .row.tool .bubble { background:var(--tool); border-bottom-left-radius:4px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; color:#f0e6d2; }
 .row.reason .bubble { background:var(--reason); border-bottom-left-radius:4px; color:#cfc6e6; font-size:13px; font-style:italic; }
 .meta { font-size:11px; color:var(--muted); margin:0 0 6px; }
-details.tools { margin-top:8px; }
-details.tools summary { cursor:pointer; color:var(--muted); font-size:12px; }
 </style></head><body>
 <header><h1>Case 2 — merge</h1>
-<p>User on the <b>right</b> · Agent / thinking / tools on the <b>left</b>. Source: <code>chat_history.jsonl</code></p></header><main>
-<div class="row user"><div class="bubble"><div class="meta">User</div>You are the MERGE agent for naive case-2. Three tracks already wrote conflicting assumptions in:
-$BENCH_V1/case-2-naive-subagents
-
-Known conflicts (fix TRACK.md files):
-- Backend: Express `/todos`, field `done`, port 4000
-- Frontend: Vite expects `/api/todos`, field `done`, proxy to 3001
-- Docs: imagined FastAPI on 8000
-
-Merge into ONE working product:
-- Prefer keeping Express backend but align routes to `/api/todos` OR update frontend to `/todos` — pick one and make both match.
-- Align ports (API 3001 or 4000 — document).
-- Field `done` OK if both use it.
-- Ensure backend unit tests + FE RTL still pass.
-- Curl proof.
-- Fix root README to reality.
-
-Then OVERWRITE:
-$AGENTS_HOLDING/example/eval/case-2-naive-subagents/AGENT_SUMMARY.md
-$AGENTS_HOLDING/example/eval/case-2-naive-subagents/HISTORY.md
-$AGENTS_HOLDING/example/eval/case-2-naive-subagents/children_ids.json
-
-children_ids.json must be:
-{
-  &quot;primary&quot;: &quot;01a05c75-51b3-70a3-add6-b45637b08082_OR_MERGE_ID&quot;,
-  &quot;children&quot;: [
-    &quot;01a05c79-96a0-7203-b26d-156f4a09febf&quot;,
-    &quot;01a05c79-96bb-7182-8270-4cc11c859bb6&quot;,
-    &quot;01a05c79-96bb-7182-8270-4cd4d6d86222&quot;
-  ],
-  &quot;merge&quot;: &quot;&lt;your session id if known else this run&gt;&quot;,
-  &quot;note&quot;: &quot;primary launcher was parent; these three are real nested LLM subagents&quot;
-}
-
-Use primary field as &quot;PARENT_SPAWNED&quot; and set &quot;merge_agent&quot; to describe yourself. List the three child ids exactly.</div></div>
+<p>User on the <b>right</b> (first message = Todo ask only) · Agent / tools on the <b>left</b></p></header><main>
 <div class="row reason"><div class="bubble"><div class="meta">Thinking</div>The user wants me to merge three conflicting tracks into one working product. Let me start by understanding the current state of the workspace and the TRACK.md files, as well as looking at the existin...</div></div>
 <div class="row agent"><div class="bubble"><div class="meta">Agent</div>I&#x27;ll inspect the three tracks and current code so we can align routes, ports, and docs into one working product.</div></div>
 <div class="row tool"><div class="bubble"><div class="meta">Tool call</div>todo_write
