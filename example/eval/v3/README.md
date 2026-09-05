@@ -11,3 +11,8 @@ Two-arm Todo vibe bench. History of v1 three-arm lives in `../history-v1/` and `
 | `case-b-company-os/` | agents-holding arm |
 
 Local product trees: `~/Documents/Agents/eval-todo-bench-v3/case-*`.
+
+## Agent chat history
+
+- [case-a-plain/CHAT_TRANSCRIPT.md](case-a-plain/CHAT_TRANSCRIPT.md) (+ `chat_history.jsonl`)
+- [case-b-company-os/CHAT_TRANSCRIPT.md](case-b-company-os/CHAT_TRANSCRIPT.md) (+ `chat_history.jsonl`)

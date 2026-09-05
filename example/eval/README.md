@@ -27,3 +27,13 @@ Snapshots: [`history-v1/`](history-v1/). Summary: [RESULTS.md](RESULTS.md) · [T
 - Rubric: [RUBRIC.md](RUBRIC.md)  
 - Optimize notes: [OPTIMIZE_HOLDING.md](OPTIMIZE_HOLDING.md)  
 - Root install / create-company: [../../README.md](../../README.md)
+
+## Agent chat history (raw + transcript)
+
+| Arm | Transcript | Raw JSONL |
+| --- | --- | --- |
+| v3 A plain | [CHAT_TRANSCRIPT.md](v3/case-a-plain/CHAT_TRANSCRIPT.md) | [chat_history.jsonl](v3/case-a-plain/chat_history.jsonl) |
+| v3 B company-os | [CHAT_TRANSCRIPT.md](v3/case-b-company-os/CHAT_TRANSCRIPT.md) | [chat_history.jsonl](v3/case-b-company-os/chat_history.jsonl) |
+| v1 case 1 | [CHAT_TRANSCRIPT.md](case-1-chat-only/CHAT_TRANSCRIPT.md) | [chat_history.jsonl](case-1-chat-only/chat_history.jsonl) |
+| v1 case 2 | [chat/](case-2-naive-subagents/chat/) (backend/frontend/docs/merge) | same folder |
+| v1 case 3 | [CHAT_TRANSCRIPT.md](case-3-agents-holding/CHAT_TRANSCRIPT.md) | [chat_history.jsonl](case-3-agents-holding/chat_history.jsonl) |

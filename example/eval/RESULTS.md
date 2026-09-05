@@ -17,6 +17,8 @@ Same **one-sentence vibe INPUT**. Scorers used **OUTPUT.md**. Tokens from `turn_
 | Wall | **B −35%** (~85s faster) |
 | Score | tie 39/40 (B thinner FE test file count) |
 
+**Evidence (no fabricated runs):** raw agent `chat_history.jsonl` + `CHAT_TRANSCRIPT.md` under `v3/case-*` (and v1 `case-*`).
+
 **Takeaway:** with equal pass bar, Company OS is **faster and cheaper** than plain vibe chat on this Todo MVP.
 
 ---
