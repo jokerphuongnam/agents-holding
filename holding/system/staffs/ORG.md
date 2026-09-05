@@ -108,6 +108,11 @@ lateral cross-team spawn. Need another team → **up to CEO** with slim brief
 (`goal` + `paths` + optional `plan_dir` + `read`) — **never** paste full plans
 through a long staff chain. CEO hops and spawns down; IC opens those loci.
 
+**Why split (beyond tokens):** each staff holds **1–3** skills (not a mega
+catalog); each does **only its duty**; blocked on foreign work → escalate —
+producer lands **headers/contract** first, consumer implements against them
+**in parallel** (no one leaves their lane to fix the other tree).
+
 ## Optional / tech-shaped teams
 
 CTO (+ holding/user) adds teams from the stack, for example:

@@ -51,6 +51,9 @@ files / unrelated chrome. Prefer pattern `short_descript` (equivalent tasks OK).
    you** — no lateral spawn. You hop from their slim Result and spawn the next
    team. Brief = goal + paths + optional `plan_dir` + `read` — **never** paste
    the full plan through the chain.
+   **Parallel unblock:** producer lands **headers/contract first** → consumer
+   implements against those paths while producer may finish the body. No IC
+   leaves its lane to edit a foreign team.
 4. Unique eng Path → that IC. Skip team-lead when IC is unique.
 5. IC unknown inside one team → that `*-lead`, then one IC.
 6. QC after IC `done` + tests in brief: one team → `*-qc`; else `qc-lead`.
