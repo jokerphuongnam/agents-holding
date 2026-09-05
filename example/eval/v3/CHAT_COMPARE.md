@@ -1,4 +1,7 @@
-# Chat compare — Case A (plain) vs Case B (Company OS)
+# Chat compare
+
+**Easy read (bubbles):** open [`CHAT_VIEW.html`](CHAT_VIEW.html) — user **right**, agent **left**. Per-arm: [`case-a-plain/CHAT.html`](case-a-plain/CHAT.html), [`case-b-company-os/CHAT.html`](case-b-company-os/CHAT.html).
+ — Case A (plain) vs Case B (Company OS)
 
 Evidence: `case-a-plain/chat_history.jsonl` + `case-b-company-os/chat_history.jsonl`  
 (and human-readable `CHAT_TRANSCRIPT.md`). Same user vibe line; different process.

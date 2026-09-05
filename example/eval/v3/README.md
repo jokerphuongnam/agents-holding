@@ -18,3 +18,11 @@ Local product trees: `~/Documents/Agents/eval-todo-bench-v3/case-*`.
 - [case-b-company-os/CHAT_TRANSCRIPT.md](case-b-company-os/CHAT_TRANSCRIPT.md) (+ `chat_history.jsonl`)
 
 Also: [CHAT_COMPARE.md](CHAT_COMPARE.md) — side-by-side reading of the two chats.
+
+## Easy chat UI
+
+- Side-by-side: [CHAT_VIEW.html](CHAT_VIEW.html)
+- A: [case-a-plain/CHAT.html](case-a-plain/CHAT.html)
+- B: [case-b-company-os/CHAT.html](case-b-company-os/CHAT.html)
+
+User bubbles on the **right**, agent/tools on the **left**.

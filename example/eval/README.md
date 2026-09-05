@@ -28,6 +28,10 @@ Snapshots: [`history-v1/`](history-v1/). Summary: [RESULTS.md](RESULTS.md) · [T
 - Optimize notes: [OPTIMIZE_HOLDING.md](OPTIMIZE_HOLDING.md)  
 - Root install / create-company: [../../README.md](../../README.md)
 
+## Agent chat history
+
+**Readable UI (user right / agent left):** [v3/CHAT_VIEW.html](v3/CHAT_VIEW.html)
+
 ## Agent chat history (raw + transcript)
 
 | Arm | Transcript | Raw JSONL |
