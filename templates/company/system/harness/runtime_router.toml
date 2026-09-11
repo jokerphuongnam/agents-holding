@@ -1,0 +1,71 @@
+# Cross-runtime Assign router (OPTIONAL — opt-in).
+# Portable SoT (system/staffs/**, agents.tsv) is UNCHANGED.
+#
+# Modes:
+#   enabled = false  → everyone same vendor story. company_os.sh grok|codex|claude|all
+#                      generates the FULL roster for each harness (classic).
+#   enabled = true   → split by role: each generate only includes roles mapped
+#                      here (e.g. ceo→grok, ba/po→codex, *-dev→claude). CEO
+#                      Assign uses native spawn when same runtime, else CLI bridge.
+#
+# Do not put API keys here. Local CLI auth stays in each vendor's login store.
+
+id = "runtime_router"
+
+# Opt-in. Default false so teams that want "all Codex" / "all Grok" need no setup.
+enabled = false
+
+[default]
+# Company default when a role has no match (and when enabled=false, unused for export filter).
+runtime = "grok"
+
+[cli.grok]
+bin = "grok"
+timeout_sec = 300
+
+[cli.codex]
+bin = "codex"
+timeout_sec = 600
+
+[cli.claude]
+bin = "claude"
+timeout_sec = 600
+
+[preflight]
+require_path = true
+require_login = true
+# error = fail loud if bin/login missing (no silent fallback to default runtime)
+on_fail = "error"
+
+[assign]
+same_runtime = "native"
+cross_runtime = "cli"
+cwd = "project-root"
+return = "brief+handoff"
+handoff_dir = "cache/handoff"
+
+# Example split (only applied when enabled = true). Edit to taste:
+#   grok  → ceo / dispatch
+#   codex → ba / po (plan)
+#   claude → *-dev (code)
+# First match wins. Catch-all "*" last.
+
+[[roles]]
+match = "ceo"
+runtime = "grok"
+
+[[roles]]
+match = "ba-*"
+runtime = "codex"
+
+[[roles]]
+match = "po-*"
+runtime = "codex"
+
+[[roles]]
+match = "*-dev"
+runtime = "claude"
+
+[[roles]]
+match = "*"
+runtime = "grok"

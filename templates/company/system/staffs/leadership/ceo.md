@@ -48,9 +48,24 @@ paid-for footguns (no-cache often re-hits or only partially re-fixes them).
 
 1. Hop **once** only when task_cache miss **and** resolve `mode=new`.
 2. Assign **one** IC. Exact owned paths.
-3. IC loads **at most one** customs `SKILL.md`.
-4. On reuse: IC follows pasted brief — no re-scaffold from zero.
-5. Budget **low**: minimal tests; no e2e unless asked.
+3. **Runtime router (optional):** SoT staffs unchanged. If
+   `system/harness/runtime_router.toml` has `enabled = false` (default), Assign
+   is normal same-vendor spawn. If `enabled = true`, check before Assign:
+
+```bash
+python3 …/runtime_router.py match --role <ic> --session "$MARLIN_HARNESS"
+# same runtime → native spawn
+# different → runtime_router.py assign --from ceo --to <ic> --goal '…'
+#   (writes cache/handoff/*; --execute to invoke other CLI)
+```
+
+4. IC loads **at most one** customs `SKILL.md`.
+5. On reuse: IC follows pasted brief — no re-scaffold from zero.
+6. Budget **low**: minimal tests; no e2e unless asked.
+
+**Generate:** with router **disabled**, `company_os.sh all` puts the **full**
+roster on every harness (use one brand). With router **enabled**, each generate
+only includes roles mapped to that runtime. Never edit staff cards for vendor.
 
 ## Escalation
 
