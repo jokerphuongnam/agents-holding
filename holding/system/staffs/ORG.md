@@ -45,7 +45,12 @@ self-serve `create-company.sh` / `create-workspace.sh` — same factory.
 | **`teams`** | One product monorepo; **one** `ceo`/`cto`/BA/PO/QC/`git` for the whole workspace; FE/BE/mobile are tech teams (engineers + routes) only | One `--project-root` = parent |
 | **`companies`** | User wants hard isolation / separate product contracts per package (each gets its own full formula) | **One `--project-root` per package** (adapters collide if shared) |
 
-Parent registry file: `<parent>/.agents/WORKSPACE.md`.
+Parent workspace file: `<parent>/.agents/WORKSPACE.md`.
+
+**Conglomerate inventory (local/gitignored):** `company_registry.py` →
+`cache/companies.sqlite` (slug + project_root + SoT path). Factory auto-registers.
+Before create / when slug is ambiguous: `list` / `check`. Dup slug at two roots →
+warn; `archive --i-am-human` renames SoT only. See `cache/COMPANIES.md`.
 
 ### Hiring example
 
@@ -74,12 +79,25 @@ often differ from web → different payloads/endpoints):
 frontend ceo  →  holding-ceo  →  backend ceo  →  backend lead/IC → QC
 ```
 
+**Registry (required for routing):**
+
+```bash
+python3 …/company_registry.py relate \
+  --from frontend-company --to backend-company --kind api --bidirectional
+python3 …/company_registry.py resolve --from frontend-company --need api
+```
+
+`resolve` prefers **linked** peers, then `packages` / `tech` / path keywords.
+Emit only the short brief (`pick`, `project_root`, `channel=ceo`) — do not load
+every subsidiary ORG.
+
 **Rules:**
 
 1. Frontend **does not** Assign backend ICs directly (no bypass of holding).
-2. `holding-ceo` (or `holding-coordinator`) carries a short English handoff:
-   goal, why (e.g. Android-only screen), contract sketch, done-when, owning
-   backend paths — then Assigns **backend `ceo` only**.
+2. `holding-ceo` (or `holding-coordinator`) runs `resolve` / `related`, then
+   carries a short English handoff: goal, why (e.g. Android-only screen),
+   contract sketch, done-when, owning backend paths — Assigns **backend `ceo`
+   only**.
 3. Backend `ceo` runs the **normal in-company cascade** (CTO/lead/IC/QC).
 4. Result returns **up** backend → holding → requesting frontend `ceo`.
 5. If **several** frontends need related APIs, holding **batches** one backend
@@ -95,24 +113,12 @@ Every company cloned from `templates/company/` **must** include:
 
 | Role / team | Notes |
 | --- | --- |
-| `ceo` | In-company dispatch; product → `product-lead` first; cross-team up-then-down |
+| `ceo` | In-company dispatch |
 | `cto` | Architecture / tech selection with user+holding |
-| `product-lead` | Product lane only: `ba-user` / `po-*`; `## Result` up to CEO (never spawn eng) |
-| BA team (`ba-lead` → `ba-user`, `ba-workflow`) | Under product-lead; `ba-user` clarifies with user; `ba-workflow` owns Jira/tools |
-| PO (`po-new`, `po-modify`; optional `po-lead`) | Writers own plans / AC; default Assign from `product-lead` |
+| BA team (`ba-lead` → `ba-user`, `ba-workflow`) | Lead assigns; `ba-user` clarifies with user; `ba-workflow` owns Jira/tools |
+| PO team (`po-lead` → `po-modify`, `po-new`) | Lead assigns; writers own plans / AC |
 | `git` | Commit / branch gate |
 | QC team | Always present — shape adapts: one `qc-lead` + embedded `*-qc`, or a larger QC org |
-
-**Strict + cheap (mandatory in every subsidiary):** each staff one lane — no
-lateral cross-team spawn. Need another team → **up to CEO** with slim brief
-(`goal` + `paths` + optional `plan_dir` + `read`) — **never** paste full plans
-through a long staff chain. CEO hops and spawns down; IC opens those loci.
-
-**Why split (beyond tokens):** each staff owns **only that staff’s skills**
-(count = user setup — not a shared mega catalog); each does **only its duty**;
-blocked on foreign work → escalate — producer lands **headers/contract** first,
-consumer implements against them **in parallel** (no one leaves their lane to
-fix the other tree).
 
 ## Optional / tech-shaped teams
 

@@ -1,0 +1,10 @@
+# Per-machine holding caches — never commit (each install differs)
+user_habits.sqlite
+user_habits.sqlite-*
+user_habits/
+companies.sqlite
+companies.sqlite-*
+companies/
+export/
+cache/**
+!cache/.gitkeep

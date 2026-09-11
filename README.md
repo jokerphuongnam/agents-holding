@@ -10,9 +10,7 @@ One **holding** coordinates many **subsidiary** companies (one per product). You
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/agents-holding/main/install.sh | bash
 ```
 
-**Bench (Todo API + React):** see [`example/eval/RESULTS.md`](example/eval/RESULTS.md) —
-**v3** plain vs Company OS (same score **39/40**; OS **−27% tokens**, **−35% wall**).
-v1 three-arm history kept under `example/eval/history-v1/` and `case-*`.
+**Bench (Todo API + React, three real arms):** see [`example/eval/RESULTS.md`](example/eval/RESULTS.md) — case 3 (this library) scored highest against the full expected bar including FE unit/UI tests.
 
 That downloads from GitHub and installs into `~/.agents/holding` + `~/.agents/templates`.
 
@@ -25,11 +23,12 @@ Re-run the same command anytime after you push updates.
 | Capability | What it does |
 | --- | --- |
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
-| **Factory** | `create-company.sh` / `create-workspace.sh` clone Company OS into a project (teams or companies topology; SoT in `templates/workspace/`) |
+| **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
 | **Habit cache (local)** | SQLite prefs for how *you* usually structure / restaff companies — `habit_cache.py` get-by-key; **gitignored**, not shared |
+| **Company registry (local)** | Inventory of subsidiaries + **family** + cross-company **`resolve`** (FE→BE handoffs without opening every ORG) — `company_registry.py`; **gitignored** per machine, not shared |
 | **Company task memory** | Per-staff SQLite — CEO `resolve --brief` into IC brief; skip re-resolve/record on reuse → ~**40%** fewer tokens after ~3 similar tasks (measured) |
 | **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
 
@@ -84,9 +83,9 @@ Two supported ways (same factory under the hood):
 
 After `curl …/install.sh | bash`, open any runtime on a project folder (or home) and talk to **`holding-ceo`**:
 
-> Create a new company for this project. Budget medium. Tech: TypeScript, React, NestJS. Project root is `/path/to/project`. Name it `my-app`. If this folder has frontend + backend, use topology teams unless I ask to split companies.
+> Create a new company for this project. Budget medium. Tech: TypeScript, React, NestJS. Project root is `/path/to/project`. Name it `my-app`.
 
-`holding-ceo` Assigns **`holding-hr`**. HR locks **topology** (`teams` \| `companies`) when there are multiple packages, then runs `create-company.sh` / `create-workspace.sh` + each `company_os.sh all`.
+`holding-ceo` Assigns **`holding-hr`**. HR deals with you on name, budget, `--tech` tags, roles/skills, then runs (or asks you to confirm) `create-company.sh` + `company_os.sh all`.
 
 ### 2) Self-serve script
 
@@ -94,7 +93,6 @@ After `curl …/install.sh | bash`, open any runtime on a project folder (or hom
 mkdir -p /path/to/project && cd /path/to/project
 git init   # optional
 
-# Single company (optional --packages for monorepo teams)
 ~/.agents/holding/system/install/create-company.sh \
   --name my-app \
   --budget medium \
@@ -104,7 +102,7 @@ git init   # optional
 
 .agents/my-app-company/system/install/company_os.sh all
 
-# Or multi-package helper (teams | companies)
+# Multi-package: teams (one company) or companies (one root per package)
 ~/.agents/holding/system/install/create-workspace.sh \
   --parent "$PWD" --topology teams --name my-app --budget medium \
   --package frontend:react --package backend:nestjs
@@ -112,7 +110,7 @@ git init   # optional
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
 
-**`companies` topology:** one `--project-root` per package (e.g. `…/frontend`, `…/backend`) so runtime adapters do not clobber each other. Parent `.agents/WORKSPACE.md` lists siblings.
+**Topologies:** `teams` = packages share one company at the parent; `companies` = each package is its own `--project-root` (see parent `.agents/WORKSPACE.md`).
 
 ---
 
@@ -122,10 +120,10 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
 
 **A1 — Via agents**
 
-1. User → **`holding-ceo`**: new company/workspace + budget + tech + packages + topology + root(s).
-2. **`holding-ceo` → `holding-hr`**: options brief (roster, skills-library tags, topology).
-3. **`holding-hr` ↔ user**: negotiate until you **confirm/lock** (include topology when multi-package).
-4. HR executes factory + `company_os.sh all`, then returns the subsidiary path(s).
+1. User → **`holding-ceo`**: new company + budget + tech hints + `--project-root`.
+2. **`holding-ceo` → `holding-hr`**: options brief (roster, skills-library tags).
+3. **`holding-hr` ↔ user**: negotiate name / budget / tech / roles until you **confirm/lock**.
+4. HR executes factory + `company_os.sh all`, then returns the subsidiary path.
 
 **A2 — Via script (self-serve)**
 
@@ -134,14 +132,7 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
   --name <slug> \
   --budget low|medium|high \
   --tech "tag1,tag2,..." \
-  --project-root /path/to/project \
-  [--packages "frontend:react,backend:nestjs"]
-
-# Multi-package parent → teams (one company) or companies (N roots)
-~/.agents/holding/system/install/create-workspace.sh \
-  --parent /path/to/parent --topology teams|companies \
-  [--name <slug>] --budget medium \
-  --package frontend:react --package backend:nestjs
+  --project-root /path/to/project
 ```
 
 | Flag | Meaning |
@@ -150,8 +141,8 @@ Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, 
 | `--budget` | Effort map for harness + hop tiers |
 | `--tech` | Tags matched against `templates/skills-library/MANIFEST.json` |
 | `--project-root` | Project directory that should own the subsidiary |
-| `--packages` | Monorepo slices → tech teams + hop routes (`teams`) |
-| `--topology` | `teams` (default) \| `companies` (via `create-workspace.sh`) |
+| `--packages` | `path[:tech],…` → tech teams + hop routes (monorepo `teams`) |
+| `--topology` | `teams` (default). Use `create-workspace.sh` for `companies` |
 
 Then:
 
@@ -171,6 +162,62 @@ python3 ~/.agents/holding/system/install/apply_budget_harness.py \
 ```
 
 **Invariant:** `po-new`, `po-modify` always keep max tier (`xhigh`), even on `low`.
+
+### C0. Company registry (holding inventory + cross-company resolve)
+
+**Feature:** a per-machine index of every subsidiary holding manages — so
+`holding-ceo` can **list**, **scan**, and **`resolve`** the right company for a
+handoff (e.g. chat frontend needs an API → pick `chat-backend-company`) without
+opening every subsidiary `ORG.md`.
+
+Store (**gitignored**, never commit / never share across machines):
+
+`~/.agents/holding/cache/companies.sqlite`
+
+```bash
+CR=~/.agents/holding/system/install/company_registry.py
+
+python3 "$CR" --help
+python3 "$CR" list                 # pretty table on TTY; --tsv for agents
+python3 "$CR" show --slug chat-frontend-company
+python3 "$CR" check                # dup slug / missing SoT paths
+
+# Discover Company OS trees already on disk; upsert into the DB:
+python3 "$CR" scan
+python3 "$CR" scan --register
+python3 "$CR" scan --root ~/Documents --max-depth 8
+
+# SoT deleted on disk but still listed:
+python3 "$CR" prune
+python3 "$CR" prune --forget --i-am-human
+
+# Family (slug order can vary — set explicitly):
+#   chat-backend, web-chat-api  →  --family chat
+#   retail-frontend, api-retail →  --family retail
+python3 "$CR" set-family --slug chat-backend-company --family chat
+create-company.sh … --family chat   # also accepted at create time
+
+# Optional explicit edge + token-cheap handoff:
+python3 "$CR" relate --from chat-frontend-company --to chat-backend-company \
+  --kind api --bidirectional
+python3 "$CR" related --slug chat-frontend-company
+python3 "$CR" resolve --from chat-frontend-company --need api
+# → pick / project_root / channel=ceo  — Assign that subsidiary ceo only
+
+# Factory auto-registers; manual one-off:
+python3 "$CR" register \
+  --slug chat-frontend-company \
+  --project-root /path/to/chat-web \
+  --company-path /path/to/chat-web/.agents/chat-frontend-company \
+  --budget medium --topology companies --family chat --packages frontend
+
+# Same slug at two folders → check warns; archive renames SoT only:
+python3 "$CR" archive --id <id> --i-am-human
+```
+
+Docs: [`holding/cache/COMPANIES.md`](holding/cache/COMPANIES.md).
+
+**Score order for `resolve`:** explicit `relate` > same **family** > packages/tech/path.
 
 ### C. Hiring — always through holding
 
@@ -197,13 +244,17 @@ You may still run factory / `apply_budget_harness.py` yourself when the lock is 
 
 ### D. Multi-company work
 
-Cross-company asks (e.g. frontend needs a new backend API) go:
+Cross-company asks (e.g. chat frontend needs a new backend API) go:
 
 ```text
-frontend ceo → holding-ceo → backend ceo → … → result back up
+frontend ceo → holding-ceo
+  → company_registry.py resolve --from <fe> --need api
+  → Assign backend ceo only (short English brief)
+  → … → result back up
 ```
 
-Never hop straight from one subsidiary IC to another company’s IC.
+Prefer **`resolve` / `related`** (and `--family` / `relate`) over browsing every
+company tree. Never hop straight from one subsidiary IC to another company’s IC.
 
 ### E. Who talks to the user
 
@@ -224,11 +275,13 @@ agents-holding/
 ├── holding/                  # conglomerate SoT
 │   ├── COMPANY.md
 │   ├── COMPANY_BOOT.md
+│   ├── cache/
+│   │   └── COMPANIES.md      # company registry docs (sqlite is local/gitignored)
 │   └── system/
 │       ├── staffs/           # holding-ceo, holding-hr, holding-coordinator
 │       ├── harness/          # grok.toml, codex.toml, claude.toml
 │       ├── skills/defaults/marlin-hop/
-│       └── install/          # factory + company_os + budget tools
+│       └── install/          # factory + company_os + company_registry + budget
 └── templates/
     ├── company/              # cloned into each new subsidiary
     ├── skills-library/       # optional customs by --tech
@@ -282,6 +335,13 @@ See `templates/skills-library/MANIFEST.json` and `SOURCES.md`.
 1. Subsidiary notifies `holding-ceo` (“missing Swift for Call”)
 2. `holding-hr` deals with you
 3. Lock → staffs/customs/hop updated
+
+### Multi-company handoff (registry)
+
+1. Create each package as its own company (`create-workspace.sh --topology companies`) with `--family` (e.g. `chat`, `retail`)
+2. Optional: `relate --from chat-frontend-company --to chat-backend-company --kind api --bidirectional`
+3. When FE needs an API: talk to **`holding-ceo`** → runs `resolve --from … --need api` → Assigns **backend `ceo` only**
+4. Backfill existing trees anytime: `company_registry.py scan --register`
 
 ---
 

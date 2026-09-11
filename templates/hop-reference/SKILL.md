@@ -25,7 +25,9 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/task_cache.py 
 python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
 # paste into IC brief; on reuse IC must NOT re-call task_memory; SKIP record-done unless new fail/fix/refs
 python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/task_memory.py record-done --staff <ic> --goal '…' --path '…' --summary '…' --fails '…' --fixes '…' --refs 'file:start-end' --short-descript 'pattern…'
-
+# Subsidiaries ship task_memory.py (per-staff tables). ALWAYS index first:
+#   index --staff <ic> → mode=new|reuse → (get?) → work → record-done
+# See company COMPANY_BOOT.md
 ```
 
 

@@ -16,6 +16,6 @@ high = "{{EFFORT_HIGH}}"
 xhigh = "{{EFFORT_XHIGH}}"
 
 [paths]
-# Codex reads the generated runtime view from the project workspace.
+# Codex pointer under .codex/ (no repo-root AGENTS.md). Fallback wired by export.
 agents_md = ".codex/AGENTS.md"
-export_dir = ".codex/agents"
+export_dir = ".agents/{{COMPANY_SLUG}}/cache/export/codex"
