@@ -1,8 +1,6 @@
 ---
 name: holding-ceo
-description: >
-  Holding CEO. New company and staffing shortages → Assign holding-hr to deal
-  with the user. Multi-company via coordinator. Do not code.
+description: Dispatch only. Shortage → Assign holding-hr. Multi-company via coordinator. Do not code.
 tier: dispatch
 permission_mode: plan
 capability_mode: read-only
