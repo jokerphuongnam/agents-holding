@@ -28,6 +28,7 @@ Re-run the same command anytime after you push updates.
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
 | **Habit cache (local)** | SQLite prefs for how *you* usually structure / restaff companies — `habit_cache.py` get-by-key; **gitignored**, not shared |
+| **Company registry (local)** | Inventory of subsidiaries + **family** + cross-company **`resolve`** (FE→BE handoffs without opening every ORG) — `company_registry.py`; **gitignored** per machine, not shared |
 | **Company task memory** | Per-staff SQLite — CEO `resolve --brief` into IC brief; skip re-resolve/record on reuse → ~**40%** fewer tokens after ~3 similar tasks (measured) |
 | **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
 
@@ -162,6 +163,62 @@ python3 ~/.agents/holding/system/install/apply_budget_harness.py \
 
 **Invariant:** `po-new`, `po-modify` always keep max tier (`xhigh`), even on `low`.
 
+### C0. Company registry (holding inventory + cross-company resolve)
+
+**Feature:** a per-machine index of every subsidiary holding manages — so
+`holding-ceo` can **list**, **scan**, and **`resolve`** the right company for a
+handoff (e.g. chat frontend needs an API → pick `chat-backend-company`) without
+opening every subsidiary `ORG.md`.
+
+Store (**gitignored**, never commit / never share across machines):
+
+`~/.agents/holding/cache/companies.sqlite`
+
+```bash
+CR=~/.agents/holding/system/install/company_registry.py
+
+python3 "$CR" --help
+python3 "$CR" list                 # pretty table on TTY; --tsv for agents
+python3 "$CR" show --slug chat-frontend-company
+python3 "$CR" check                # dup slug / missing SoT paths
+
+# Discover Company OS trees already on disk; upsert into the DB:
+python3 "$CR" scan
+python3 "$CR" scan --register
+python3 "$CR" scan --root ~/Documents --max-depth 8
+
+# SoT deleted on disk but still listed:
+python3 "$CR" prune
+python3 "$CR" prune --forget --i-am-human
+
+# Family (slug order can vary — set explicitly):
+#   chat-backend, web-chat-api  →  --family chat
+#   retail-frontend, api-retail →  --family retail
+python3 "$CR" set-family --slug chat-backend-company --family chat
+create-company.sh … --family chat   # also accepted at create time
+
+# Optional explicit edge + token-cheap handoff:
+python3 "$CR" relate --from chat-frontend-company --to chat-backend-company \
+  --kind api --bidirectional
+python3 "$CR" related --slug chat-frontend-company
+python3 "$CR" resolve --from chat-frontend-company --need api
+# → pick / project_root / channel=ceo  — Assign that subsidiary ceo only
+
+# Factory auto-registers; manual one-off:
+python3 "$CR" register \
+  --slug chat-frontend-company \
+  --project-root /path/to/chat-web \
+  --company-path /path/to/chat-web/.agents/chat-frontend-company \
+  --budget medium --topology companies --family chat --packages frontend
+
+# Same slug at two folders → check warns; archive renames SoT only:
+python3 "$CR" archive --id <id> --i-am-human
+```
+
+Docs: [`holding/cache/COMPANIES.md`](holding/cache/COMPANIES.md).
+
+**Score order for `resolve`:** explicit `relate` > same **family** > packages/tech/path.
+
 ### C. Hiring — always through holding
 
 Subsidiaries **do not** add staffs themselves.
@@ -187,13 +244,17 @@ You may still run factory / `apply_budget_harness.py` yourself when the lock is 
 
 ### D. Multi-company work
 
-Cross-company asks (e.g. frontend needs a new backend API) go:
+Cross-company asks (e.g. chat frontend needs a new backend API) go:
 
 ```text
-frontend ceo → holding-ceo → backend ceo → … → result back up
+frontend ceo → holding-ceo
+  → company_registry.py resolve --from <fe> --need api
+  → Assign backend ceo only (short English brief)
+  → … → result back up
 ```
 
-Never hop straight from one subsidiary IC to another company’s IC.
+Prefer **`resolve` / `related`** (and `--family` / `relate`) over browsing every
+company tree. Never hop straight from one subsidiary IC to another company’s IC.
 
 ### E. Who talks to the user
 
@@ -214,11 +275,13 @@ agents-holding/
 ├── holding/                  # conglomerate SoT
 │   ├── COMPANY.md
 │   ├── COMPANY_BOOT.md
+│   ├── cache/
+│   │   └── COMPANIES.md      # company registry docs (sqlite is local/gitignored)
 │   └── system/
 │       ├── staffs/           # holding-ceo, holding-hr, holding-coordinator
 │       ├── harness/          # grok.toml, codex.toml, claude.toml
 │       ├── skills/defaults/marlin-hop/
-│       └── install/          # factory + company_os + budget tools
+│       └── install/          # factory + company_os + company_registry + budget
 └── templates/
     ├── company/              # cloned into each new subsidiary
     ├── skills-library/       # optional customs by --tech
@@ -272,6 +335,13 @@ See `templates/skills-library/MANIFEST.json` and `SOURCES.md`.
 1. Subsidiary notifies `holding-ceo` (“missing Swift for Call”)
 2. `holding-hr` deals with you
 3. Lock → staffs/customs/hop updated
+
+### Multi-company handoff (registry)
+
+1. Create each package as its own company (`create-workspace.sh --topology companies`) with `--family` (e.g. `chat`, `retail`)
+2. Optional: `relate --from chat-frontend-company --to chat-backend-company --kind api --bidirectional`
+3. When FE needs an API: talk to **`holding-ceo`** → runs `resolve --from … --need api` → Assigns **backend `ceo` only**
+4. Backfill existing trees anytime: `company_registry.py scan --register`
 
 ---
 

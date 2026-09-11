@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Generate harness adapters from Company SoT (.agents/marlin-language-company/).
+# Generate harness adapters from Holding Company OS (.agents/holding/ or ~/.agents/holding/).
 set -euo pipefail
 
 INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SYSTEM_DIR="$(cd "$INSTALL_DIR/.." && pwd)"
 COMPANY_DIR="$(cd "$SYSTEM_DIR/.." && pwd)"
-# Company = <repo>/.agents/marlin-language-company
+# Holding = <root>/.agents/holding — root is repo or HOME when installed to ~/.agents/holding
 if [[ "$(basename "$(dirname "$COMPANY_DIR")")" == ".agents" ]]; then
   ROOT="$(cd "$COMPANY_DIR/../.." && pwd)"
 else
@@ -16,16 +16,17 @@ HARNESS_DIR="$SYSTEM_DIR/harness"
 
 usage() {
   cat <<'USAGE'
-Generate Company OS views for a harness (setup which harness → generate that one).
+Generate Holding Company OS views for a harness (setup which harness → generate that one).
 
 Usage:
-  .agents/marlin-language-company/system/install/company_os.sh <harness|all>
-  .agents/marlin-language-company/system/install/company_os.sh --list
-  .agents/marlin-language-company/system/install/company_os.sh -h
+  .agents/holding/system/install/company_os.sh <harness|all>
+  .agents/holding/system/install/company_os.sh --list
+  .agents/holding/system/install/company_os.sh -h
 
 Examples:
-  .agents/marlin-language-company/system/install/company_os.sh grok
-  .agents/marlin-language-company/system/install/company_os.sh all
+  .agents/holding/system/install/company_os.sh grok
+  .agents/holding/system/install/company_os.sh all
+  ~/.agents/holding/system/install/company_os.sh all
 
 Harness = system/harness/<id>.toml — [paths] say where that agent reads adapters.
 USAGE
@@ -44,9 +45,9 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || $# -lt 1 ]]; then
   exit 0
 fi
 
-echo "[company_os] repo=$ROOT"
-echo "[company_os] company=$COMPANY_DIR"
+echo "[company_os] root=$ROOT"
+echo "[company_os] holding=$COMPANY_DIR"
 echo "[company_os] generate harness=$1"
 cd "$ROOT"
 python3 "$EXPORT" --to "$1"
-echo "[company_os] done — see .agents/marlin-language-company/README.md"
+echo "[company_os] done — see holding README.md / COMPANY_BOOT.md"
