@@ -60,6 +60,8 @@ rsync_or_cp() {
       --exclude 'cache/export/' --exclude 'cache/cache/' \
       --exclude 'cache/user_habits.sqlite' --exclude 'cache/user_habits.sqlite-*' \
       --exclude 'cache/user_habits/' \
+      --exclude 'cache/companies.sqlite' --exclude 'cache/companies.sqlite-*' \
+      --exclude 'cache/companies/' \
       "$src" "$dst"
   else
     rm -rf "$dst"
@@ -128,6 +130,9 @@ holding/cache/cache/**
 holding/cache/user_habits.sqlite
 holding/cache/user_habits.sqlite-*
 holding/cache/user_habits/
+holding/cache/companies.sqlite
+holding/cache/companies.sqlite-*
+holding/cache/companies/
 **/cache/cache/task_memory.sqlite
 **/cache/cache/task_memory.sqlite-*
 *.tmp

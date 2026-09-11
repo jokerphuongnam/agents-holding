@@ -11,16 +11,15 @@ from pathlib import Path
 ALWAYS = [
     # name, tier, perm, cap, skill, lead, qc, routing, blurb
     # Leads stay dispatch (maps low). Plan writers po-* stay xhigh via budget policy.
-    ("ba-lead", "dispatch", "plan", "read-only", "", "product-lead", "", "1", "BA lead — assign ba-user vs ba-workflow. Not user channel."),
-    ("ba-user", "medium", "plan", "read-only", "", "product-lead", "", "1", "Clarify ask with user; design intake. User channel with ceo."),
+    ("ba-lead", "dispatch", "plan", "read-only", "", "", "", "1", "BA lead — assign ba-user vs ba-workflow. Not user channel."),
+    ("ba-user", "medium", "plan", "read-only", "", "ba-lead", "", "1", "Clarify ask with user; design intake. User channel with ceo."),
     ("ba-workflow", "medium", "default", "all", "", "ba-lead", "", "0", "Jira/tickets/process tooling. Not user channel."),
-    ("ceo", "dispatch", "plan", "read-only", "marlin-hop", "", "", "1", "Dispatch only. Product→product-lead; cross-team up-then-down; slim plan_dir+read."),
+    ("ceo", "dispatch", "plan", "read-only", "marlin-hop", "", "", "1", "Dispatch only. hop then spawn IC/lead. Do not code."),
     ("cto", "dispatch", "plan", "read-only", "", "", "", "1", "Multi-team architecture; recommend tech teams. Do not code."),
     ("git", "low", "default", "all", "", "", "", "0", "git add/commit/branch/push/gitignore gate."),
-    ("po-lead", "dispatch", "plan", "read-only", "", "product-lead", "", "1", "Optional PO lead; default product-lead Assigns po-* directly."),
-    ("po-modify", "xhigh", "default", "all", "", "product-lead", "", "0", "AC + update existing cache/plans/. Not new plan files."),
-    ("po-new", "xhigh", "default", "all", "", "product-lead", "", "0", "Create one new plan under cache/plans/."),
-    ("product-lead", "dispatch", "plan", "read-only", "marlin-hop", "", "", "1", "Product lead — CEO first; ba-user/po only; Result to CEO with plan_dir+read."),
+    ("po-lead", "dispatch", "plan", "read-only", "", "", "", "1", "PO lead — assign po-new vs po-modify. Does not write plans."),
+    ("po-modify", "xhigh", "default", "all", "", "po-lead", "", "0", "AC + update existing cache/plans/. Not new plan files."),
+    ("po-new", "xhigh", "default", "all", "", "po-lead", "", "0", "Create one new plan under cache/plans/."),
     ("qc-lead", "dispatch", "plan", "read-only", "", "", "", "1", "Assign matching *-qc; adapt QC shape to this company."),
     ("tech-lead", "dispatch", "plan", "read-only", "", "", "", "1", "Slice design. Not CTO. Not a default coder. Lives on seeded tech team."),
 ]
@@ -245,21 +244,19 @@ def main() -> int:
 
     agents = list(ALWAYS)
     roster: list[tuple[str, str]] = [
-        ("ceo", "product-lead"),
-        ("product-lead", "ba-lead"),
-        ("product-lead", "ba-user"),
-        ("product-lead", "po-new"),
-        ("product-lead", "po-modify"),
+        ("ceo", "ba-lead"),
         ("ba-lead", "ba-user"),
         ("ba-lead", "ba-workflow"),
         ("ceo", "cto"),
         ("ceo", "git"),
+        ("ceo", "po-lead"),
+        ("po-lead", "po-modify"),
+        ("po-lead", "po-new"),
         ("ceo", "qc-lead"),
         ("ceo", "tech-lead"),
         ("cto", "tech-lead"),
     ]
-    # plans/ → product-lead (decides po-new vs po-modify; never paste full plan down)
-    routes: list[tuple[str, str]] = [("cache/plans/", "product-lead")]
+    routes: list[tuple[str, str]] = []
 
     want_design = is_frontend(effective_tech) or bool(pkg_kinds & {"frontend", "mobile"})
     if want_design:
@@ -319,13 +316,13 @@ def main() -> int:
             end = text.find("\ndef main()", start)
             if end > start:
                 new_fn = '''def self_test() -> int:
-    # Generic company: agents.tsv loads; roster has ceo→product-lead→ba-user/po-*.
+    # Generic company: agents.tsv loads; roster has ceo→ba-lead and ba-user.
     bad = 0
     if "ceo" not in AGENTS:
         print("FAIL missing ceo in agents.tsv", file=sys.stderr)
         bad += 1
-    if "product-lead" not in AGENTS:
-        print("FAIL missing product-lead in agents.tsv", file=sys.stderr)
+    if "ba-lead" not in AGENTS:
+        print("FAIL missing ba-lead in agents.tsv", file=sys.stderr)
         bad += 1
     if "ba-user" not in AGENTS:
         print("FAIL missing ba-user in agents.tsv", file=sys.stderr)

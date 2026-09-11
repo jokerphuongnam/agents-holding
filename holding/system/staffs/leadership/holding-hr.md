@@ -43,14 +43,42 @@ CEO hands you either:
 0. **Habit prior (optional, 2-step):** `habit_cache.py propose` (or `index`) →
    pick **one** key from `key` + `short_descript` → `get --key` for `work`.
    Do **not** open SQLite / `dump`. Prior only; user lock still required.
-1. Inventory that company (`staffs/`, hop TSV, customs, `BUDGET_APPLIED.json`,
-   skills-library `MANIFEST.json`).
+1. **Registry (new company / ambiguous slug):** 
+   `company_registry.py check --slug <slug>` or `list`. Same slug at two
+   roots → warn + suggest `archive --id … --i-am-human` (SoT rename only) or
+   rename slug. Inventory the target company (`staffs/`, hop TSV, customs,
+   `BUDGET_APPLIED.json`, skills-library `MANIFEST.json`).
 2. **Open the hiring deal with the user** (options + recommendations; mention
    when a line came from habit `work`).
 3. Negotiate until user **confirms/locks**.
-4. Execute SoT + harness; remind `company_os.sh all`.
+4. Execute SoT + harness; remind `company_os.sh all`. Factory
+   `create-company.sh` **auto-registers** into holding `companies.sqlite`
+   (local/gitignored — never commit).
 5. **`habit_cache.py record-bundle`** (or `record`) with the **locked** outcome.
 6. Report done to `holding-ceo` (and subsidiary may resume product work).
+
+## Company registry (inventory)
+
+Local conglomerate index (gitignored SQLite). **Not** habit prefs.
+
+```bash
+CR=".agents/holding/system/install/company_registry.py"
+# ~/.agents/holding/system/install/company_registry.py
+
+python3 "$CR" list
+python3 "$CR" scan --register
+python3 "$CR" prune --forget --i-am-human
+python3 "$CR" relate --from fe-company --to be-company --kind api --bidirectional
+python3 "$CR" resolve --from fe-company --need api
+python3 "$CR" show --slug calldemoapp-company
+# Stale SoT only (renames .agents/<slug>-company → *-archived-TIMESTAMP):
+python3 "$CR" archive --id <id> --i-am-human
+```
+
+After `create-workspace.sh --topology companies`, **relate** sibling companies
+(FE↔BE↔mobile) so later handoffs use `resolve` instead of browsing every tree.
+
+See `cache/COMPANIES.md`.
 
 ## User habit cache
 

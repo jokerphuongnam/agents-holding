@@ -26,6 +26,7 @@ TECH=""
 PROJECT_ROOT=""
 TOPOLOGY="teams"
 PACKAGES=""
+FAMILY=""
 DRY=0
 
 usage() {
@@ -35,6 +36,7 @@ Create a subsidiary Company OS tree from templates/company.
   create-company.sh --name <slug> --budget low|medium|high […] \
     [--tech "a,b,c"] [--project-root <path>] \
     [--topology teams|companies] [--packages "frontend:react,backend:nestjs"] \
+    [--family chat] \
     [--dry-run]
 
 Result:
@@ -52,11 +54,9 @@ Holding may live in-repo (.agents/holding) or system (~/.agents/holding).
 Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script
   (or create-workspace.sh for multi-package parents).
 
-Always-on staffs: ceo, cto, product-lead, ba-lead (+ ba-user, ba-workflow),
-po-new/po-modify (optional po-lead), git, qc-lead, tech-lead (on seeded tech team).
+Always-on staffs: ceo, cto, ba-lead (+ ba-user, ba-workflow), po-lead (+ po-*),
+git, qc-lead, tech-lead (on seeded tech team, not cross-cut).
 Leads = dispatch/low; ba-user/ba-workflow = medium; po-* writers = xhigh.
-Product: ceo→product-lead→ba-user→product-lead→(po-*)?→Result→ceo→eng.
-Cross-team: always up to CEO; slim plan_dir+read (never paste full plans).
 USAGE
 }
 
@@ -68,6 +68,7 @@ while [[ $# -gt 0 ]]; do
     --project-root) PROJECT_ROOT="${2:-}"; shift 2 ;;
     --topology) TOPOLOGY="${2:-}"; shift 2 ;;
     --packages) PACKAGES="${2:-}"; shift 2 ;;
+    --family) FAMILY="${2:-}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown arg: $1" >&2; usage; exit 2 ;;
@@ -430,13 +431,7 @@ User channel: \`ceo\` / \`ba-user\` only.
 Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
 
 0. **Always** \`task_cache.py show\` first. Same goal → resume. New goal → \`clear\` then set.
-1. **Product:** CEO → **\`product-lead\`** first → \`ba-user\` (user talk) →
-   \`product-lead\` → (\`po-new\`|\`po-modify\` if needed) → **## Result → CEO** → eng.
-   Product-lead does **not** spawn eng.
-2. **Cross-team (all roles):** need another team → always **up to CEO**, then CEO
-   spawns down. Slim brief = goal + paths + optional \`plan_dir\` + \`read\` loci —
-   **never** paste the full plan through the chain. Strict lane per staff.
-3. **Memory (parent prefetch — required for savings):**
+1. **Memory (parent prefetch — required for savings):**
    \`\`\`bash
    python3 …/task_memory.py resolve --staff <ic> --path <file> [--goal '…'] --brief
    \`\`\`
@@ -445,11 +440,11 @@ Scripts: \`.agents/$SLUG/system/skills/defaults/marlin-hop/scripts/\`
    - \`mode=reuse\` → IC applies fails/fixes/refs from the brief; **MUST NOT** call
      \`task_memory\` again; **SKIP** \`record-done\` unless a new fail/fix/refs was learned.
    - Each IC only \`--staff\` = own \`name:\`. Never full-file cache.
-4. Assign **one** IC. Do **not** read all of ORG or all customs.
-5. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
-6. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
-7. Multi-company / hire → holding \`holding-ceo\`.
-8. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
+2. Assign **one** IC. Do **not** read all of ORG or all customs.
+3. IC loads **at most one** customs \`SKILL.md\`. Prefer seeded \`backend/\` + \`frontend/\`.
+4. After assign: \`task_cache.py set --goal '...' --path '...' --role <ic>\`
+5. Multi-company / hire → holding \`holding-ceo\`.
+6. Budget **low** tests: minimal API unit + one RTL smoke; skip e2e unless asked.
 
 \`task_cache\` = active pointer. \`task_memory\` = per-staff SQLite
 \`cache/cache/task_memory.sqlite\` (local/gitignored).
@@ -503,6 +498,23 @@ NOTE
   echo "[create-company] task_memory ready: $TM"
 else
   echo "[create-company] warn: task_memory.py missing from hop-reference" >&2
+fi
+
+# Holding conglomerate registry (local gitignored sqlite)
+REG="$HOLDING_INSTALL/company_registry.py"
+if [[ -f "$REG" ]]; then
+  python3 "$REG" register \
+    --slug "$SLUG" \
+    --project-root "$PARENT_FOR_WS" \
+    --company-path "$DEST" \
+    --budget "$BUDGET" \
+    --topology "$TOPOLOGY" \
+    --tech "${TECH:-}" \
+    --packages "${PACKAGES:-}" \
+    --family "${FAMILY:-}" \
+    || echo "[create-company] warn: company_registry register failed" >&2
+else
+  echo "[create-company] warn: company_registry.py missing" >&2
 fi
 
 echo "[create-company] done: $DEST"

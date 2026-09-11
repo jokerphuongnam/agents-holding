@@ -57,6 +57,14 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 7. **Habits (optional):** HR may `habit_cache.py propose` once (new-company /
    restaff) for a compact prior — never open the SQLite blob; never skip lock.
    Data is local/gitignored (`cache/user_habits.sqlite`).
+8. **Company registry (inventory):** `company_registry.py list|check|show` —
+   conglomerate index of slug + project root (local/gitignored
+   `cache/companies.sqlite`; each machine differs — never commit). Factory
+   auto-registers on create. Dup slug → warn; `archive --i-am-human` renames
+   SoT only. See `cache/COMPANIES.md`.
+9. **Cross-company handoff:** `relate` sibling companies (FE↔BE↔mobile), then
+   `resolve --from <requesting> --need api` → Assign **target `ceo` only**.
+   Do not open every subsidiary ORG; do not Assign foreign ICs.
 
 ## Portable vs vendor
 
@@ -69,7 +77,7 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 | Runtime | Boot artifact |
 | --- | --- |
 | Grok | `.agents/holding/cache/export/grok/` + flat links under `.grok/agents` |
-| Codex | generated project `.codex/AGENTS.md` and `.codex/agents/` |
+| Codex | `.agents/holding/cache/export/codex/AGENTS.md` (not repo-root, not `~/.codex/AGENTS.md`) |
 | Claude | `.agents/holding/cache/export/claude-runtime/` tree mounts (avoids clobbering project `.claude`) |
 
 Re-generate: `.agents/holding/system/install/company_os.sh <harness|all>`

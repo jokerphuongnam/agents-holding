@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import agents_home, company_relposix, load_agents, load_tsv
+from common import agents_home, company_relposix, load_tsv
 
 try:
     import tomllib
@@ -279,7 +279,6 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
     out = _resolve_path(root, agents_rel)
     out.parent.mkdir(parents=True, exist_ok=True)
     rows = sorted(load_tsv("agents.tsv"), key=lambda r: r.get("name", ""))
-    source_roles = load_agents(home)
     guidance = cfg.get("tier_guidance") or {}
     boot = cfg.get("boot") or {}
     hop = f"python3 {company}/system/skills/defaults/marlin-hop/scripts/hop.py"
@@ -298,26 +297,6 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
             f"{hop} --list --harness {hid}",
             f"{company}/system/install/company_os.sh {hid}",
             "```",
-            "",
-            "## Codex execution contract",
-            "",
-            "When the user addresses the CEO, run the Company OS flow automatically. Use the "
-            "actual `multi_agent_v1__spawn_agent` tool for delegated stages; do not merely "
-            "role-play the chain:",
-            "",
-            "```text",
-            "Product: CEO → product-lead → ba-user → product-lead → (po-new|po-modify)? → ## Result → CEO → eng",
-            "Eng:     CEO → [team-lead] → IC → *-qc  (QC only after IC done)",
-            "Cross-team: always ## Result/Escalate UP to CEO, then CEO hops down.",
-            "Slim brief: goal + paths + optional plan_dir + read loci — never paste full plans.",
-            "```",
-            "",
-            "Resolve the exact role with `hop.py --path <file> --harness codex`. Start every "
-            "spawn prompt with `COMPANY_OS_ROLE: <exact hop role>` and "
-            "`COMPANY_OS_PARENT: <parent role>`. The UI nickname is not the role identity. "
-            "Use the generated role card under `.codex/agents/` as the brief. A dispatch "
-            "role must spawn its next role; a leaf IC must not spawn. Product-lead must not "
-            "spawn eng — report up to CEO with `plan_dir`/`read` only.",
             "",
         ]
     )
@@ -377,17 +356,6 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
         mirror = _resolve_path(root, str(export_rel))
         mirror.mkdir(parents=True, exist_ok=True)
         (mirror / "AGENTS.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-        role_names = {f"{r.get('name')}.md" for r in rows if r.get("name")}
-        for existing in mirror.glob("*.md"):
-            if existing.name not in role_names and existing.name not in {"AGENTS.md", "README.md"}:
-                existing.unlink(missing_ok=True)
-        for row in rows:
-            name = row.get("name")
-            source = (source_roles.get(name) or {}).get("file")
-            if name and source and Path(source).is_file():
-                (mirror / f"{name}.md").write_text(
-                    Path(source).read_text(encoding="utf-8"), encoding="utf-8"
-                )
         (mirror / "README.md").write_text(
             f"Generated `{hid}` roster mirror. Boot pointer: `{agents_rel}`.\n",
             encoding="utf-8",
@@ -540,8 +508,7 @@ def main() -> int:
     else:
         targets = [target]
 
-    skip_normalize_for_codex = target == "codex"
-    if not args.skip_sot_normalize and not skip_normalize_for_codex:
+    if not args.skip_sot_normalize:
         n = normalize_sot_portable(home)
         print(f"sot: normalized {n} portable role cards")
 
