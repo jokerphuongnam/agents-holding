@@ -30,7 +30,7 @@ Re-run the same command anytime after you push updates.
 | **Habit cache (local)** | SQLite prefs for how *you* usually structure / restaff companies — `habit_cache.py` get-by-key; **gitignored**, not shared |
 | **Company registry (local)** | Inventory of subsidiaries + **family** + cross-company **`resolve`** (FE→BE handoffs without opening every ORG) — `company_registry.py`; **gitignored** per machine, not shared |
 | **Company task memory** | Per-staff SQLite — CEO `resolve --brief` into IC brief; skip re-resolve/record on reuse → ~**40%** fewer tokens after ~3 similar tasks (measured) |
-| **Multi-runtime** | `company_os.sh` generates adapters for Grok (`.grok/agents`), Codex (`.codex/`), Claude (runtime dir) |
+| **Multi-runtime (optional split)** | Default: full roster on every vendor. Opt-in `runtime_router.toml` (`enabled = true`) so each generate only includes mapped roles (e.g. ceo→grok, ba/po→codex, *-dev→claude). SoT staffs unchanged. |
 
 ---
 
@@ -279,7 +279,7 @@ agents-holding/
 │   │   └── COMPANIES.md      # company registry docs (sqlite is local/gitignored)
 │   └── system/
 │       ├── staffs/           # holding-ceo, holding-hr, holding-coordinator
-│       ├── harness/          # grok.toml, codex.toml, claude.toml
+│       ├── harness/          # grok/codex/claude.toml + optional runtime_router.toml
 │       ├── skills/defaults/marlin-hop/
 │       └── install/          # factory + company_os + company_registry + budget
 └── templates/
@@ -312,6 +312,56 @@ See `templates/skills-library/MANIFEST.json` and `SOURCES.md`.
 | **Claude** | Runtime tree / symlinks per `claude.toml` |
 
 **Rule:** edit SoT under `holding/` or `<slug>-company/` only; regenerate adapters — do not hand-polish generated folders as the source of truth.
+
+---
+
+## One vendor vs many vendors (runtime_router)
+
+Not everyone wants cross-agent setup. Company OS supports both:
+
+| Mode | Config | What `company_os.sh all` does |
+| --- | --- | --- |
+| **Single vendor** (default) | `system/harness/runtime_router.toml` → `enabled = false` (or ignore the file) | **Full roster** on Grok **and** Codex **and** Claude — open whichever CLI you use; same company SoT |
+| **Split vendors** (opt-in) | set `enabled = true` + edit `[[roles]]` | Each generate includes **only** roles mapped to that runtime |
+
+Example split (edit to taste; SoT `staffs/**` / `agents.tsv` stay portable):
+
+```toml
+# .agents/<slug>-company/system/harness/runtime_router.toml
+enabled = true
+
+[[roles]]
+match = "ceo"
+runtime = "grok"
+
+[[roles]]
+match = "ba-*"
+runtime = "codex"
+
+[[roles]]
+match = "po-*"
+runtime = "codex"
+
+[[roles]]
+match = "*-dev"
+runtime = "claude"
+
+[[roles]]
+match = "*"
+runtime = "grok"
+```
+
+```bash
+# After editing:
+python3 .agents/<slug>-company/system/skills/defaults/marlin-hop/scripts/runtime_router.py check
+python3 …/runtime_router.py match --role ba-lead    # → codex
+.agents/<slug>-company/system/install/company_os.sh all
+```
+
+- **Same runtime Assign** → native spawn in the current CLI.  
+- **Cross-runtime Assign** → `runtime_router.py assign --from ceo --to <role> --goal '…'` (handoff under `cache/handoff/`; `--execute` to invoke the other CLI). Requires that CLI installed + logged in; missing bin → **error** (no silent fallback).
+
+Shipped template: [`templates/company/system/harness/runtime_router.toml`](templates/company/system/harness/runtime_router.toml) · short guide: [`templates/company/system/harness/README.md`](templates/company/system/harness/README.md).
 
 ---
 
