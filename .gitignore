@@ -10,6 +10,8 @@ holding/cache/user_habits/
 holding/cache/companies.sqlite
 holding/cache/companies.sqlite-*
 holding/cache/companies/
+**/cache/children.sqlite
+**/cache/children.sqlite-*
 **/cache/cache/task_memory.sqlite
 **/cache/cache/task_memory.sqlite-*
 *.tmp

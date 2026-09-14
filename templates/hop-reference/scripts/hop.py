@@ -37,6 +37,15 @@ for r in _ROSTER:
     if p and c and p != "ceo":
         LEAD_BELOW.setdefault(p, []).append(c)
 
+# Optional parent→child handoff table (holding→company analogy, nested).
+# columns: prefix, slug, company_path
+_CHILDREN_ROWS = load_tsv("children.tsv") if (Path(__file__).resolve().parents[1] / "data" / "children.tsv").is_file() else []
+CHILDREN: list[tuple[str, str, str]] = [
+    (r["prefix"], r["slug"], r["company_path"])
+    for r in _CHILDREN_ROWS
+    if r.get("prefix") and r.get("slug") and r.get("company_path")
+]
+
 
 LIBRARY_LESSONS = re.compile(
     r"(?:^|/)(?:18_foundation|19_secure|21_unittest|22_networking|23_database|errors/21_)"
@@ -76,6 +85,29 @@ def norm_path(p: str) -> str:
     return s
 
 
+def child_for_path(path: str) -> tuple[str, str, str] | None:
+    """Longest-prefix match in children.tsv → (prefix, slug, company_path)."""
+    if not CHILDREN:
+        return None
+    p = norm_path(path)
+    hits = [
+        (pref, slug, cpath)
+        for pref, slug, cpath in CHILDREN
+        if p == pref.rstrip("/") or p.startswith(pref) or f"/{pref}" in f"/{p}"
+    ]
+    if not hits:
+        # also allow match when path contains children/<stem>/
+        for pref, slug, cpath in CHILDREN:
+            stem = slug[: -len("-company")] if slug.endswith("-company") else slug
+            needle = f"children/{stem}/"
+            if needle in p or p.endswith(f"children/{stem}") or p.endswith(stem + "-company") or f"/{stem}-company/" in f"/{p}/":
+                hits.append((pref, slug, cpath))
+    if not hits:
+        return None
+    hits.sort(key=lambda x: len(x[0]), reverse=True)
+    return hits[0]
+
+
 def agent_for_path(path: str) -> str | None:
     p = norm_path(path)
     # Marlin authoring split (not C++ product ICs)
@@ -93,6 +125,38 @@ def agent_for_path(path: str) -> str | None:
         return None
     hits.sort(key=lambda x: len(x[0]), reverse=True)
     return hits[0][1]
+
+
+def emit_child_handoff(slug: str, company_path: str, harness: str = "grok") -> None:
+    """Token-cheap parent→child: spawn only the child company ceo."""
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: child")
+    print(f"child_slug: {slug}")
+    print(f"child_company: {company_path}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: ONLY that child company's ceo with a short goal "
+        "(path + done-when). Do not load child staffs/ORG/skills."
+    )
+    print(
+        "do_not: deep-spawn child ICs from here; open sibling children; "
+        "scan full parent tree"
+    )
+    print(
+        "child_flow: child ceo hops its own staffs inside the child folder only; "
+        "may escalate back to this parent ceo for more grants/info"
+    )
 
 
 def agent_for_section(section: str) -> str | None:
@@ -246,6 +310,12 @@ def main() -> int:
     elif args.lesson:
         agent = agent_for_lesson(args.lesson)
     elif args.path:
+        # Parent→child handoff first (cheap): never deep-route into child staffs here
+        ch = child_for_path(args.path)
+        if ch:
+            _pref, slug, cpath = ch
+            emit_child_handoff(slug, cpath, harness)
+            return 0
         agent = agent_for_path(args.path)
     else:
         ap.print_help()

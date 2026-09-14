@@ -25,6 +25,7 @@ Re-run the same command anytime after you push updates.
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
 | **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
 | **Template sync** | Edit defaults in one company → `promote-company-defaults.sh` → holding `templates/` → `update-company.sh --all` distributes; customs kept |
+| **Child companies** | Same relation as holding→company (recursive). Only with **`hr` + manage-children`**: HR owns child portfolio (approve/create/grants/staff); product hop → child ceo |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
@@ -111,7 +112,10 @@ git init   # optional
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
 
-**Topologies:** `teams` = packages share one company at the parent; `companies` = each package is its own `--project-root` (see parent `.agents/WORKSPACE.md`).
+**Topologies:** `teams` | `companies` | **children**.
+
+Full **child companies** developer guide (HR gate, product hop diagram, scripts):
+see the package root [`README.md` § Child companies (developer guide)](../../../README.md#child-companies-developer-guide).
 
 ---
 

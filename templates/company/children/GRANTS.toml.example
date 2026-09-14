@@ -1,0 +1,19 @@
+# Authoritative read-only grants from the PARENT company.
+# Child may always read its own project_root; these paths are extra slices.
+
+[grants]
+# Paths relative to the parent's project root (or absolute). Trailing / = directory.
+paths_readonly = [
+  "documents/",
+  # "docs/api/",
+]
+
+# Optional single files (also read-only)
+artifacts = [
+  # "documents/spec.md",
+]
+
+[policy]
+sibling_hop = false
+parent_channel = "ceo"
+scan_parent_tree = false

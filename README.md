@@ -25,6 +25,7 @@ Re-run the same command anytime after you push updates.
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
 | **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
 | **Template sync** | Edit defaults in one company → `promote-company-defaults.sh` → holding `templates/` → `update-company.sh --all` distributes; customs kept |
+| **Child companies** | Same relation as holding→company (recursive). Only with **`hr` + manage-children`**: HR owns child portfolio (approve/create/grants/staff); product hop → child ceo |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
@@ -111,7 +112,13 @@ git init   # optional
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
 
-**Topologies:** `teams` = packages share one company at the parent; `companies` = each package is its own `--project-root` (see parent `.agents/WORKSPACE.md`).
+**Topologies:**
+
+| Topology | When | Linkage |
+| --- | --- | --- |
+| **teams** | Packages in one product are linked | Shared ceo/BA/PO; cross-package via cto/tech-lead |
+| **companies** | Each package is its own holding subsidiary | Cross-company via holding-ceo / registry `relate` |
+| **children** | Smaller agent context under one product company | Same relation as holding→company (recursive). See [Child companies](#child-companies-developer-guide) |
 
 ---
 
@@ -431,6 +438,122 @@ See also `.grok/README.md` written next to the launcher.
 2. Optional: `relate --from chat-frontend-company --to chat-backend-company --kind api --bidirectional`
 3. When FE needs an API: talk to **`holding-ceo`** → runs `resolve --from … --need api` → Assigns **backend `ceo` only**
 4. Backfill existing trees anytime: `company_registry.py scan --register`
+
+### Scoped child under one product company
+
+See **[Child companies (developer guide)](#child-companies-developer-guide)** below.
+
+---
+
+## Child companies (developer guide)
+
+Use **children** when one product company needs **smaller agent context** for a
+package/slice — same relationship as **holding → company**, nested (and
+recursive). Prefer **teams** when packages are tightly linked and should share
+one ceo/BA/PO.
+
+```text
+holding
+  └── my-app-company              ← holding subsidiary
+        └── hr                    ← REQUIRED before any child-org flow
+        └── children/
+              └── sdk-ios/
+                    ├── GRANTS.toml
+                    ├── META.toml
+                    └── sdk-ios-company/   ← full Company OS (own ceo, staffs, …)
+```
+
+Children may own further children the same way (each level needs its own `hr`
+before it can nest deeper).
+
+### Who does what
+
+| Ask | Who |
+| --- | --- |
+| Code / feature inside a child package | Parent **ceo** hop → **child ceo** only → child staffs |
+| Create / approve child, inventory, grants policy, restaff | Parent **hr** (`manage-children`) |
+| Child needs more parent docs/API | Child ceo → parent **ceo** (grants/info) — no parent-tree crawl |
+| Child needs more people | Child ceo → parent ceo → parent **hr** |
+| This company has no `hr` but wants children | Escalate to HR **above** to hire `hr` here first (`holding-hr` for a top subsidiary; parent `hr` if this is already a child) |
+
+**Invariant:** no `hr` on a company ⇒ **no** child-org flows (`create-child` refuses).  
+**Invariant:** no sibling hops between children — only escalate to the immediate parent.
+
+### Setup (scripts)
+
+Install/refresh machine copy first (`curl …/install.sh` or `install_holding_system.sh`).
+
+```bash
+PARENT=/path/to/project/.agents/my-app-company
+PKG=/path/to/package   # code root owned by the child
+
+# 1) Enable HR on the parent (dev bootstrap). Product flow: upper HR hires hr after user lock.
+python3 ~/.agents/holding/system/install/seed_parent_hr.py --parent "$PARENT"
+# → system/staffs/cross-cut/hr.md
+# → system/skills/customs/cross-cut/hr/manage-children/
+
+# 2) Create child (prefer: parent hr runs this after user lock on name/budget/grants)
+~/.agents/holding/system/install/create-child-company.sh \
+  --parent "$PARENT" \
+  --name sdk-ios \
+  --budget low \
+  --tech "swift,ios" \
+  --project-root "$PKG" \
+  --grant-path documents/api/ \
+  --placement nested
+
+# 3) Inventory
+python3 ~/.agents/holding/system/install/children_registry.py --parent "$PARENT" list
+
+# 4) Generate adapters for the child
+"$PARENT"/children/sdk-ios/sdk-ios-company/system/install/company_os.sh all
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--parent` | Path to parent `…/<slug>-company/` (must already have `hr`) |
+| `--name` | Child stem → `…/children/<stem>/<stem>-company/` |
+| `--project-root` | Code package the child owns |
+| `--grant-path` | Read-only slice from parent (repeatable); reference only — not a crawl license |
+| `--placement nested` | Default: Company OS under parent `children/` |
+| `--placement external` | Company OS at `<project-root>/.agents/<stem>-company/` |
+
+### Product runtime (token-cheap) — keep this flow
+
+Parent still owns the user channel. Coding asks for a child path **do not** load
+child ORG/staffs at the parent:
+
+```text
+parent ceo  --hop(path)-->  handoff: child ceo only (short goal)
+                                │
+                                ▼
+                          child ceo hops own staffs
+                          (scope = child company folder + package)
+                                │
+                                ▼ (need more parent info)
+                          escalate → parent ceo (ask grants/info)
+```
+
+Hop data: parent `system/skills/defaults/marlin-hop/data/children.tsv`  
+Try: `python3 …/marlin-hop/scripts/hop.py --path sdk-ios/src/…` → expect `handoff: child`.
+
+### Org runtime (hr portfolio)
+
+```text
+create / approve child / grants policy / restaff / enable hr on a descendant
+  → parent ceo Assigns hr
+  → hr loads manage-children → deal with user → lock → execute into child SoT
+```
+
+Skill: `system/skills/customs/cross-cut/hr/manage-children/SKILL.md`  
+Staff: `system/staffs/cross-cut/hr.md`
+
+### More detail
+
+- `templates/company/children/README.md` — layout, grants, invariants  
+- `templates/company/children/GRANTS.toml.example`  
+- `holding/system/install/children_registry.py --help`  
+- `holding/system/install/create-child-company.sh --help`
 
 ---
 
