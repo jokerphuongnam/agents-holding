@@ -311,11 +311,15 @@ def main() -> int:
     hop_py = dest / "system" / "skills" / "defaults" / "marlin-hop" / "scripts" / "hop.py"
     if hop_py.is_file():
         text = hop_py.read_text(encoding="utf-8")
-        start = text.find("def self_test()")
-        if start >= 0:
-            end = text.find("\ndef main()", start)
-            if end > start:
-                new_fn = '''def self_test() -> int:
+        new = soften_hop_self_test(text)
+        if new != text:
+            hop_py.write_text(new, encoding="utf-8")
+
+    print(f"[seed_company_hop_data] agents={len(rows)} roster={len(roster_u)} routes={len(routes)}")
+    return 0
+
+
+GENERIC_HOP_SELF_TEST = '''def self_test() -> int:
     # Generic company: agents.tsv loads; roster has ceo→ba-lead and ba-user.
     bad = 0
     if "ceo" not in AGENTS:
@@ -331,11 +335,17 @@ def main() -> int:
     return bad
 
 '''
-                text = text[:start] + new_fn + text[end:]
-                hop_py.write_text(text, encoding="utf-8")
 
-    print(f"[seed_company_hop_data] agents={len(rows)} roster={len(roster_u)} routes={len(routes)}")
-    return 0
+
+def soften_hop_self_test(text: str) -> str:
+    """Replace Marlin-specific hop self_test with a generic company check."""
+    start = text.find("def self_test()")
+    if start < 0:
+        return text
+    end = text.find("\ndef main()", start)
+    if end <= start:
+        return text
+    return text[:start] + GENERIC_HOP_SELF_TEST + text[end:]
 
 
 if __name__ == "__main__":
