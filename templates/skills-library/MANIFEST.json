@@ -376,6 +376,21 @@
       ],
       "target": "qc/qc-lead",
       "always_for_roles": []
+    },
+    {
+      "id": "manage-children",
+      "path": "product/hr/manage-children",
+      "tags": [
+        "hr",
+        "hire",
+        "children",
+        "staffing",
+        "manage-children"
+      ],
+      "target": "cross-cut/hr",
+      "always_for_roles": [
+        "hr"
+      ]
     }
   ]
 }

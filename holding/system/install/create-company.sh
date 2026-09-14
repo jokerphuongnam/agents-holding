@@ -24,24 +24,27 @@ NAME=""
 BUDGET="medium"
 TECH=""
 PROJECT_ROOT=""
+DEST_OVERRIDE=""
 TOPOLOGY="teams"
 PACKAGES=""
 FAMILY=""
 DRY=0
+NO_REGISTER=0
 
 usage() {
   cat <<'USAGE'
 Create a subsidiary Company OS tree from templates/company.
 
   create-company.sh --name <slug> --budget low|medium|high […] \
-    [--tech "a,b,c"] [--project-root <path>] \
+    [--tech "a,b,c"] [--project-root <path>] [--dest <company-path>] \
     [--topology teams|companies] [--packages "frontend:react,backend:nestjs"] \
-    [--family chat] \
+    [--family chat] [--no-register] \
     [--dry-run]
 
 Result:
   (default)           <agents-home>/<slug>-company/
   --project-root DIR  DIR/.agents/<slug>-company/
+  --dest PATH         explicit Company OS destination (child companies, etc.)
 
 Topology (workspace layout):
   teams (default)  One company; --packages become tech teams + hop routes
@@ -66,9 +69,11 @@ while [[ $# -gt 0 ]]; do
     --budget) BUDGET="${2:-}"; shift 2 ;;
     --tech) TECH="${2:-}"; shift 2 ;;
     --project-root) PROJECT_ROOT="${2:-}"; shift 2 ;;
+    --dest) DEST_OVERRIDE="${2:-}"; shift 2 ;;
     --topology) TOPOLOGY="${2:-}"; shift 2 ;;
     --packages) PACKAGES="${2:-}"; shift 2 ;;
     --family) FAMILY="${2:-}"; shift 2 ;;
+    --no-register) NO_REGISTER=1; shift ;;
     --dry-run) DRY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown arg: $1" >&2; usage; exit 2 ;;
@@ -133,7 +138,14 @@ SLUG="$NAME"
 SLUG="$(echo "$SLUG" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')"
 TITLE="$(echo "$SLUG" | sed 's/-company$//; s/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')"
 
-if [[ -n "$PROJECT_ROOT" ]]; then
+if [[ -n "$DEST_OVERRIDE" ]]; then
+  # Resolve absolute dest without creating it (exists-check comes later)
+  _dest_parent="$(cd "$(dirname "$DEST_OVERRIDE")" && pwd)"
+  DEST="$_dest_parent/$(basename "$DEST_OVERRIDE")"
+  if [[ -n "$PROJECT_ROOT" ]]; then
+    PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
+  fi
+elif [[ -n "$PROJECT_ROOT" ]]; then
   PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
   mkdir -p "$PROJECT_ROOT/.agents"
   DEST="$PROJECT_ROOT/.agents/$SLUG"
@@ -501,8 +513,11 @@ else
 fi
 
 # Holding conglomerate registry (local gitignored sqlite)
+# Child companies use --no-register and parent children_registry instead.
 REG="$HOLDING_INSTALL/company_registry.py"
-if [[ -f "$REG" ]]; then
+if [[ "$NO_REGISTER" -eq 1 ]]; then
+  echo "[create-company] skip holding company_registry (--no-register)"
+elif [[ -f "$REG" ]]; then
   python3 "$REG" register \
     --slug "$SLUG" \
     --project-root "$PARENT_FOR_WS" \

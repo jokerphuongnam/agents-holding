@@ -39,6 +39,11 @@ CEO hands you either:
   `create-company.sh` or `create-workspace.sh` + each `company_os.sh all`.
 - **Shortage / re-hire:** target company slug, shortage text, optional feature
   context (e.g. call feature → need Swift).
+- **Enable children on a subsidiary:** that company has **no `hr`** but wants
+  child-org flows → hire role `hr` (+ skill `manage-children`) **into that
+  subsidiary** after user lock. That `hr` then owns approve/create/grants/staff
+  for its children. Nested child-without-hr escalates to that subsidiary’s `hr`,
+  not to you.
 
 0. **Habit prior (optional, 2-step):** `habit_cache.py propose` (or `index`) →
    pick **one** key from `key` + `short_descript` → `get --key` for `work`.
