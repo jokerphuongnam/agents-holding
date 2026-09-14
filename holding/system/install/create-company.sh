@@ -517,6 +517,17 @@ else
   echo "[create-company] warn: company_registry.py missing" >&2
 fi
 
+# Fingerprint managed defaults so later update-company.sh can sync safely
+UPD="$HOLDING_INSTALL/update_company_defaults.py"
+if [[ -f "$UPD" ]]; then
+  PYTHONPATH="$HOLDING_INSTALL${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 "$UPD" --write-manifest-only "$DEST" --agents-home "$AGENTS_HOME" --budget "$BUDGET" \
+    || echo "[create-company] warn: template_sync manifest not written" >&2
+else
+  echo "[create-company] warn: update_company_defaults.py missing (no template_sync.json)" >&2
+fi
+
 echo "[create-company] done: $DEST"
 echo "[create-company] next: .agents/$SLUG/system/install/company_os.sh all"
 echo "[create-company] then CTO refines teams from CTO_TECH_SEED.md"
+echo "[create-company] later template updates: $HOLDING_INSTALL/update-company.sh --dest $DEST"

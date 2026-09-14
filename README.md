@@ -24,6 +24,7 @@ Re-run the same command anytime after you push updates.
 | --- | --- |
 | **Holding org** | `holding-ceo`, `holding-hr`, `holding-coordinator` — conglomerate roles, not product coders |
 | **Factory** | `create-company.sh` clones a full subsidiary Company OS into any project |
+| **Template sync** | Edit defaults in one company → `promote-company-defaults.sh` → holding `templates/` → `update-company.sh --all` distributes; customs kept |
 | **Skills library** | Ready customs (React, Nest, Kotlin, Swift, BA/PO, design, QC, …) copied by `--tech` tags |
 | **Budget → harness** | `low` / `medium` / `high`  tunes agent tiers; plan/doc roles (`po-*`) always stay max |
 | **Hiring (holding-only)** | Subsidiaries never recruit — they report gaps; HR deals with **you** on role, skills, duties, slice |
@@ -435,14 +436,72 @@ See also `.grok/README.md` written next to the launcher.
 
 ## Updating
 
+### A. Pull a new agents-holding release (machine install)
+
 ```bash
-cd agents-holding
-git pull
-./holding/system/install/install_holding_system.sh --dest ~/.agents
+curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/agents-holding/main/install.sh | bash
+# or: git pull && ./holding/system/install/install_holding_system.sh --dest ~/.agents
 ~/.agents/holding/system/install/company_os.sh all
 ```
 
-Existing subsidiaries are **not** overwritten. Re-pack skills into a company only if you re-run factory pieces or copy skills deliberately.
+This refreshes `~/.agents/holding` + `~/.agents/templates` only. Existing
+companies are **not** changed until you run **C** below.
+
+### B. Promote defaults from one company → holding templates
+
+Use when you improve defaults in a **reference** company (e.g. `pilot-company`)
+and want that to become the factory template:
+
+```text
+reference company  ──promote──►  templates/  ──update──►  other companies
+```
+
+```bash
+# preview
+~/.agents/holding/system/install/promote-company-defaults.sh \
+  --from /path/to/project/.agents/pilot-company \
+  --dry-run
+
+# write into git checkout (commit + push), then reinstall on machines
+~/.agents/holding/system/install/promote-company-defaults.sh \
+  --from /path/to/project/.agents/pilot-company \
+  --agents-home /path/to/agents-holding
+
+# or write straight into ~/.agents/templates (this machine only)
+~/.agents/holding/system/install/promote-company-defaults.sh \
+  --from /path/to/project/.agents/pilot-company
+```
+
+**Promotes:** hop scripts + `SKILL.md`, `company_os.sh`, `FORMULA.md`, harness
+(re-generalized with `{{COMPANY_SLUG}}` / `{{EFFORT_*}}`).
+
+**Does not promote:** `staffs/`, `skills/customs/`, hop `data/`, `COMPANY*.md`,
+`CTO_TECH_SEED.md`.
+
+### C. Distribute templates → existing companies
+
+```bash
+~/.agents/holding/system/install/update-company.sh --all --dry-run
+~/.agents/holding/system/install/update-company.sh --all
+# or one company:  update-company.sh --dest /path/to/.agents/<slug>-company
+```
+
+Syncs the same safe defaults. Keeps customs. Diverged / unreviewed files are
+skipped unless `--force` / `--force-file`. Then:
+
+```bash
+/path/to/project/.agents/<slug>-company/system/install/company_os.sh all
+```
+
+Fingerprint: `<company>/cache/template_sync.json`.
+
+| Status | Meaning |
+| --- | --- |
+| `ok` / `update` / `add` | Safe to apply |
+| `diverge` | Local edited since last sync — skipped |
+| `review` | No fingerprint and file ≠ template — skipped |
+
+More detail: [`holding/system/install/AGENTS_HOLDING_README.md`](holding/system/install/AGENTS_HOLDING_README.md) § Updating.
 
 ---
 

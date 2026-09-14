@@ -34,4 +34,5 @@ Prefer language/framework official docs linked inside each `SKILL.md`
 `holding/system/install/copy_library_skills.py` + `create-company.sh --tech`
 copy matching entries into a **new** company's
 `system/skills/customs/<team>/<role>/`. Existing subsidiaries are not
-auto-updated.
+auto-updated for library skills; use `update-company.sh` only for safe
+defaults (hop scripts, company_os, FORMULA, harness) — not customs.
