@@ -1,6 +1,10 @@
 # Children (scoped Company OS)
 
-**Same relationship as holding → company**, nested and recursive:
+**Same relationship as holding → company**, nested and recursive.
+
+Choosing **teams** vs **children**? See the side-by-side in the package root:
+
+**[Teams vs children](../../../README.md#teams-vs-children)**
 
 ```text
 holding
