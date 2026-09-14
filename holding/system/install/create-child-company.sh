@@ -207,25 +207,48 @@ if [[ -n "$TECH" ]]; then
 fi
 "$CREATE_COMPANY" "${CREATE_ARGS[@]}"
 
-# Child hop routes: ONLY inside this child's owned scope (company folder + package).
-# Grants are read-only references — not hop targets for ICs.
-ROUTE="$DEST/system/skills/defaults/marlin-hop/data/route.tsv"
-if [[ -f "$ROUTE" ]]; then
-  {
-    echo -e "prefix\tagent"
-    echo -e "src/\ttech-lead"
-    echo -e "$(basename "$PROJECT_ROOT")/\ttech-lead"
-    echo -e "system/\tceo"
-    echo -e "cache/plans/\tpo-modify"
-  } > "$ROUTE"
-  echo "[create-child] scoped hop route.tsv (child folder/package only)"
+# Child hop routes + hard scope fence: ONLY child company folder + package.
+# Grants are RO reference — not hop targets. Out-of-scope hop → parent ceo.
+CHILD_DATA="$DEST/system/skills/defaults/marlin-hop/data"
+mkdir -p "$CHILD_DATA"
+PKG_BASENAME="$(basename "$PROJECT_ROOT")"
+ROUTE="$CHILD_DATA/route.tsv"
+{
+  echo -e "prefix\tagent"
+  echo -e "src/\ttech-lead"
+  echo -e "${PKG_BASENAME}/\ttech-lead"
+  echo -e "system/\tceo"
+  echo -e "cache/plans/\tpo-modify"
+} > "$ROUTE"
+# Allowlist enforced by hop.py (scope_allow.tsv + parent.tsv)
+{
+  echo -e "prefix"
+  echo -e "src/"
+  echo -e "${PKG_BASENAME}/"
+  echo -e "system/"
+  echo -e "cache/"
+  echo -e "COMPANY_BOOT.md"
+  echo -e "COMPANY.md"
+  echo -e "CTO_TECH_SEED.md"
+  echo -e "FORMULA.md"
+  echo -e "README.md"
+} > "$CHILD_DATA/scope_allow.tsv"
+REL_PARENT="$PARENT"
+if REL_TRY="$(python3 -c "import os; print(os.path.relpath('$PARENT', '$DEST'))" 2>/dev/null)"; then
+  REL_PARENT="$REL_TRY"
 fi
+{
+  echo -e "key\tvalue"
+  echo -e "slug\t$PARENT_SLUG"
+  echo -e "company_path\t$REL_PARENT"
+  echo -e "channel\tceo"
+} > "$CHILD_DATA/parent.tsv"
+echo "[create-child] scoped route + scope_allow + parent.tsv (fence → escalate parent)"
 
 # Parent children.tsv — token-cheap hop: path → child ceo handoff (not child ICs)
 PARENT_DATA="$PARENT/system/skills/defaults/marlin-hop/data"
 mkdir -p "$PARENT_DATA"
 CHILDREN_TSV="$PARENT_DATA/children.tsv"
-PKG_BASENAME="$(basename "$PROJECT_ROOT")"
 # Relative pointers from parent company root when possible
 REL_CHILD="$DEST"
 if REL_TRY="$(python3 -c "import os; print(os.path.relpath('$DEST', '$PARENT'))" 2>/dev/null)"; then

@@ -39,12 +39,78 @@ for r in _ROSTER:
 
 # Optional parent→child handoff table (holding→company analogy, nested).
 # columns: prefix, slug, company_path
-_CHILDREN_ROWS = load_tsv("children.tsv") if (Path(__file__).resolve().parents[1] / "data" / "children.tsv").is_file() else []
+_DATA = Path(__file__).resolve().parents[1] / "data"
+_CHILDREN_ROWS = load_tsv("children.tsv") if (_DATA / "children.tsv").is_file() else []
 CHILDREN: list[tuple[str, str, str]] = [
     (r["prefix"], r["slug"], r["company_path"])
     for r in _CHILDREN_ROWS
     if r.get("prefix") and r.get("slug") and r.get("company_path")
 ]
+
+# Child-company scope fence (written by create-child-company.sh).
+# scope_allow.tsv: prefix (only these paths are in-scope for local hop)
+# parent.tsv: key/value — slug, company_path, channel (escalate target)
+_SCOPE_ALLOW: list[str] = []
+if (_DATA / "scope_allow.tsv").is_file():
+    _SCOPE_ALLOW = [
+        r["prefix"]
+        for r in load_tsv("scope_allow.tsv")
+        if r.get("prefix")
+    ]
+_PARENT_META: dict[str, str] = {}
+if (_DATA / "parent.tsv").is_file():
+    for r in load_tsv("parent.tsv"):
+        k, v = r.get("key", ""), r.get("value", "")
+        if k:
+            _PARENT_META[k] = v
+
+
+def in_child_scope(path: str) -> bool:
+    """True if path is inside this child company's allowlist (when configured)."""
+    if not _SCOPE_ALLOW:
+        return True  # not a fenced child
+    p = norm_path(path)
+    for pref in _SCOPE_ALLOW:
+        pref_n = pref.rstrip("/")
+        if p == pref_n or p.startswith(pref) or p.startswith(pref_n + "/"):
+            return True
+    return False
+
+
+def emit_escalate_parent(path: str, harness: str = "grok") -> None:
+    """Out-of-scope path on a child company → parent ceo only (no local crawl)."""
+    slug = _PARENT_META.get("slug", "(parent)")
+    cpath = _PARENT_META.get("company_path", "")
+    channel = _PARENT_META.get("channel", "ceo")
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: parent")
+    print(f"parent_slug: {slug}")
+    if cpath:
+        print(f"parent_company: {cpath}")
+    print(f"parent_channel: {channel}")
+    print(f"out_of_scope_path: {norm_path(path)}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: ONLY the parent company's "
+        f"{channel} — ask for grants/info for this path. "
+        "Do not open parent/sibling trees from this child."
+    )
+    print(
+        "do_not: spawn local ICs for out-of-scope paths; crawl parent; "
+        "hop sibling children"
+    )
+    print(f"allowed_prefixes: {', '.join(_SCOPE_ALLOW) if _SCOPE_ALLOW else '(none)'}")
 
 
 LIBRARY_LESSONS = re.compile(
@@ -316,11 +382,27 @@ def main() -> int:
             _pref, slug, cpath = ch
             emit_child_handoff(slug, cpath, harness)
             return 0
+        # Child fence: out-of-scope → escalate parent (not local team-lead)
+        if _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
+            emit_escalate_parent(args.path, harness)
+            return 0
         agent = agent_for_path(args.path)
+        if agent and _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
+            emit_escalate_parent(args.path, harness)
+            return 0
     else:
         ap.print_help()
         return 2
     if not agent:
+        # Out of child fence → parent; in-fence unmapped → local ceo/lead hint
+        if (
+            args.path
+            and _PARENT_META
+            and _SCOPE_ALLOW
+            and not in_child_scope(args.path)
+        ):
+            emit_escalate_parent(args.path, harness)
+            return 0
         print("unmapped — unique IC unknown; spawn team-lead or ceo", file=sys.stderr)
         return 1
     emit(agent, args.role, harness)

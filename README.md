@@ -534,8 +534,12 @@ parent ceo  --hop(path)-->  handoff: child ceo only (short goal)
                           escalate → parent ceo (ask grants/info)
 ```
 
-Hop data: parent `system/skills/defaults/marlin-hop/data/children.tsv`  
+Hop data: parent `…/data/children.tsv`  
 Try: `python3 …/marlin-hop/scripts/hop.py --path sdk-ios/src/…` → expect `handoff: child`.
+
+**Child fence:** child `…/data/scope_allow.tsv` + `parent.tsv`. Path outside the
+child folder/package → `handoff: parent` (ask parent ceo for grants/info). Child
+agents must not hop siblings or crawl the parent tree.
 
 ### Org runtime (hr portfolio)
 

@@ -60,6 +60,10 @@ parent ceo  --hop(path)-->  handoff: child ceo only (short goal)
 
 Parent does **not** deep-spawn child ICs. Child does **not** crawl the parent tree.
 
+**Hard fence (hop):** child `data/scope_allow.tsv` + `parent.tsv`. A path outside
+the allowlist prints `handoff: parent` (escalate to parent ceo) — not a local
+team-lead. Sibling / parent / other-package paths are out of scope.
+
 ## Runtime — org / people (only if parent has `hr`)
 
 ```text
