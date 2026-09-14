@@ -4,8 +4,9 @@
 # Copies:
 #   holding/ → $DEST/holding/
 #   templates/ → $DEST/templates/  (from repo .agents/templates)
-#   Also copies hop scripts into $DEST/templates/hop-reference/ from marlin-hop
-#   and company_os.sh into $DEST/templates/install/
+#   hop-reference: keep templates/hop-reference when present (subsidiary SoT,
+#   e.g. children handoff); else fill from holding marlin-hop
+#   company_os.sh → $DEST/templates/install/
 # Prints next steps: company_os.sh all; create-company --project-root …
 set -euo pipefail
 
@@ -25,7 +26,7 @@ Usage:
 Copies:
   holding/                  → $DEST/holding/
   templates/                → $DEST/templates/
-  marlin-hop (scripts+SKILL)→ $DEST/templates/hop-reference/
+  templates/hop-reference/  → kept if present; else ← holding marlin-hop
   company_os.sh             → $DEST/templates/install/company_os.sh
 USAGE
 }
@@ -74,8 +75,12 @@ else
   cp -R "$TEMPLATE_SRC/." "$DEST/templates/"
 fi
 
+# Subsidiary hop SoT lives in templates/hop-reference (children handoff, etc.).
+# Do not clobber it with holding marlin-hop after templates/ was synced.
 mkdir -p "$DEST/templates/hop-reference"
-if [[ -d "$HOP_SRC" ]]; then
+if [[ -f "$DEST/templates/hop-reference/scripts/hop.py" ]]; then
+  echo "[install_holding_system] hop-reference ← templates/hop-reference (kept)"
+elif [[ -d "$HOP_SRC" ]]; then
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete \
       --exclude 'data/' \
@@ -89,7 +94,7 @@ if [[ -d "$HOP_SRC" ]]; then
     cp -R "$HOP_SRC/scripts" "$DEST/templates/hop-reference/" 2>/dev/null || true
     cp "$HOP_SRC/SKILL.md" "$DEST/templates/hop-reference/" 2>/dev/null || true
   fi
-  echo "[install_holding_system] hop-reference ← $HOP_SRC"
+  echo "[install_holding_system] hop-reference ← $HOP_SRC (fallback)"
 else
   echo "[install_holding_system] warn: no hop source at $HOP_SRC" >&2
 fi
