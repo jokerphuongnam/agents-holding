@@ -539,14 +539,17 @@ Try: `python3 …/marlin-hop/scripts/hop.py --path sdk-ios/src/…` → expect `
 
 **Child fence (hard):**
 
-- Hop: out of scope → `handoff: parent`
-- Tool: `scope_guard.py check --path …` (exit 2 = deny; ask parent ceo)
-- SoT: `SCOPE.md` = allowed roots (child company folder + package only)
+| Path | Access |
+| --- | --- |
+| Child folder + package | read/write |
+| `GRANTS.toml` paths/artifacts | **read-only** (`handoff: grant_read`) |
+| Else | deny → `handoff: parent` (ask parent ceo) |
 
 ```bash
-python3 …/pkg-company/system/skills/defaults/marlin-hop/scripts/scope_guard.py \
-  check --path ../other/src/x.go
-# expect: deny / handoff:parent
+G=…/pkg-company/system/skills/defaults/marlin-hop/scripts/scope_guard.py
+python3 "$G" check --path documents/api/README.md   # allow_ro if granted
+python3 "$G" check --path documents/api/x --write   # deny (RO only)
+python3 "$G" check --path ../other/src/x.go         # deny → parent
 ```
 
 ### Org runtime (hr portfolio)

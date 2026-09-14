@@ -113,6 +113,33 @@ def emit_escalate_parent(path: str, harness: str = "grok") -> None:
     print(f"allowed_prefixes: {', '.join(_SCOPE_ALLOW) if _SCOPE_ALLOW else '(none)'}")
 
 
+def emit_grant_read(path: str, harness: str = "grok") -> None:
+    """Path is under parent GRANTS.toml — child may READ only, stay as child ceo."""
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: grant_read")
+    print(f"grant_path: {norm_path(path)}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: child ceo (or brief IC) may READ this granted parent slice only. "
+        "Do not write; do not treat grant paths as a work root."
+    )
+    print(
+        "do_not: write under grant paths; crawl ungated parent trees; "
+        "hop sibling children"
+    )
+
+
 LIBRARY_LESSONS = re.compile(
     r"(?:^|/)(?:18_foundation|19_secure|21_unittest|22_networking|23_database|errors/21_)"
 )
@@ -382,27 +409,39 @@ def main() -> int:
             _pref, slug, cpath = ch
             emit_child_handoff(slug, cpath, harness)
             return 0
-        # Child fence: out-of-scope → escalate parent (not local team-lead)
-        if _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
-            emit_escalate_parent(args.path, harness)
-            return 0
+        # Child fence via scope_guard: rw / grant RO / deny→parent
+        if _PARENT_META and _SCOPE_ALLOW:
+            try:
+                from scope_guard import classify_path  # type: ignore
+
+                level, _detail = classify_path(args.path, want_write=False)
+            except Exception:
+                level = "deny" if not in_child_scope(args.path) else "allow_rw"
+            if level == "allow_ro":
+                emit_grant_read(args.path, harness)
+                return 0
+            if level == "deny":
+                emit_escalate_parent(args.path, harness)
+                return 0
         agent = agent_for_path(args.path)
-        if agent and _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
-            emit_escalate_parent(args.path, harness)
-            return 0
     else:
         ap.print_help()
         return 2
     if not agent:
-        # Out of child fence → parent; in-fence unmapped → local ceo/lead hint
-        if (
-            args.path
-            and _PARENT_META
-            and _SCOPE_ALLOW
-            and not in_child_scope(args.path)
-        ):
-            emit_escalate_parent(args.path, harness)
-            return 0
+        if args.path and _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
+            try:
+                from scope_guard import classify_path  # type: ignore
+
+                level, _ = classify_path(args.path, want_write=False)
+                if level == "allow_ro":
+                    emit_grant_read(args.path, harness)
+                    return 0
+                if level == "deny":
+                    emit_escalate_parent(args.path, harness)
+                    return 0
+            except Exception:
+                emit_escalate_parent(args.path, harness)
+                return 0
         print("unmapped — unique IC unknown; spawn team-lead or ceo", file=sys.stderr)
         return 1
     emit(agent, args.role, harness)
