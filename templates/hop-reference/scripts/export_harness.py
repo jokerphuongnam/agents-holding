@@ -412,24 +412,43 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
     boot = cfg.get("boot") or {}
     hop = f"python3 {company}/system/skills/defaults/marlin-hop/scripts/hop.py"
 
-    pointer = "\n".join(
-        [
-            f"# Codex boot pointer — Company OS ({hid})",
+    pointer_lines = [
+        f"# Codex boot pointer — Company OS ({hid})",
+        "",
+        f"Generated adapter (not SoT). Lives under `.codex/` so the repo root stays free of AGENTS.md.",
+        f"Boot: [`{company}/COMPANY_BOOT.md`]({company}/COMPANY_BOOT.md).",
+        f"Org: [`{company}/README.md`]({company}/README.md). Hiring: `.agents/holding/` (`holding-hr`).",
+        f"Roster below = roles mapped to **`{hid}`** via `runtime_router.toml` (SoT staffs unchanged).",
+        "",
+        "```bash",
+        f"{hop} --path <file>",
+        f"{hop} --roster ceo",
+        f"{hop} --list --harness {hid}",
+        f"{company}/system/install/company_os.sh {hid}",
+        "```",
+        "",
+    ]
+    scope_md = home / "SCOPE.md"
+    parent_tsv = (
+        home / "system" / "skills" / "defaults" / "marlin-hop" / "data" / "parent.tsv"
+    )
+    if scope_md.is_file() or parent_tsv.is_file():
+        guard = f"python3 {company}/system/skills/defaults/marlin-hop/scripts/scope_guard.py"
+        pointer_lines += [
+            "## Child scope fence",
             "",
-            f"Generated adapter (not SoT). Lives under `.codex/` so the repo root stays free of AGENTS.md.",
-            f"Boot: [`{company}/COMPANY_BOOT.md`]({company}/COMPANY_BOOT.md).",
-            f"Org: [`{company}/README.md`]({company}/README.md). Hiring: `.agents/holding/` (`holding-hr`).",
-            f"Roster below = roles mapped to **`{hid}`** via `runtime_router.toml` (SoT staffs unchanged).",
+            f"This is a **child** company. Read [`{company}/SCOPE.md`]({company}/SCOPE.md).",
+            "Before reading paths outside the company cwd:",
             "",
             "```bash",
-            f"{hop} --path <file>",
-            f"{hop} --roster ceo",
-            f"{hop} --list --harness {hid}",
-            f"{company}/system/install/company_os.sh {hid}",
+            f"{guard} check --path <path>",
             "```",
             "",
+            "Deny / `handoff: parent` → spawn **parent ceo** for grants/info. "
+            "Do not open parent or sibling trees.",
+            "",
         ]
-    )
+    pointer = "\n".join(pointer_lines)
     out.write_text(pointer, encoding="utf-8")
     _ensure_codex_project_doc_fallback(root, agents_rel)
 

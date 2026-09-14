@@ -60,9 +60,16 @@ parent ceo  --hop(path)-->  handoff: child ceo only (short goal)
 
 Parent does **not** deep-spawn child ICs. Child does **not** crawl the parent tree.
 
-**Hard fence (hop):** child `data/scope_allow.tsv` + `parent.tsv`. A path outside
-the allowlist prints `handoff: parent` (escalate to parent ceo) — not a local
-team-lead. Sibling / parent / other-package paths are out of scope.
+**Hard fence:**
+
+| Layer | What |
+| --- | --- |
+| Hop | `scope_allow.tsv` + `parent.tsv` → out of scope prints `handoff: parent` |
+| Tool check | `scope_guard.py check --path …` (exit 2 = deny) |
+| SoT | `SCOPE.md` lists allowed roots (company folder + package only) |
+
+Agents **must** run `scope_guard.py` before reading outside cwd. Grants are not a
+license to crawl the parent.
 
 ## Runtime — org / people (only if parent has `hr`)
 
