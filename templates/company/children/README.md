@@ -62,14 +62,20 @@ Parent does **not** deep-spawn child ICs. Child does **not** crawl the parent tr
 
 **Hard fence:**
 
-| Layer | What |
+| Path kind | Hop / `scope_guard` |
 | --- | --- |
-| Hop | `scope_allow.tsv` + `parent.tsv` → out of scope prints `handoff: parent` |
-| Tool check | `scope_guard.py check --path …` (exit 2 = deny) |
-| SoT | `SCOPE.md` lists allowed roots (company folder + package only) |
+| Child company folder + package | read/write (`allow_rw`) |
+| Listed in parent `GRANTS.toml` | **read-only** (`allow_ro` / `handoff: grant_read`) |
+| Anything else (siblings, ungated parent) | deny → `handoff: parent` |
 
-Agents **must** run `scope_guard.py` before reading outside cwd. Grants are not a
-license to crawl the parent.
+```bash
+scope_guard.py check --path documents/api/README.md     # RO if granted
+scope_guard.py check --path documents/api/x --write     # deny even if granted
+scope_guard.py check --path ../other/src/x.go           # deny → parent ceo
+```
+
+Agents **must** run `scope_guard` before reading outside cwd. Grants are **not** a
+license to crawl the rest of the parent — only listed paths, read-only.
 
 ## Runtime — org / people (only if parent has `hr`)
 

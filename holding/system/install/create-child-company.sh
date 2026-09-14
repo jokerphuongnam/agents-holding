@@ -339,8 +339,10 @@ Same relationship as a **company under holding**, nested (you may own further ch
 - Allowed roots: see \`SCOPE.md\` (company folder + package root only).
 - **Before** reading any path outside cwd:
   \`python3 system/skills/defaults/marlin-hop/scripts/scope_guard.py check --path <path>\`
-  Deny (\`handoff: parent\`) → spawn parent ceo for grants/info — do **not** open parent/siblings.
-- Grants file \`$GRANTS_FILE\` is reference only after parent approved — not a hunt license.
+  - Own roots → read/write
+  - Paths in \`$GRANTS_FILE\` → **read-only** (\`handoff: grant_read\`)
+  - Else deny (\`handoff: parent\`) → spawn parent ceo for more grants/info
+- Do **not** write under grant paths; do **not** open ungated parent/sibling trees.
 - No sibling hops. No holding-ceo unless the product-root parent escalates upward.
 
 Create deeper children: \`create-child-company.sh --parent $DEST …\`
