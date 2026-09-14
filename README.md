@@ -112,13 +112,13 @@ git init   # optional
 
 Either way you get `/path/to/project/.agents/my-app-company/` with staffs, hop, harness, and matching skills. Then talk to that company’s **`ceo`** / **`ba-user`** for product work.
 
-**Topologies:**
+**Topologies (overview):**
 
 | Topology | When | Linkage |
 | --- | --- | --- |
 | **teams** | Packages in one product are linked | Shared ceo/BA/PO; cross-package via cto/tech-lead |
 | **companies** | Each package is its own holding subsidiary | Cross-company via holding-ceo / registry `relate` |
-| **children** | Smaller agent context under one product company | Same relation as holding→company (recursive). See [Child companies](#child-companies-developer-guide) |
+| **children** | Smaller agent context under one product company | Like holding→company (recursive). See [Teams vs children](#teams-vs-children) |
 
 ---
 
@@ -441,16 +441,111 @@ See also `.grok/README.md` written next to the launcher.
 
 ### Scoped child under one product company
 
-See **[Child companies (developer guide)](#child-companies-developer-guide)** below.
+Pick shape with **[Teams vs children](#teams-vs-children)**, then follow
+**[Child companies (developer guide)](#child-companies-developer-guide)**.
+
+---
+
+## Teams vs children
+
+Use this when choosing how to split work **inside one product**.  
+(`companies` topology = separate holding subsidiaries — different case.)
+
+<table>
+<tr>
+<th width="50%">Teams</th>
+<th width="50%">Children</th>
+</tr>
+<tr>
+<td valign="top">
+
+**When**
+
+Packages are **linked** (shared product, shared BA/PO, frequent cross-package work).
+
+**Shape**
+
+```text
+my-app-company
+  ├── ceo / ba / po / qc / git   ← shared once
+  └── tech teams (hop routes)
+        ├── frontend-engineer
+        ├── backend-engineer
+        └── mobile-engineer
+```
+
+**Linkage**
+
+- One company OS, one user channel (`ceo` / `ba-user`)
+- Cross-package via **cto** / **tech-lead**
+- Hop routes point at engineers on the same roster
+
+**Context**
+
+Agents may see the **whole** company tree (routes still guide which IC).
+
+**Create**
+
+`create-company.sh --packages …` or `create-workspace.sh --topology teams`
+
+**HR**
+
+No parent `hr` required. Holding-hr only for conglomerate / new subsidiaries.
+
+</td>
+<td valign="top">
+
+**When**
+
+Need **smaller agent context** / hard isolation per package (like a mini holding).
+
+**Shape**
+
+```text
+my-app-company
+  ├── hr                    ← REQUIRED
+  └── children/sdk-ios/
+        └── sdk-ios-company  ← full formula (own ceo…)
+```
+
+**Linkage**
+
+- Same relation as **holding → company** (recursive)
+- **No** sibling hops between children
+- Product: parent ceo → **child ceo** only (short goal)
+- Org: parent **hr** (`manage-children`)
+
+**Context**
+
+Child fenced to **own folder + package**; `GRANTS.toml` = **read-only**;
+else escalate to parent ceo.
+
+**Create**
+
+`seed_parent_hr.py` → `create-child-company.sh`  
+(see developer guide below)
+
+**HR**
+
+Must have `hr` first. No hr → escalate HR **above** to hire `hr` here.
+
+</td>
+</tr>
+</table>
+
+| Aspect | Teams | Children |
+| --- | --- | --- |
+| Shared ceo/BA/PO | Yes | No (each child has its own) |
+| Cross-slice work | In-company (cto / tech-lead) | Only via **parent** (no sibling) |
+| Agent context | Wide (one company) | Narrow (child fence + RO grants) |
+| Needs `hr` on parent | No | **Yes** |
+| Analogy | Squads in one company | Subsidiaries under a company |
 
 ---
 
 ## Child companies (developer guide)
 
-Use **children** when one product company needs **smaller agent context** for a
-package/slice — same relationship as **holding → company**, nested (and
-recursive). Prefer **teams** when packages are tightly linked and should share
-one ceo/BA/PO.
+Use **children** after you chose the right-hand side of [Teams vs children](#teams-vs-children).
 
 ```text
 holding
@@ -472,7 +567,7 @@ before it can nest deeper).
 | --- | --- |
 | Code / feature inside a child package | Parent **ceo** hop → **child ceo** only → child staffs |
 | Create / approve child, inventory, grants policy, restaff | Parent **hr** (`manage-children`) |
-| Child needs more parent docs/API | Child ceo → parent **ceo** (grants/info) — no parent-tree crawl |
+| Child needs more parent docs/API | Child ceo → parent **ceo** (widen grants) — or read existing **RO grants** |
 | Child needs more people | Child ceo → parent ceo → parent **hr** |
 | This company has no `hr` but wants children | Escalate to HR **above** to hire `hr` here first (`holding-hr` for a top subsidiary; parent `hr` if this is already a child) |
 
@@ -514,7 +609,7 @@ python3 ~/.agents/holding/system/install/children_registry.py --parent "$PARENT"
 | `--parent` | Path to parent `…/<slug>-company/` (must already have `hr`) |
 | `--name` | Child stem → `…/children/<stem>/<stem>-company/` |
 | `--project-root` | Code package the child owns |
-| `--grant-path` | Read-only slice from parent (repeatable); reference only — not a crawl license |
+| `--grant-path` | Read-only slice from parent (repeatable); `scope_guard` allows **read**, not write/crawl |
 | `--placement nested` | Default: Company OS under parent `children/` |
 | `--placement external` | Company OS at `<project-root>/.agents/<stem>-company/` |
 
