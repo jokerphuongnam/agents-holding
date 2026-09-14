@@ -245,6 +245,18 @@ fi
 } > "$CHILD_DATA/parent.tsv"
 echo "[create-child] scoped route + scope_allow + parent.tsv (fence → escalate parent)"
 
+# Tool-level SCOPE.md + ensure scope_guard.py present on child hop scripts
+REF_SCOPE="$AGENTS_HOME/templates/hop-reference/scripts/scope_guard.py"
+CHILD_SCRIPTS="$DEST/system/skills/defaults/marlin-hop/scripts"
+if [[ -f "$REF_SCOPE" ]]; then
+  cp "$REF_SCOPE" "$CHILD_SCRIPTS/scope_guard.py"
+  cp "$AGENTS_HOME/templates/hop-reference/scripts/common.py" "$CHILD_SCRIPTS/common.py" 2>/dev/null || true
+fi
+if [[ -f "$CHILD_SCRIPTS/scope_guard.py" ]]; then
+  python3 "$CHILD_SCRIPTS/scope_guard.py" --company "$DEST" write-scope-md \
+    || echo "[create-child] warn: SCOPE.md not written" >&2
+fi
+
 # Parent children.tsv — token-cheap hop: path → child ceo handoff (not child ICs)
 PARENT_DATA="$PARENT/system/skills/defaults/marlin-hop/data"
 mkdir -p "$PARENT_DATA"
@@ -283,6 +295,9 @@ HOP_PY="$PARENT/system/skills/defaults/marlin-hop/scripts/hop.py"
 REF_HOP="$AGENTS_HOME/templates/hop-reference/scripts/hop.py"
 if [[ -f "$REF_HOP" ]]; then
   cp "$REF_HOP" "$HOP_PY"
+  REF_SCRIPTS="$(dirname "$REF_HOP")"
+  cp "$REF_SCRIPTS/common.py" "$(dirname "$HOP_PY")/common.py" 2>/dev/null || true
+  cp "$REF_SCRIPTS/scope_guard.py" "$(dirname "$HOP_PY")/scope_guard.py" 2>/dev/null || true
   # Keep generic self_test if seed softened it
   if [[ -f "$HOLDING_INSTALL/seed_company_hop_data.py" ]]; then
     PYTHONPATH="$HOLDING_INSTALL${PYTHONPATH:+:$PYTHONPATH}" python3 - <<PY
@@ -319,10 +334,13 @@ Same relationship as a **company under holding**, nested (you may own further ch
 4. Need more **people** (or your own children / hr) → escalate to parent ceo →
    parent **hr** (\`manage-children\`). Do not hire into your own staffs without lock.
 
-### Scope
+### Scope (hard fence)
 
-- Work/context: this child company folder + declared package root only.
-- Read-only grants already given: \`$GRANTS_FILE\` (reference, not a hunt license).
+- Allowed roots: see \`SCOPE.md\` (company folder + package root only).
+- **Before** reading any path outside cwd:
+  \`python3 system/skills/defaults/marlin-hop/scripts/scope_guard.py check --path <path>\`
+  Deny (\`handoff: parent\`) → spawn parent ceo for grants/info — do **not** open parent/siblings.
+- Grants file \`$GRANTS_FILE\` is reference only after parent approved — not a hunt license.
 - No sibling hops. No holding-ceo unless the product-root parent escalates upward.
 
 Create deeper children: \`create-child-company.sh --parent $DEST …\`

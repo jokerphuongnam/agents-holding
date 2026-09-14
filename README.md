@@ -537,9 +537,17 @@ parent ceo  --hop(path)-->  handoff: child ceo only (short goal)
 Hop data: parent `…/data/children.tsv`  
 Try: `python3 …/marlin-hop/scripts/hop.py --path sdk-ios/src/…` → expect `handoff: child`.
 
-**Child fence:** child `…/data/scope_allow.tsv` + `parent.tsv`. Path outside the
-child folder/package → `handoff: parent` (ask parent ceo for grants/info). Child
-agents must not hop siblings or crawl the parent tree.
+**Child fence (hard):**
+
+- Hop: out of scope → `handoff: parent`
+- Tool: `scope_guard.py check --path …` (exit 2 = deny; ask parent ceo)
+- SoT: `SCOPE.md` = allowed roots (child company folder + package only)
+
+```bash
+python3 …/pkg-company/system/skills/defaults/marlin-hop/scripts/scope_guard.py \
+  check --path ../other/src/x.go
+# expect: deny / handoff:parent
+```
 
 ### Org runtime (hr portfolio)
 

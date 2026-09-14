@@ -27,6 +27,10 @@ def agents_home() -> Path:
 
 
 def repo_root_from_company(home: Path) -> Path:
+    """Project root that owns `.agents/` (works for nested children too)."""
+    for d in [home, *home.parents]:
+        if d.name == ".agents":
+            return d.parent
     if home.parent.name == ".agents":
         return home.parent.parent
     return home.parent
