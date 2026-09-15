@@ -67,6 +67,18 @@ python3 …/runtime_router.py match --role <ic> --session "$MARLIN_HARNESS"
 roster on every harness (use one brand). With router **enabled**, each generate
 only includes roles mapped to that runtime. Never edit staff cards for vendor.
 
+## Correct staff (mandatory)
+
+Call the **owned** IC — do not keep the work on CEO.
+
+| User ask | Assign |
+| -------- | ------ |
+| commit / branch / push / PR / merge / rebase / mark-resolve / conflict **staging** / remote hygiene | **`git`** |
+| product conflict *semantics* (which side to keep) while merging | lead (`tech-lead` / `int-tech-lead` / …) **brief** → then **`git`** for index/`git add` |
+| product feature / bugfix code | hop → owning IC (not CEO) |
+
+**Hard:** CEO does **not** run `git` / resolve conflict files / push. If the session opened as `ceo` but the ask is pure git/merge → **Assign `git`** immediately.
+
 ## Escalation
 
 - Multi-company → **holding-ceo**
