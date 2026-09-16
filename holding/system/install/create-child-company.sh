@@ -420,10 +420,15 @@ if [[ -f "$UPD" ]]; then
     || true
 fi
 
-# CEO-direct launch.sh on the **company** (SoT); thin redirect on package root
+# Company SoT: launch.sh + README.md (usage how-to). No package-root launcher.
+STEM="${SLUG%-company}"
 WRITE_LAUNCH="$HOLDING_INSTALL/write_company_launch.sh"
+WRITE_README="$HOLDING_INSTALL/write_company_readme.sh"
 if [[ -x "$WRITE_LAUNCH" ]]; then
   bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
+fi
+if [[ -x "$WRITE_README" ]]; then
+  bash "$WRITE_README" --company-dir "$DEST" --package-root "$PROJECT_ROOT" --title "$STEM company" || true
 fi
 # Seed empty aliases file for parent→child fuzzy launch
 ALIAS="$DEST/system/skills/defaults/marlin-hop/data/children_aliases.tsv"
@@ -432,7 +437,6 @@ if [[ ! -f "$ALIAS" ]]; then
   printf 'alias\tslug\n' > "$ALIAS"
 fi
 
-STEM="${SLUG%-company}"
 echo "[create-child] done: $DEST"
 echo "[create-child] grants: $GRANTS_FILE"
 echo "[create-child] placement: ${PLACEMENT:-nested}"
