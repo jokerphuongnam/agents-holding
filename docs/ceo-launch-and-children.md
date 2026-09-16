@@ -167,15 +167,17 @@ projects/desk-garden/.agents/desk-garden-company/launch.sh grok "…"
 4. Parent working on a child: **`./.agents/<parent>-company/launch.sh grok <child> "prompt"`** — do not open child ORG.
 5. Missing Marlin/docs grants from a child: child ceo → **parent ceo** (not holding).
 
-## Product git vs Company OS (important)
+## Where the usage guide lives
 
-**Do not** put Company OS / CEO / `launch.sh` / agent-role docs in **product package
-READMEs** that ship on the application git remote.
+| File | Role |
+| --- | --- |
+| **`.agents/<slug>-company/README.md`** | **Usage SoT** — how to `launch.sh` CEO (written by `write_company_readme.sh` on create) |
+| `.grok/README.md` | Generated pointer → company `README.md` |
+| Product package `README.md` | **Product only** — no CEO / launch / agents |
+
+**Do not** put Company OS / CEO / `launch.sh` docs in product package READMEs on the app git remote.
 
 | Lives in git (product) | Stays local / under `.agents/` (ignored) |
 | --- | --- |
-| App `README.md` (features, layout, build) | `.agents/<slug>-company/**` including `launch.sh` |
-| Product `docs/` (GDD, design tokens, public site) | `.grok/`, `.claude/`, `.codex/` |
-| | Generated `.grok/README.md` (CEO how-to) |
-
-No package-root `launch.sh` — company entry is enough; `.agents/` is already gitignored.
+| App `README.md` (features, layout, build) | `.agents/<slug>-company/**` including `launch.sh` + company `README.md` |
+| Product `docs/` | `.grok/`, `.claude/`, `.codex/` |

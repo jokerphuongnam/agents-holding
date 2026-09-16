@@ -548,10 +548,14 @@ PKG_FOR_LAUNCH="${PROJECT_ROOT:-}"
 if [[ -z "$PKG_FOR_LAUNCH" && -n "${PARENT_FOR_WS:-}" ]]; then
   PKG_FOR_LAUNCH="$PARENT_FOR_WS"
 fi
+WRITE_README="$HOLDING_INSTALL/write_company_readme.sh"
 if [[ -x "$WRITE_LAUNCH" && -n "$PKG_FOR_LAUNCH" ]]; then
   bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PKG_FOR_LAUNCH" || true
+  if [[ -x "$WRITE_README" ]]; then
+    bash "$WRITE_README" --company-dir "$DEST" --package-root "$PKG_FOR_LAUNCH" --title "${TITLE:-$SLUG}" || true
+  fi
 elif [[ -x "$WRITE_LAUNCH" ]]; then
-  echo "[create-company] warn: skip launch.sh (pass --project-root so adapters cwd is known)" >&2
+  echo "[create-company] warn: skip launch.sh / README usage (pass --project-root so adapters cwd is known)" >&2
 fi
 
 echo "[create-company] done: $DEST"
