@@ -165,6 +165,21 @@ projects/desk-garden/.agents/desk-garden-company/launch.sh grok "…"
 
 1. Create company / child as today (`create-company` / `create-child` + hr when needed).
 2. Run `company_os.sh all` (or `launch.sh merge` once, which runs `all`).
-3. Day-to-day: **`./launch.sh grok\|claude\|codex\|merge "prompt"`** — always CEO.
-4. Parent working on a child: **`./launch.sh grok <child> "prompt"`** — do not open child ORG.
+3. Day-to-day: **company** `./.agents/<slug>-company/launch.sh grok\|claude\|codex\|merge "prompt"` — always CEO.
+4. Parent working on a child: **`./.agents/<parent>-company/launch.sh grok <child> "prompt"`** — do not open child ORG.
 5. Missing Marlin/docs grants from a child: child ceo → **parent ceo** (not holding).
+
+## Product git vs Company OS (important)
+
+**Do not** put Company OS / CEO / `launch.sh` / agent-role docs in **product package
+READMEs** that ship on the application git remote.
+
+| Lives in git (product) | Stays local / under `.agents/` (ignored) |
+| --- | --- |
+| App `README.md` (features, layout, build) | `.agents/<slug>-company/**` |
+| Product `docs/` (GDD, design tokens, public site) | `.grok/`, `.claude/`, `.codex/` |
+| | Package-root `launch.sh` redirect (gitignored) |
+| | Generated `.grok/README.md` (CEO how-to) |
+
+`write_company_launch.sh` adds `launch.sh` to the package `.gitignore` when it
+writes the thin redirect.

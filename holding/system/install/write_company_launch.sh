@@ -85,3 +85,11 @@ exec "\$(cd "\$(dirname "\$0")" && pwd)/$REL_COMP/launch.sh" "\$@"
 EOF
 chmod +x "$PKG_ROOT/launch.sh"
 echo "[write_company_launch] thin redirect: $PKG_ROOT/launch.sh → ./$REL_COMP/launch.sh"
+
+# Keep AI/company launcher out of product git
+GI="$PKG_ROOT/.gitignore"
+if [[ -f "$GI" ]]; then
+  grep -qxF 'launch.sh' "$GI" 2>/dev/null || echo 'launch.sh' >> "$GI"
+elif [[ -d "$PKG_ROOT" ]]; then
+  printf '%s\n' '# Local company launcher redirect (not product source)' 'launch.sh' > "$GI"
+fi
