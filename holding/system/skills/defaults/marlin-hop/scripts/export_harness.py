@@ -270,17 +270,24 @@ def layout_flat(home: Path, cfg: dict) -> int:
 
 
 def _write_grok_ceo_launcher(root: Path, home: Path) -> None:
-    """Write .grok/launch-ceo.sh + short README so opening Grok as ceo is one command.
-
-    Project `.grok/config.toml` cannot set agent.name (Grok only allows mcp/plugins/
-    permission there). Use GROK_AGENT / --agent / this launcher instead.
-    """
+    """Write .grok/launch-ceo.sh + README (CEO CLI how-to after generate)."""
     grok_dir = root / ".grok"
     grok_dir.mkdir(parents=True, exist_ok=True)
     try:
         company = home.relative_to(root).as_posix()
     except ValueError:
         company = home.as_posix()
+
+    if (root / "launch.sh").is_file():
+        launch_cmd = "./launch.sh"
+    elif (home / "launch.sh").is_file():
+        try:
+            launch_cmd = "./" + (home / "launch.sh").relative_to(root).as_posix()
+        except ValueError:
+            launch_cmd = f"./{company}/launch.sh"
+    else:
+        launch_cmd = f"./{company}/launch.sh"
+
     launch = grok_dir / "launch-ceo.sh"
     launch.write_text(
         "\n".join(
@@ -305,52 +312,71 @@ def _write_grok_ceo_launcher(root: Path, home: Path) -> None:
         launch.chmod(launch.stat().st_mode | 0o111)
     except OSError:
         pass
+
     readme = grok_dir / "README.md"
     readme.write_text(
         "\n".join(
             [
-                "# Grok + Company OS",
+                "# Company OS — CLI launch (generated)",
                 "",
-                f"Company SoT: `{company}/` (portable). Cards here are **generated**.",
+                f"Company SoT: `{company}/` (portable). Cards under `.grok/agents/` are **generated**.",
                 "",
                 "## Start as company CEO (recommended)",
                 "",
-                "Bare `grok` does **not** auto-select `ceo`. Use one of:",
+                "Always talk to **CEO** directly. Do not open a bare CLI and then hop for `ceo`.",
                 "",
                 "```bash",
-                "cd <project-root>          # or your git worktree of this repo",
-                "./.grok/launch-ceo.sh      # interactive TUI as ceo",
-                "./.grok/launch-ceo.sh \"your ask\"",
+                "cd <project-root>   # package or repo root that owns this .grok/",
+                "",
+                f'{launch_cmd} grok "your ask"       # CEO on Grok (first prompt = your ask)',
+                f'{launch_cmd} claude "your ask"     # CEO on Claude',
+                f'{launch_cmd} codex "your ask"      # CEO on Codex',
+                f'{launch_cmd} merge "your ask"      # all adapters + CEO on runtime_router default',
+                f'{launch_cmd} grok --fresh "…"      # new session (default: continue prior)',
                 "```",
                 "",
-                "Equivalents:",
+                "| Arg | Meaning |",
+                "| --- | --- |",
+                "| `grok` / `claude` / `codex` | Start **CEO** on that vendor CLI |",
+                "| `merge` | `company_os all` + CEO on `runtime_router` default (cross-vendor Assign when enabled) |",
+                "| `\"ask…\"` | First user message in the CEO session |",
+                "| `--fresh` | Do not continue the prior session for this cwd |",
+                "",
+                "### Parent → child CEO (parent companies only)",
+                "",
+                "```bash",
+                f'{launch_cmd} grok <child-ish> "spike feature"   # fuzzy name, e.g. desk-garden / dg',
+                f"{launch_cmd} --list-children",
+                "```",
+                "",
+                "Do **not** open the child ORG/staffs from the parent. Child CEO hops its own ICs.",
+                "",
+                "### Grok-only low-level (still generated)",
+                "",
+                "```bash",
+                "./.grok/launch-ceo.sh",
+                './.grok/launch-ceo.sh "your ask"    # same as: launch.sh grok "…"',
+                "```",
                 "",
                 "```bash",
                 "grok --agent ceo",
                 "GROK_AGENT=ceo grok",
                 "```",
                 "",
-                "Optional direnv (`.envrc`, usually gitignored):",
-                "",
-                "```bash",
-                "export GROK_AGENT=ceo",
-                "```",
-                "",
-                "Then plain `grok` in this directory starts as ceo.",
-                "",
                 "## Regenerate",
                 "",
                 "```bash",
-                f"{company}/system/install/company_os.sh grok",
-                "# or: company_os.sh all",
+                f"{company}/system/install/company_os.sh all",
+                f"# or: {company}/system/install/company_os.sh grok",
                 "```",
+                "",
+                "More: company `README.md` (if present) · agents-holding `docs/ceo-launch-and-children.md`.",
                 "",
             ]
         ),
         encoding="utf-8",
     )
-    print(f"grok: wrote {launch.relative_to(root)} + .grok/README.md (start as ceo)")
-
+    print(f"grok: wrote {launch.relative_to(root)} + .grok/README.md (CEO launch how-to)")
 
 def _ensure_codex_project_doc_fallback(root: Path, agents_md_rel: str) -> None:
     """Codex only auto-reads AGENTS.md on the root→cwd walk. Point fallback at
@@ -412,24 +438,43 @@ def layout_agents_md(home: Path, cfg: dict) -> int:
     boot = cfg.get("boot") or {}
     hop = f"python3 {company}/system/skills/defaults/marlin-hop/scripts/hop.py"
 
-    pointer = "\n".join(
-        [
-            f"# Codex boot pointer — Company OS ({hid})",
+    pointer_lines = [
+        f"# Codex boot pointer — Company OS ({hid})",
+        "",
+        f"Generated adapter (not SoT). Lives under `.codex/` so the repo root stays free of AGENTS.md.",
+        f"Boot: [`{company}/COMPANY_BOOT.md`]({company}/COMPANY_BOOT.md).",
+        f"Org: [`{company}/README.md`]({company}/README.md). Hiring: `.agents/holding/` (`holding-hr`).",
+        f"Roster below = roles mapped to **`{hid}`** via `runtime_router.toml` (SoT staffs unchanged).",
+        "",
+        "```bash",
+        f"{hop} --path <file>",
+        f"{hop} --roster ceo",
+        f"{hop} --list --harness {hid}",
+        f"{company}/system/install/company_os.sh {hid}",
+        "```",
+        "",
+    ]
+    scope_md = home / "SCOPE.md"
+    parent_tsv = (
+        home / "system" / "skills" / "defaults" / "marlin-hop" / "data" / "parent.tsv"
+    )
+    if scope_md.is_file() or parent_tsv.is_file():
+        guard = f"python3 {company}/system/skills/defaults/marlin-hop/scripts/scope_guard.py"
+        pointer_lines += [
+            "## Child scope fence",
             "",
-            f"Generated adapter (not SoT). Lives under `.codex/` so the repo root stays free of AGENTS.md.",
-            f"Boot: [`{company}/COMPANY_BOOT.md`]({company}/COMPANY_BOOT.md).",
-            f"Org: [`{company}/README.md`]({company}/README.md). Hiring: `.agents/holding/` (`holding-hr`).",
-            f"Roster below = roles mapped to **`{hid}`** via `runtime_router.toml` (SoT staffs unchanged).",
+            f"This is a **child** company. Read [`{company}/SCOPE.md`]({company}/SCOPE.md).",
+            "Before reading paths outside the company cwd:",
             "",
             "```bash",
-            f"{hop} --path <file>",
-            f"{hop} --roster ceo",
-            f"{hop} --list --harness {hid}",
-            f"{company}/system/install/company_os.sh {hid}",
+            f"{guard} check --path <path>",
             "```",
             "",
+            "Deny / `handoff: parent` → spawn **parent ceo** for grants/info. "
+            "Do not open parent or sibling trees.",
+            "",
         ]
-    )
+    pointer = "\n".join(pointer_lines)
     out.write_text(pointer, encoding="utf-8")
     _ensure_codex_project_doc_fallback(root, agents_rel)
 
