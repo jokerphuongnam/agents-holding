@@ -379,19 +379,27 @@ Bare `grok` in a project **does not** auto-select Company OS `ceo`. Project
 `.grok/config.toml` also **cannot** set `agent.name` (Grok only allows MCP /
 plugins / permissions there).
 
-After `company_os.sh grok` (or `all`), use one of:
+After `company_os.sh all` (or first `launch.sh merge`), **talk to CEO directly**:
 
 ```bash
 cd /path/to/project          # or a git worktree of that repo
 
-# Recommended — generated launcher
-./.grok/launch-ceo.sh
-./.grok/launch-ceo.sh "ship the empty-state fix"
+# Recommended — all harnesses (always CEO; first string = first prompt)
+./launch.sh grok "ship the empty-state fix"
+./launch.sh claude "…"
+./launch.sh codex "…"
+./launch.sh merge "…"          # multi-vendor Assign (runtime_router)
+./launch.sh grok --fresh "…"   # new session (default: continue)
 
-# Equivalents
-grok --agent ceo
-GROK_AGENT=ceo grok
+# Parent → child CEO (fuzzy name; no child ORG crawl)
+./.agents/<parent>-company/launch.sh grok desk-garden "spike embed"
+
+# Low-level Grok-only (still generated)
+./.grok/launch-ceo.sh "…"
 ```
+
+**Dev guide (new):** [`docs/ceo-launch-and-children.md`](docs/ceo-launch-and-children.md)
+— child `external` placement, `handoff_child.py`, aliases, merge mode.
 
 Optional **direnv** so plain `grok` becomes ceo in this tree (keep `.envrc`
 gitignored if personal):
@@ -403,11 +411,12 @@ export GROK_AGENT=ceo
 
 | Want | Command |
 | --- | --- |
-| Product work in a subsidiary | `./.grok/launch-ceo.sh` inside that project |
+| Product work in a subsidiary | `./launch.sh grok\|claude\|codex\|merge "…"` |
+| Wake a **child** CEO from parent | `./.agents/<parent>-company/launch.sh grok <child> "…"` |
 | Conglomerate / hire / new company | `grok --agent holding-ceo` (holding install in `~/.agents`) |
-| Regenerate ceo card + launcher | `.agents/<slug>-company/system/install/company_os.sh grok` |
+| Regenerate adapters | `.agents/<slug>-company/system/install/company_os.sh all` |
 
-See also `.grok/README.md` written next to the launcher.
+See also `.grok/README.md` and **`docs/ceo-launch-and-children.md`**.
 
 ---
 
@@ -418,7 +427,7 @@ See also `.grok/README.md` written next to the launcher.
 1. Install `agents-holding` → `~/.agents`
 2. `create-company` with `--project-root` + `--tech`
 3. `company_os.sh all` in the project
-4. Open Grok as **`ceo`**: `./.grok/launch-ceo.sh` (not bare `grok`)
+4. Talk to **`ceo`**: `./launch.sh grok "…"` (or `claude` / `codex` / `merge`)
 
 ### Existing codebase
 

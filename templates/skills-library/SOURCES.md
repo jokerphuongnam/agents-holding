@@ -36,3 +36,5 @@ copy matching entries into a **new** company's
 `system/skills/customs/<team>/<role>/`. Existing subsidiaries are not
 auto-updated for library skills; use `update-company.sh` only for safe
 defaults (hop scripts, company_os, FORMULA, harness) — not customs.
+
+- game-design-* : industry game designer practice (loops, GDD, idle); see TopDev overview https://topdev.vn/blog/game-designer-la-gi-mo-ta-cong-viec-cua-nha-thiet-ke-game/

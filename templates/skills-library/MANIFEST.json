@@ -391,6 +391,44 @@
       "always_for_roles": [
         "hr"
       ]
+    },
+    {
+      "id": "game-design-core",
+      "path": "design/game-design-core",
+      "tags": [
+        "game",
+        "game-design",
+        "gdd",
+        "unity",
+        "idle"
+      ],
+      "target": "design/game-designer",
+      "always_for_roles": []
+    },
+    {
+      "id": "game-design-gdd",
+      "path": "design/game-design-gdd",
+      "tags": [
+        "game",
+        "game-design",
+        "gdd",
+        "documentation"
+      ],
+      "target": "design/game-designer",
+      "always_for_roles": []
+    },
+    {
+      "id": "game-design-idle-loop",
+      "path": "design/game-design-idle-loop",
+      "tags": [
+        "game",
+        "game-design",
+        "idle",
+        "garden",
+        "casual"
+      ],
+      "target": "design/game-designer",
+      "always_for_roles": []
     }
   ]
 }

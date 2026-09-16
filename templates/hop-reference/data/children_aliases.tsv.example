@@ -1,0 +1,4 @@
+alias	slug
+# fuzzy names → <stem>-company (one slug per child)
+# desk-garden	desk-garden-company
+# dg	desk-garden-company

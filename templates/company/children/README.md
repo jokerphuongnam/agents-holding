@@ -34,6 +34,15 @@ company wants children but has no hr
 
 Dev bootstrap: `seed_parent_hr.py --parent …`
 
+## Launch child CEO (from parent — no ORG crawl)
+
+```bash
+./.agents/<parent>-company/launch.sh grok|claude|codex|merge <child-ish> "prompt"
+# fuzzy aliases: …/marlin-hop/data/children_aliases.tsv
+# external SoT: <project-root>/.agents/<stem>-company/
+# guide: docs/ceo-launch-and-children.md
+```
+
 ## Layout
 
 ```text
