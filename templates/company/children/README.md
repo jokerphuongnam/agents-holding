@@ -37,9 +37,14 @@ Dev bootstrap: `seed_parent_hr.py --parent …`
 ## Launch child CEO (from parent — no ORG crawl)
 
 ```bash
+# Wake child from parent (fuzzy name):
 ./.agents/<parent>-company/launch.sh grok|claude|codex|merge <child-ish> "prompt"
+
+# Child company SoT entry (after create-child):
+#   nested:   …/children/<stem>/<stem>-company/launch.sh
+#   external: <project-root>/.agents/<stem>-company/launch.sh
+# Package-root launch.sh is only a thin redirect → company launch.sh
 # fuzzy aliases: …/marlin-hop/data/children_aliases.tsv
-# external SoT: <project-root>/.agents/<stem>-company/
 # guide: docs/ceo-launch-and-children.md
 ```
 

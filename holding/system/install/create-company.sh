@@ -542,19 +542,21 @@ else
   echo "[create-company] warn: update_company_defaults.py missing (no template_sync.json)" >&2
 fi
 
-# CEO-direct launch.sh (grok|claude|codex|merge)
+# CEO-direct launch.sh on the **company** (requires project root for .grok/)
 WRITE_LAUNCH="$HOLDING_INSTALL/write_company_launch.sh"
-if [[ -x "$WRITE_LAUNCH" ]]; then
-  if [[ -n "${PROJECT_ROOT:-}" ]]; then
-    bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
-  else
-    bash "$WRITE_LAUNCH" --company-dir "$DEST" || true
-  fi
+PKG_FOR_LAUNCH="${PROJECT_ROOT:-}"
+if [[ -z "$PKG_FOR_LAUNCH" && -n "${PARENT_FOR_WS:-}" ]]; then
+  PKG_FOR_LAUNCH="$PARENT_FOR_WS"
+fi
+if [[ -x "$WRITE_LAUNCH" && -n "$PKG_FOR_LAUNCH" ]]; then
+  bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PKG_FOR_LAUNCH" || true
+elif [[ -x "$WRITE_LAUNCH" ]]; then
+  echo "[create-company] warn: skip launch.sh (pass --project-root so adapters cwd is known)" >&2
 fi
 
 echo "[create-company] done: $DEST"
 echo "[create-company] next: $DEST/system/install/company_os.sh all"
-echo "[create-company] then: ./launch.sh grok|claude|codex|merge \"prompt\"  (always CEO)"
+echo "[create-company] then: $DEST/launch.sh grok|claude|codex|merge \"prompt\"  (always CEO; company SoT)"
 echo "[create-company] docs: see agents-holding docs/ceo-launch-and-children.md"
 echo "[create-company] then CTO refines teams from CTO_TECH_SEED.md"
 echo "[create-company] later template updates: $HOLDING_INSTALL/update-company.sh --dest $DEST"
