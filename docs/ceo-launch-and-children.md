@@ -51,7 +51,21 @@ Company entry (**SoT = company `launch.sh`**, calls the core):
 
 **Always CEO.** Do not run a random command and then hop to ceo.
 
-**Worktree:** default starts in a **NEW git worktree** (does not reuse the current checkout). Use `--no-worktree` to stay put, or `--continue` to reuse checkout + prior session. Optional `--worktree-name NAME`.
+**Worktree:** default starts in a **NEW git worktree** as **`ceo`**.  
+**User channels in that worktree:** only **`ceo`** and **`ba-user`** — all other roles are sub-agents.
+
+```bash
+# 1) Start as CEO (new worktree) — note the worktree name
+./.agents/<slug>-company/launch.sh grok "…"
+
+# 2) Same worktree → talk to BA
+./.agents/<slug>-company/launch.sh grok --worktree-name <name> --agent ba-user "…"
+
+# 3) Same worktree → back to CEO
+./.agents/<slug>-company/launch.sh grok --worktree-name <name> --agent ceo "…"
+```
+
+`--no-worktree` stays in the current checkout; `--continue` resumes a prior session.
 
 ### Examples
 

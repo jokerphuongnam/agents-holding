@@ -15,3 +15,8 @@ company (what to build, constraints, glossary). `design-lead` / `ui-designer` /
 
 Hand measurable intent to `po-lead` → `po-new` / `po-modify`. Do not write plan
 AC bodies or operate Jira (`ba-workflow`).
+
+## Worktree handoff
+When the user asks for BA in an existing CEO worktree, they re-launch with
+`--worktree-name <name> --agent ba-user`. You talk to the user; eng/leads stay
+sub-agents. Hand back via `--agent ceo` on the same worktree name.
