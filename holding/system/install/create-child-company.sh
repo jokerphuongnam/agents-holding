@@ -438,10 +438,6 @@ echo "[create-child] grants: $GRANTS_FILE"
 echo "[create-child] placement: ${PLACEMENT:-nested}"
 echo "[create-child] next: $DEST/system/install/company_os.sh all"
 echo "[create-child] then (company SoT): $DEST/launch.sh grok|claude|codex|merge \"prompt\""
-if [[ "${PLACEMENT:-nested}" == "external" ]]; then
-  echo "[create-child] or from package: $PROJECT_ROOT/.agents/$SLUG/launch.sh …"
-  echo "[create-child] thin redirect: $PROJECT_ROOT/launch.sh → .agents/$SLUG/launch.sh"
-fi
 echo "[create-child] parent wake child: <parent>/launch.sh grok $STEM \"prompt\""
 echo "[create-child] docs: agents-holding docs/ceo-launch-and-children.md"
 echo "[create-child] list: python3 $CHILDREN_REG --parent $PARENT list"
