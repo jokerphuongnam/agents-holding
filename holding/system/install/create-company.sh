@@ -542,7 +542,19 @@ else
   echo "[create-company] warn: update_company_defaults.py missing (no template_sync.json)" >&2
 fi
 
+# CEO-direct launch.sh (grok|claude|codex|merge)
+WRITE_LAUNCH="$HOLDING_INSTALL/write_company_launch.sh"
+if [[ -x "$WRITE_LAUNCH" ]]; then
+  if [[ -n "${PROJECT_ROOT:-}" ]]; then
+    bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
+  else
+    bash "$WRITE_LAUNCH" --company-dir "$DEST" || true
+  fi
+fi
+
 echo "[create-company] done: $DEST"
-echo "[create-company] next: .agents/$SLUG/system/install/company_os.sh all"
+echo "[create-company] next: $DEST/system/install/company_os.sh all"
+echo "[create-company] then: ./launch.sh grok|claude|codex|merge \"prompt\"  (always CEO)"
+echo "[create-company] docs: see agents-holding docs/ceo-launch-and-children.md"
 echo "[create-company] then CTO refines teams from CTO_TECH_SEED.md"
 echo "[create-company] later template updates: $HOLDING_INSTALL/update-company.sh --dest $DEST"

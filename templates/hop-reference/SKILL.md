@@ -16,6 +16,11 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --path 
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --section hiring
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --roster holding-ceo
+# Parent → child CEO (fuzzy); prefer company launch.sh:
+python3 …/handoff_child.py --list
+python3 …/handoff_child.py desk-garden --print-path
+./.agents/<parent>-company/launch.sh grok <child> "prompt"
+./launch.sh grok|claude|codex|merge "prompt"   # always CEO; see docs/ceo-launch-and-children.md
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to grok
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to codex
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all

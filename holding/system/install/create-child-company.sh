@@ -420,7 +420,27 @@ if [[ -f "$UPD" ]]; then
     || true
 fi
 
+# CEO-direct launch.sh (+ package root launch when external)
+WRITE_LAUNCH="$HOLDING_INSTALL/write_company_launch.sh"
+if [[ -x "$WRITE_LAUNCH" ]]; then
+  if [[ "${PLACEMENT:-nested}" == "external" ]]; then
+    bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
+  else
+    bash "$WRITE_LAUNCH" --company-dir "$DEST" || true
+  fi
+fi
+# Seed empty aliases file for parent→child fuzzy launch
+ALIAS="$DEST/system/skills/defaults/marlin-hop/data/children_aliases.tsv"
+if [[ ! -f "$ALIAS" ]]; then
+  mkdir -p "$(dirname "$ALIAS")"
+  printf 'alias\tslug\n' > "$ALIAS"
+fi
+
 echo "[create-child] done: $DEST"
 echo "[create-child] grants: $GRANTS_FILE"
+echo "[create-child] placement: ${PLACEMENT:-nested}"
 echo "[create-child] next: $DEST/system/install/company_os.sh all"
+echo "[create-child] then: ./launch.sh grok|claude|codex|merge \"prompt\"  (always child CEO)"
+echo "[create-child] parent wake child: <parent>/launch.sh grok <stem> \"prompt\""
+echo "[create-child] docs: agents-holding docs/ceo-launch-and-children.md"
 echo "[create-child] list: python3 $CHILDREN_REG --parent $PARENT list"
