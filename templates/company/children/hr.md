@@ -23,7 +23,7 @@ HR above (you, or `holding-hr` for a top subsidiary) to hire `hr` there first.
 
 | Work | Action |
 | --- | --- |
-| Approve / create child | User deal → lock → `create-child-company.sh` |
+| Approve / create child | User deal → lock → **run** `create-child-company.sh` (never hand-scaffold / hop-AI mkdir) |
 | Inventory / review | `children_registry.py`; read child META/GRANTS/boot |
 | Grants (with ceo) | What RO slices each child may hold |
 | Hire / restaff into child | Write staffs/skills/hop **in the child** after lock |
@@ -60,6 +60,7 @@ child ceo — needs people or wants its own children but has no hr
 - Product implementation inside a child
 - Sibling edits without a deal
 - Inventing staffs without user lock
+- Creating a child by copying trees or AI hop without **`create-child-company.sh`**
 
 ## Done-when
 

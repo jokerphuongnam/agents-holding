@@ -159,13 +159,26 @@ projects/desk-garden/.agents/desk-garden-company/launch.sh grok "…"
 
 ---
 
+## Create a child — holding scripts only (not hop AI)
+
+```text
+user / parent ceo → Assign hr → deal + lock
+  → ~/.agents/holding/system/install/create-child-company.sh …
+  → <child>/system/install/company_os.sh all
+```
+
+**Forbidden:** CEO/IC “just mkdir `.agents/…` and write ORG” or hop-scaffolding a
+child tree. That skips META/GRANTS/registry/`launch.sh`/company `README.md`.
+
+Product work after the child exists: parent `launch.sh grok <child> "…"`.
+
 ## Checklist for app developers
 
-1. Create company / child as today (`create-company` / `create-child` + hr when needed).
-2. Run `company_os.sh all` (or `launch.sh merge` once, which runs `all`).
+1. Create company / child via **holding install scripts** + hr lock (`create-company.sh` / `create-child-company.sh`).
+2. Run `company_os.sh all` (or `launch.sh merge` once).
 3. Day-to-day: **company** `./.agents/<slug>-company/launch.sh grok\|claude\|codex\|merge "prompt"` — always CEO.
-4. Parent working on a child: **`./.agents/<parent>-company/launch.sh grok <child> "prompt"`** — do not open child ORG.
-5. Missing Marlin/docs grants from a child: child ceo → **parent ceo** (not holding).
+4. Parent → child product: **`./.agents/<parent>-company/launch.sh grok <child> "prompt"`** — do not open child ORG.
+5. Missing docs/grants from a child: child ceo → **parent ceo** (not holding).
 
 ## Where the usage guide lives
 
