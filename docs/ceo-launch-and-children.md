@@ -159,16 +159,38 @@ projects/desk-garden/.agents/desk-garden-company/launch.sh grok "…"
 
 ---
 
-## Create a child — holding scripts only (not hop AI)
+## Create a child — same as create-company, plus `--parent`
+
+Creating a child is **the same script UX as a top company**. The only differences:
+
+1. Pass **`--parent <parent-company-path>`** (first distinguishing flag)
+2. Parent is **wired at create time** (META/GRANTS/registry/`parent.tsv`/`PARENT.md`)
+
+```bash
+# Top company (parent = holding):
+~/.agents/holding/system/install/create-company.sh \
+  --name my-app --budget medium --project-root /path/to/app --tech "…"
+
+# Child company (identical flags + --parent):
+~/.agents/holding/system/install/create-company.sh \
+  --parent .agents/my-app-company \
+  --name desk-garden --budget medium \
+  --project-root /path/to/app/projects/desk-garden \
+  --placement external \
+  --tech "unity,macos,service" \
+  --grant-path libraries/sources/Service
+
+# Alias (same implementation):
+~/.agents/holding/system/install/create-child-company.sh --parent … --name … …
+```
 
 ```text
 user / parent ceo → Assign hr → deal + lock
-  → ~/.agents/holding/system/install/create-child-company.sh …
+  → create-company.sh --parent …   # or create-child-company.sh
   → <child>/system/install/company_os.sh all
 ```
 
-**Forbidden:** CEO/IC “just mkdir `.agents/…` and write ORG” or hop-scaffolding a
-child tree. That skips META/GRANTS/registry/`launch.sh`/company `README.md`.
+**Forbidden:** hop-AI mkdir / copy trees. Always the holding install script.
 
 Product work after the child exists: parent `launch.sh grok <child> "…"`.
 
