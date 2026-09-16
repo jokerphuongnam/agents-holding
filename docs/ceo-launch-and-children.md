@@ -34,9 +34,8 @@ Company entry (**SoT = company `launch.sh`**, calls the core):
 ./.agents/<slug>-company/launch.sh <harness|merge> ["prompt…"]
 ./.agents/<slug>-company/launch.sh <harness|merge> <child-ish> ["prompt…"]
 
-# External child — script lives IN the company, not the package root:
-./.agents/<stem>-company/launch.sh <harness|merge> ["prompt…"]
-# Optional thin redirect at <project-root>/launch.sh → company launch.sh
+# External child — script lives IN the company (under .agents/, gitignored with it):
+<project-root>/.agents/<stem>-company/launch.sh <harness|merge> ["prompt…"]
 ```
 
 | Arg | Meaning |
@@ -134,12 +133,11 @@ After create:
 ```bash
 <child-company>/system/install/company_os.sh all
 
-# Company SoT (preferred):
+# Company SoT only (no package-root launcher):
 <path-to>/<stem>-company/launch.sh grok "…"
 
 # External example:
 projects/desk-garden/.agents/desk-garden-company/launch.sh grok "…"
-# Thin redirect only: projects/desk-garden/launch.sh → company script
 
 # Or from parent:
 ./.agents/<parent>-company/launch.sh grok <stem> "…"
@@ -176,10 +174,8 @@ READMEs** that ship on the application git remote.
 
 | Lives in git (product) | Stays local / under `.agents/` (ignored) |
 | --- | --- |
-| App `README.md` (features, layout, build) | `.agents/<slug>-company/**` |
+| App `README.md` (features, layout, build) | `.agents/<slug>-company/**` including `launch.sh` |
 | Product `docs/` (GDD, design tokens, public site) | `.grok/`, `.claude/`, `.codex/` |
-| | Package-root `launch.sh` redirect (gitignored) |
 | | Generated `.grok/README.md` (CEO how-to) |
 
-`write_company_launch.sh` adds `launch.sh` to the package `.gitignore` when it
-writes the thin redirect.
+No package-root `launch.sh` — company entry is enough; `.agents/` is already gitignored.
