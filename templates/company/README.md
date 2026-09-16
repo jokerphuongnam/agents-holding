@@ -2,52 +2,42 @@
 
 Company OS (`{{COMPANY_SLUG}}`). Staffs, skills, harness, and hop live under `system/`.
 
-## Usage — always talk to the CEO
+## Usage — CEO / BA in one worktree
 
-Do **not** open a bare CLI and then hop for `ceo`. Use this company’s `launch.sh`.
-**Default: NEW git worktree** (does not reuse the current checkout).
+**User talks only to `ceo` and `ba-user`.** Everyone else is a **sub-agent**.
+
+**Default launch = NEW git worktree as `ceo`.**
 
 ```bash
-# From the project / package root (new worktree each launch):
 ./.agents/{{COMPANY_SLUG}}/launch.sh grok "your ask"
-./.agents/{{COMPANY_SLUG}}/launch.sh claude "your ask"
-./.agents/{{COMPANY_SLUG}}/launch.sh codex "your ask"
-./.agents/{{COMPANY_SLUG}}/launch.sh merge "your ask"    # multi-vendor Assign
 
-# From this company directory:
-./launch.sh grok "your ask"
+# Same worktree → BA
+./.agents/{{COMPANY_SLUG}}/launch.sh grok --worktree-name <name> --agent ba-user "clarify with user"
 
-# Optional:
-./.agents/{{COMPANY_SLUG}}/launch.sh grok --worktree-name my-topic "your ask"
-./.agents/{{COMPANY_SLUG}}/launch.sh grok --no-worktree "stay in current tree"
-./.agents/{{COMPANY_SLUG}}/launch.sh grok --continue "reuse checkout + prior session"
+# Same worktree → back to CEO
+./.agents/{{COMPANY_SLUG}}/launch.sh grok --worktree-name <name> --agent ceo "continue"
+
+./.agents/{{COMPANY_SLUG}}/launch.sh merge "…"
+./.agents/{{COMPANY_SLUG}}/launch.sh grok --no-worktree "…"
+./.agents/{{COMPANY_SLUG}}/launch.sh grok --continue "…"
 ```
 
 | Arg | Meaning |
 | --- | --- |
-| `grok` / `claude` / `codex` | Start **CEO** on that vendor CLI |
-| `merge` | `company_os all` + CEO on `runtime_router` default runtime |
-| `"ask…"` | **First user message** in the CEO session |
-| (default) | **New git worktree** |
-| `--worktree-name NAME` | Name the new worktree/branch |
-| `--no-worktree` | Stay in current checkout |
-| `--continue` | Reuse checkout + prior session |
+| `--agent ceo\|ba-user` | User-facing agent (default `ceo`) |
+| `--worktree-name NAME` | Create/join named worktree (required for `ba-user`) |
+| (default) | **New** worktree as ceo |
 
-### Parent → child CEO (if this company has children)
+### Parent → child
 
 ```bash
 ./.agents/{{COMPANY_SLUG}}/launch.sh grok <child-ish> "short goal"
-./.agents/{{COMPANY_SLUG}}/launch.sh --list-children
 ```
 
-Do **not** open the child ORG/staffs from here. Child CEO hops its own ICs.
-
-## Regenerate adapters
+## Regenerate
 
 ```bash
 ./.agents/{{COMPANY_SLUG}}/system/install/company_os.sh all
 ```
 
-Generated how-to also appears in `.grok/README.md` after `company_os.sh grok` (points here).
-
-Holding templates: [docs/ceo-launch-and-children.md](https://github.com/jokerphuongnam/agents-holding/blob/main/docs/ceo-launch-and-children.md)
+Holding: [docs/ceo-launch-and-children.md](https://github.com/jokerphuongnam/agents-holding/blob/main/docs/ceo-launch-and-children.md)

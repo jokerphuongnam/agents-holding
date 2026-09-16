@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
 # Write Company OS README.md (usage how-to). Product package README must stay AI-free.
-# Usage: write_company_readme.sh --company-dir DEST --package-root PKG [--title TITLE]
 set -euo pipefail
-
-COMPANY_DIR=""
-PKG_ROOT=""
-TITLE=""
-
+COMPANY_DIR=""; PKG_ROOT=""; TITLE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --company-dir) COMPANY_DIR="${2:-}"; shift 2 ;;
@@ -15,7 +10,6 @@ while [[ $# -gt 0 ]]; do
     *) echo "unknown: $1" >&2; exit 2 ;;
   esac
 done
-
 [[ -n "$COMPANY_DIR" && -n "$PKG_ROOT" ]] || { echo "need --company-dir and --package-root" >&2; exit 2; }
 COMPANY_DIR="$(cd "$COMPANY_DIR" && pwd)"
 PKG_ROOT="$(cd "$PKG_ROOT" && pwd)"
@@ -30,45 +24,47 @@ Company OS (\`$SLUG\`). Staffs, skills, harness, and hop live under \`system/\`.
 
 Package / adapters root: \`$PKG_ROOT\`
 
-## Usage — always talk to the CEO
+## Usage — CEO / BA in one worktree
 
-Do **not** open a bare CLI and then hop for \`ceo\`. Use this company's \`launch.sh\`.
-**Default: NEW git worktree** (does not reuse the current checkout).
+**User talks only to \`ceo\` and \`ba-user\`.** Everyone else is a **sub-agent**
+(Assigned by ceo/ba-user; not a direct user chat).
+
+**Default launch = NEW git worktree as \`ceo\`.**
 
 \`\`\`bash
-# From the project / package root (new worktree each launch):
-./$REL_COMP/launch.sh grok "your ask"
-./$REL_COMP/launch.sh claude "your ask"
-./$REL_COMP/launch.sh codex "your ask"
-./$REL_COMP/launch.sh merge "your ask"    # multi-vendor Assign
+# Start (new worktree as CEO) — note the worktree name printed by the CLI
+./$REL_COMP/launch.sh grok "ship empty-state"
 
-# From this company directory:
-./launch.sh grok "your ask"
+# Call BA in the SAME worktree (handoff conversation surface to ba-user)
+./$REL_COMP/launch.sh grok --worktree-name <name> --agent ba-user "clarify acceptance with user"
 
-# Optional:
-./$REL_COMP/launch.sh grok --worktree-name my-topic "your ask"
-./$REL_COMP/launch.sh grok --no-worktree "stay in current tree"
-./$REL_COMP/launch.sh grok --continue "reuse checkout + prior session"
+# Return to CEO in that worktree
+./$REL_COMP/launch.sh grok --worktree-name <name> --agent ceo "BA done — continue eng"
+
+# Other harnesses
+./$REL_COMP/launch.sh claude "…"
+./$REL_COMP/launch.sh merge "…"
+
+# Opt out of new worktree / resume
+./$REL_COMP/launch.sh grok --no-worktree "…"
+./$REL_COMP/launch.sh grok --continue "…"
 \`\`\`
 
 | Arg | Meaning |
 | --- | --- |
-| \`grok\` / \`claude\` / \`codex\` | Start **CEO** on that vendor CLI |
-| \`merge\` | \`company_os all\` + CEO on \`runtime_router\` default runtime |
-| \`"ask…"\` | **First user message** in the CEO session |
-| (default) | **New git worktree** |
-| \`--worktree-name NAME\` | Name the new worktree/branch |
-| \`--no-worktree\` | Stay in current checkout |
-| \`--continue\` | Reuse checkout + prior session |
+| \`grok\` / \`claude\` / \`codex\` | Vendor CLI |
+| \`merge\` | \`company_os all\` + default runtime_router vendor |
+| \`--agent ceo\|ba-user\` | User-facing agent (default \`ceo\`) |
+| \`--worktree-name NAME\` | Name/join worktree (required for \`--agent ba-user\`) |
+| (default) | **New** worktree as ceo |
+| \`--no-worktree\` / \`--continue\` | Stay in current tree / resume session |
 
-### Parent → child CEO (if this company has children)
+### Parent → child product CEO
 
 \`\`\`bash
 ./$REL_COMP/launch.sh grok <child-ish> "short goal"
 ./$REL_COMP/launch.sh --list-children
 \`\`\`
-
-Do **not** open the child ORG/staffs from here. Child CEO hops its own ICs.
 
 ## Regenerate adapters
 
@@ -76,9 +72,6 @@ Do **not** open the child ORG/staffs from here. Child CEO hops its own ICs.
 ./$REL_COMP/system/install/company_os.sh all
 \`\`\`
 
-Generated pointer also appears in \`.grok/README.md\` after \`company_os.sh grok\`.
-
 Holding: https://github.com/jokerphuongnam/agents-holding/blob/main/docs/ceo-launch-and-children.md
 EOF
-
 echo "[write_company_readme] $COMPANY_DIR/README.md"
