@@ -420,14 +420,10 @@ if [[ -f "$UPD" ]]; then
     || true
 fi
 
-# CEO-direct launch.sh (+ package root launch when external)
+# CEO-direct launch.sh on the **company** (SoT); thin redirect on package root
 WRITE_LAUNCH="$HOLDING_INSTALL/write_company_launch.sh"
 if [[ -x "$WRITE_LAUNCH" ]]; then
-  if [[ "${PLACEMENT:-nested}" == "external" ]]; then
-    bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
-  else
-    bash "$WRITE_LAUNCH" --company-dir "$DEST" || true
-  fi
+  bash "$WRITE_LAUNCH" --company-dir "$DEST" --package-root "$PROJECT_ROOT" || true
 fi
 # Seed empty aliases file for parent→child fuzzy launch
 ALIAS="$DEST/system/skills/defaults/marlin-hop/data/children_aliases.tsv"
@@ -436,11 +432,16 @@ if [[ ! -f "$ALIAS" ]]; then
   printf 'alias\tslug\n' > "$ALIAS"
 fi
 
+STEM="${SLUG%-company}"
 echo "[create-child] done: $DEST"
 echo "[create-child] grants: $GRANTS_FILE"
 echo "[create-child] placement: ${PLACEMENT:-nested}"
 echo "[create-child] next: $DEST/system/install/company_os.sh all"
-echo "[create-child] then: ./launch.sh grok|claude|codex|merge \"prompt\"  (always child CEO)"
-echo "[create-child] parent wake child: <parent>/launch.sh grok <stem> \"prompt\""
+echo "[create-child] then (company SoT): $DEST/launch.sh grok|claude|codex|merge \"prompt\""
+if [[ "${PLACEMENT:-nested}" == "external" ]]; then
+  echo "[create-child] or from package: $PROJECT_ROOT/.agents/$SLUG/launch.sh …"
+  echo "[create-child] thin redirect: $PROJECT_ROOT/launch.sh → .agents/$SLUG/launch.sh"
+fi
+echo "[create-child] parent wake child: <parent>/launch.sh grok $STEM \"prompt\""
 echo "[create-child] docs: agents-holding docs/ceo-launch-and-children.md"
 echo "[create-child] list: python3 $CHILDREN_REG --parent $PARENT list"

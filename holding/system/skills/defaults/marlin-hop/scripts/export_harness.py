@@ -278,13 +278,14 @@ def _write_grok_ceo_launcher(root: Path, home: Path) -> None:
     except ValueError:
         company = home.as_posix()
 
-    if (root / "launch.sh").is_file():
-        launch_cmd = "./launch.sh"
-    elif (home / "launch.sh").is_file():
+    # Prefer company SoT launch.sh; package-root launch.sh is only a thin redirect
+    if (home / "launch.sh").is_file():
         try:
             launch_cmd = "./" + (home / "launch.sh").relative_to(root).as_posix()
         except ValueError:
             launch_cmd = f"./{company}/launch.sh"
+    elif (root / "launch.sh").is_file():
+        launch_cmd = "./launch.sh"
     else:
         launch_cmd = f"./{company}/launch.sh"
 
