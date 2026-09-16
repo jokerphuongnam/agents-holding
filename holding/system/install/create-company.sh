@@ -33,35 +33,39 @@ NO_REGISTER=0
 
 usage() {
   cat <<'USAGE'
-Create a subsidiary Company OS tree from templates/company.
+Create a Company OS tree from templates/company.
 
+  # Top subsidiary (parent = holding):
   create-company.sh --name <slug> --budget low|medium|high […] \
     [--tech "a,b,c"] [--project-root <path>] [--dest <company-path>] \
     [--topology teams|companies] [--packages "frontend:react,backend:nestjs"] \
-    [--family chat] [--no-register] \
-    [--dry-run]
+    [--family chat] [--no-register] [--dry-run]
 
-Result:
+  # Child company (same flags; first extra arg is the parent Company OS):
+  create-company.sh --parent <parent-company-path> --name <slug> \
+    --budget low|medium|high --project-root <path> […] \
+    [--placement nested|external] [--grant-path PATH]… [--grant-artifact FILE]…
+
+With --parent, this script forwards to create-child-company.sh (full company
+mirror + META/GRANTS + parent link wired at create time). Do not hand-scaffold.
+
+Result (no --parent):
   (default)           <agents-home>/<slug>-company/
   --project-root DIR  DIR/.agents/<slug>-company/
-  --dest PATH         explicit Company OS destination (child companies, etc.)
 
-Topology (workspace layout):
-  teams (default)  One company; --packages become tech teams + hop routes
-                   under the same --project-root (monorepo-friendly).
-  companies        Do not use this script alone for multi-package splits —
-                   run create-workspace.sh --topology companies instead
-                   (one --project-root per package; avoids adapter clobber).
-
-Holding may live in-repo (.agents/holding) or system (~/.agents/holding).
-Call path: shortage/budget → holding-ceo → holding-hr ↔ user → this script
-  (or create-workspace.sh for multi-package parents).
+Child result: see create-child-company.sh (nested vs external).
 
 Always-on staffs: ceo, cto, ba-lead (+ ba-user, ba-workflow), po-lead (+ po-*),
 git, qc-lead, tech-lead (on seeded tech team, not cross-cut).
-Leads = dispatch/low; ba-user/ba-workflow = medium; po-* writers = xhigh.
 USAGE
 }
+
+# If --parent is present anywhere, forward entire argv to create-child (same UX).
+for _arg in "$@"; do
+  if [[ "$_arg" == "--parent" ]]; then
+    exec "$HOLDING_INSTALL/create-child-company.sh" "$@"
+  fi
+done
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

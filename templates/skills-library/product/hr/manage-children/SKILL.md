@@ -14,16 +14,22 @@ child ceos/ICs.
 ## Hard rule — create via holding scripts only
 
 **Never** invent / scaffold / copy a child Company OS by hand or by “hop AI
-writing files.” Creating a child **must** run:
+writing files.” Creating a child is **the same as create-company**, with
+`--parent` and parent link attached at create time:
 
 ```bash
-~/.agents/holding/system/install/create-child-company.sh \
+# Preferred (same entry as top companies):
+~/.agents/holding/system/install/create-company.sh \
   --parent .agents/<parent>-company \
   --name <stem> \
   --budget low|medium|high \
   --project-root <package-root> \
   [--placement nested|external] \
+  [--tech "…"] [--packages "…"] \
   [--grant-path …] [--grant-artifact …]
+
+# Equivalent:
+~/.agents/holding/system/install/create-child-company.sh --parent … --name … …
 ```
 
 Then:
@@ -32,8 +38,9 @@ Then:
 <child-company>/system/install/company_os.sh all
 ```
 
-`create-child-company.sh` writes META/GRANTS, registry, hop fences, `launch.sh`,
-and **company `README.md` (usage)**. Hand-made trees skip those and drift.
+The script writes META/GRANTS, registry, hop fences, `launch.sh`, and company
+`README.md` (usage), and links parent↔child immediately. Hand-made trees skip
+those and drift.
 
 | Allowed | Forbidden |
 | --- | --- |
