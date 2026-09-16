@@ -32,10 +32,11 @@ Package / adapters root: \`$PKG_ROOT\`
 
 ## Usage — always talk to the CEO
 
-Do **not** open a bare CLI and then hop for \`ceo\`. Use this company's \`launch.sh\`:
+Do **not** open a bare CLI and then hop for \`ceo\`. Use this company's \`launch.sh\`.
+**Default: NEW git worktree** (does not reuse the current checkout).
 
 \`\`\`bash
-# From the project / package root:
+# From the project / package root (new worktree each launch):
 ./$REL_COMP/launch.sh grok "your ask"
 ./$REL_COMP/launch.sh claude "your ask"
 ./$REL_COMP/launch.sh codex "your ask"
@@ -44,8 +45,10 @@ Do **not** open a bare CLI and then hop for \`ceo\`. Use this company's \`launch
 # From this company directory:
 ./launch.sh grok "your ask"
 
-# New session (default continues prior session for this company cwd):
-./$REL_COMP/launch.sh grok --fresh "new topic"
+# Optional:
+./$REL_COMP/launch.sh grok --worktree-name my-topic "your ask"
+./$REL_COMP/launch.sh grok --no-worktree "stay in current tree"
+./$REL_COMP/launch.sh grok --continue "reuse checkout + prior session"
 \`\`\`
 
 | Arg | Meaning |
@@ -53,7 +56,10 @@ Do **not** open a bare CLI and then hop for \`ceo\`. Use this company's \`launch
 | \`grok\` / \`claude\` / \`codex\` | Start **CEO** on that vendor CLI |
 | \`merge\` | \`company_os all\` + CEO on \`runtime_router\` default runtime |
 | \`"ask…"\` | **First user message** in the CEO session |
-| \`--fresh\` | Do not continue the prior session |
+| (default) | **New git worktree** |
+| \`--worktree-name NAME\` | Name the new worktree/branch |
+| \`--no-worktree\` | Stay in current checkout |
+| \`--continue\` | Reuse checkout + prior session |
 
 ### Parent → child CEO (if this company has children)
 

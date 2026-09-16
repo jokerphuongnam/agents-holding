@@ -322,7 +322,7 @@ def _write_grok_ceo_launcher(root: Path, home: Path) -> None:
                 "",
                 f"Company SoT: `{company}/`",
                 "",
-                "**How to launch the CEO** (harness + prompt, continue/--fresh, children):",
+                "**How to launch the CEO** (harness + prompt; default NEW worktree):",
                 "",
                 f"See **[`{company}/README.md`]({company}/README.md)** — that is the usage guide.",
                 "",
