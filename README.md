@@ -556,6 +556,10 @@ Must have `hr` first. No hr → escalate HR **above** to hire `hr` here.
 
 Use **children** after you chose the right-hand side of [Teams vs children](#teams-vs-children).
 
+**Create children only with** `holding/system/install/create-child-company.sh`
+(after hr deal + lock). Do **not** hop-AI scaffold a child Company OS by hand —
+see [docs/ceo-launch-and-children.md](docs/ceo-launch-and-children.md).
+
 ```text
 holding
   └── my-app-company              ← holding subsidiary
