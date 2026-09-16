@@ -43,12 +43,15 @@ Company entry (**SoT = company `launch.sh`**, calls the core):
 | `grok` / `claude` / `codex` | Start **CEO** on that vendor CLI |
 | `merge` | `company_os.sh all`, then CEO on `runtime_router.toml` **default** runtime (cross-vendor Assign when router `enabled = true`) |
 | `"prompt…"` | **First user message** in the CEO session |
-| `--fresh` | Do **not** continue the prior session for this cwd |
+| (default) | **New git worktree** |
+| `--worktree-name NAME` | Name the worktree/branch |
+| `--no-worktree` | Stay in current checkout |
+| `--continue` | Reuse checkout + prior session |
 | `<child-ish>` | Fuzzy child name (parent wrapper only) — see aliases |
 
 **Always CEO.** Do not run a random command and then hop to ceo.
 
-**Session:** default continues the last session for that company cwd (`grok --continue`, `claude --continue`, `codex resume --last`). Use `--fresh` for a new thread.
+**Worktree:** default starts in a **NEW git worktree** (does not reuse the current checkout). Use `--no-worktree` to stay put, or `--continue` to reuse checkout + prior session. Optional `--worktree-name NAME`.
 
 ### Examples
 

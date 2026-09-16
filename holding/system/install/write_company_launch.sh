@@ -50,7 +50,7 @@ for a in "\$@"; do
   case "\$a" in
     --fresh) FRESH_ARGS+=(--fresh) ;;
     -h|--help)
-      echo "Usage: ./$REL_COMP/launch.sh <grok|claude|codex|merge> [--fresh] [child?] [prompt]"
+      echo "Usage: ./$REL_COMP/launch.sh <grok|claude|codex|merge> [--worktree-name N|--no-worktree|--continue] [child?] [prompt]"
       exit 0
       ;;
     *) POS+=("\$a") ;;
@@ -58,7 +58,7 @@ for a in "\$@"; do
 done
 set -- "\${POS[@]+"\${POS[@]}"}"
 [[ \$# -ge 1 ]] || {
-  echo "Usage: ./$REL_COMP/launch.sh <grok|claude|codex|merge> [--fresh] [child?] [prompt]" >&2
+  echo "Usage: ./$REL_COMP/launch.sh <grok|claude|codex|merge> [--worktree-name N|--no-worktree|--continue] [child?] [prompt]" >&2
   exit 2
 }
 MODE="\$1"; shift
