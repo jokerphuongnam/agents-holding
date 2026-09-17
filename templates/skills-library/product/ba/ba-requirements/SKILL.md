@@ -30,8 +30,14 @@ verbatim dump.
    multi-company, flag holding — do not invent cross-subsidiary scope alone.
 3. **Split must / should / could.** Must = ship-blocking. Should = agreed value.
    Could = park with owner. Never demote a must without `next: wait-user`.
-4. **Surface ambiguity explicitly.** Multiple viable paths → short options table
-   (pros/cons/risk) + `next: wait-user`. Do not pick silently.
+4. **Surface ambiguity explicitly — no pick-one option grids.** Multiple viable
+   work paths → a **choices table** (or equivalent written list) with:
+   - **Title**
+   - **Short description**
+   - **Code before** (current; if a code/API/config change)
+   - **Code after** (proposed; if applicable)
+   Then `next: wait-user`. Do not pick silently. Do not use bare A/B chip
+   pickers as the primary UX — prefer concrete before/after.
 5. **Acceptance intent, not implementation.** State observable outcomes
    (“user can X and sees Y”). Leave Given/When/Then wording and plan file
    ownership to PO; you may draft intent bullets PO will harden.
