@@ -2,7 +2,10 @@
 # Shared Company OS launcher — every company (parent + children).
 #
 # User-facing agents in a worktree: ceo | ba-user only (everyone else = sub-agent).
-# Default: NEW git worktree as ceo. Switch BA/CEO by reusing --worktree-name.
+# Default workspace = the PROJECT that contains the company (--cwd there).
+#   - Company at repo root → sibling git worktree <repo-parent>/.company-worktrees/<name>
+#   - Company nested in a monorepo package → live package cwd (avoids empty HEAD checkouts)
+# Never use harness --worktree / Grove clone into system trees.
 #
 #   launch_company.sh --company-dir DIR --root DIR <harness|merge> \
 #     [--agent ceo|ba-user] [--worktree-name NAME] [--no-worktree] [--continue] \
@@ -24,7 +27,7 @@ launch_company.sh --company-dir DIR --root DIR <harness|merge> [options] ["promp
 
 User channels in the worktree: ceo | ba-user only (other roles = sub-agents).
 
-  # Start (new worktree as CEO):
+  # Start (new git worktree of the project as CEO):
   launch_company.sh --company-dir … --root … grok "…"
 
   # Call BA in the SAME worktree:
@@ -35,9 +38,13 @@ User channels in the worktree: ceo | ba-user only (other roles = sub-agents).
 
 Options:
   --agent ceo|ba-user   User-facing agent (default: ceo)
-  --worktree-name NAME  Worktree/branch name (required to switch agent in-place)
+  --worktree-name NAME  Name/join worktree under ../.company-worktrees/NAME
   --no-worktree         Stay in --root (no new worktree)
   --continue            Continue prior session (implies join existing / no new worktree)
+
+Worktrees are always `git worktree add` from the project repo that contains the
+company — never a harness system clone. Ignored overlays (.agents/.grok/…) are
+symlinked from --root into the worktree when missing.
 USAGE
 }
 
@@ -129,6 +136,44 @@ for r in rows:
 PY
 }
 
+# Link company/harness overlays that are gitignored (not present in a fresh worktree).
+link_company_overlays() {
+  local src="$1" dest="$2"
+  [[ -n "$src" && -n "$dest" && "$src" != "$dest" ]] || return 0
+  local d
+  for d in .agents .grok .claude .codex; do
+    if [[ -e "$src/$d" && ! -e "$dest/$d" ]]; then
+      ln -s "$src/$d" "$dest/$d"
+      echo "[launch] symlink $dest/$d → $src/$d" >&2
+    fi
+  done
+}
+
+ensure_project_worktree() {
+  # Create or reuse: <parent-of-repo>/.company-worktrees/<name>
+  local repo="$1" name="$2"
+  local parent dest found
+  found="$(resolve_worktree_path "$name" "$repo" || true)"
+  if [[ -n "$found" && -d "$found" ]]; then
+    printf '%s\n' "$found"
+    return 0
+  fi
+  parent="$(dirname "$repo")/.company-worktrees"
+  mkdir -p "$parent"
+  dest="$parent/$name"
+  if [[ -d "$dest" ]]; then
+    echo "error: path exists but is not a registered git worktree: $dest" >&2
+    exit 2
+  fi
+  echo "[launch] git worktree add $dest (branch $name) from $repo" >&2
+  if git -C "$repo" show-ref --verify --quiet "refs/heads/$name"; then
+    git -C "$repo" worktree add "$dest" "$name"
+  else
+    git -C "$repo" worktree add -b "$name" "$dest" HEAD
+  fi
+  printf '%s\n' "$dest"
+}
+
 HARNESS="$MODE"
 if [[ "$MODE" == "merge" ]]; then
   echo "[launch] merge → company_os all + CEO/BA on router default" >&2
@@ -156,18 +201,6 @@ fi
 STEM="$(basename "$COMPANY_DIR")"
 STEM="${STEM%-company}"
 
-# Joining an existing topic worktree as ba-user/ceo (same conversation workspace)
-JOIN_EXISTING=0
-if [[ -n "$WT_NAME" && "$AGENT" != "ceo" ]]; then
-  JOIN_EXISTING=1
-  NO_WORKTREE=1
-fi
-if [[ -n "$WT_NAME" && "$CONTINUE" -eq 1 ]]; then
-  JOIN_EXISTING=1
-  NO_WORKTREE=1
-fi
-# Explicit: ceo with --worktree-name alone still CREATES/USES that named worktree via CLI
-
 USE_WT=1
 [[ "$NO_WORKTREE" -eq 1 ]] && USE_WT=0
 
@@ -176,7 +209,7 @@ if [[ -z "$WT_NAME" && "$USE_WT" -eq 1 ]]; then
 fi
 
 # Switching to ba-user without a worktree name is unsafe (would create a new tree as BA)
-if [[ "$AGENT" == "ba-user" && -z "$WT_NAME" && "$USE_WT" -eq 1 ]]; then
+if [[ "$AGENT" == "ba-user" && -z "$WT_NAME" ]]; then
   echo "error: --agent ba-user requires --worktree-name <existing> (same tree as CEO)" >&2
   echo "hint: launch as ceo first, note the worktree name, then:" >&2
   echo "  launch.sh grok --worktree-name <name> --agent ba-user \"…\"" >&2
@@ -185,59 +218,75 @@ fi
 
 LAUNCH_ROOT="$ROOT"
 REPO_GIT="$(cd "$ROOT" && git rev-parse --show-toplevel 2>/dev/null || true)"
+# Non-empty when company package root is nested inside a monorepo checkout.
+PKG_REL=""
+if [[ -n "$REPO_GIT" ]]; then
+  PKG_REL="$(python3 -c "import os; print(os.path.relpath('$ROOT', '$REPO_GIT'))")"
+  [[ "$PKG_REL" == "." ]] && PKG_REL=""
+fi
 
-if [[ "$JOIN_EXISTING" -eq 1 && -n "$WT_NAME" && -n "$REPO_GIT" ]]; then
+if [[ "$USE_WT" -eq 1 ]]; then
+  if [[ -z "$REPO_GIT" ]]; then
+    echo "error: --root is not inside a git repo; cannot create a project worktree" >&2
+    echo "hint: use --no-worktree, or run from the project that contains the company" >&2
+    exit 2
+  fi
+
+  if [[ -n "$PKG_REL" ]]; then
+    # Nested package (e.g. projects/desk-garden): always the live package that holds
+    # the company. A monorepo git worktree from HEAD often lacks uncommitted package
+    # files — and harness --worktree clones are wrong. BA handoff = same cwd + --agent.
+    LAUNCH_ROOT="$ROOT"
+    if [[ "$AGENT" == "ba-user" ]]; then
+      echo "[launch] nested package — joining live project $LAUNCH_ROOT (agent=$AGENT name=$WT_NAME)" >&2
+    else
+      echo "[launch] nested package — cwd=$LAUNCH_ROOT (project contains company; name=$WT_NAME)" >&2
+    fi
+  elif [[ "$AGENT" == "ba-user" ]]; then
+    FOUND="$(resolve_worktree_path "$WT_NAME" "$REPO_GIT" || true)"
+    if [[ -z "$FOUND" || ! -d "$FOUND" ]]; then
+      echo "error: worktree '$WT_NAME' not found under project $REPO_GIT" >&2
+      echo "hint: start ceo first (creates ../.company-worktrees/$WT_NAME), then hand off" >&2
+      exit 2
+    fi
+    LAUNCH_ROOT="$FOUND"
+    echo "[launch] joining existing worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
+  else
+    # Company at repo root: sibling git worktree (never harness --worktree clone)
+    LAUNCH_ROOT="$(ensure_project_worktree "$REPO_GIT" "$WT_NAME")"
+    echo "[launch] project worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
+  fi
+elif [[ -n "$WT_NAME" && -n "$REPO_GIT" && -z "$PKG_REL" ]]; then
+  # --continue / --no-worktree with an explicit name → prefer that checkout if registered
   FOUND="$(resolve_worktree_path "$WT_NAME" "$REPO_GIT" || true)"
   if [[ -n "$FOUND" && -d "$FOUND" ]]; then
     LAUNCH_ROOT="$FOUND"
-    USE_WT=0
-    echo "[launch] joining existing worktree: $FOUND (agent=$AGENT)" >&2
-  else
-    # Grove may own the worktree; still pass name to CLI without creating a second one if possible
-    echo "[launch] worktree '$WT_NAME' not in git worktree list — launching with named worktree/cwd hints" >&2
+    echo "[launch] joining existing worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
   fi
 fi
 
-if [[ "$USE_WT" -eq 1 && "$HARNESS" == "codex" && -n "$REPO_GIT" ]]; then
-  WT_PARENT="$(dirname "$REPO_GIT")/.grok-worktrees"
-  mkdir -p "$WT_PARENT"
-  LAUNCH_ROOT="$WT_PARENT/$WT_NAME"
-  if [[ ! -d "$LAUNCH_ROOT" ]]; then
-    echo "[launch] git worktree add $LAUNCH_ROOT (branch $WT_NAME)" >&2
-    git -C "$REPO_GIT" worktree add -b "$WT_NAME" "$LAUNCH_ROOT" HEAD
-  fi
-  USE_WT=0
-fi
+link_company_overlays "$ROOT" "$LAUNCH_ROOT"
 
-echo "[launch] agent=$AGENT harness=$HARNESS worktree=${WT_NAME:-none} join=$JOIN_EXISTING root=$LAUNCH_ROOT company=$COMPANY_DIR" >&2
+echo "[launch] agent=$AGENT harness=$HARNESS worktree=${WT_NAME:-none} root=$LAUNCH_ROOT company=$COMPANY_DIR" >&2
 [[ -n "$PROMPT" ]] && echo "[launch] first_prompt=${PROMPT:0:160}" >&2
 
 cd "$LAUNCH_ROOT"
 
 case "$HARNESS" in
   grok)
-    GOPTS=(--agent "$AGENT")
-    if [[ "$USE_WT" -eq 1 ]]; then
-      GOPTS+=(--worktree "$WT_NAME")
-    else
-      GOPTS+=(--cwd "$LAUNCH_ROOT")
-      [[ "$CONTINUE" -eq 1 ]] && GOPTS+=(--continue)
-    fi
+    # Always --cwd of the project (or its git worktree). Never grok --worktree.
+    GOPTS=(--agent "$AGENT" --cwd "$LAUNCH_ROOT")
+    [[ "$CONTINUE" -eq 1 ]] && GOPTS+=(--continue)
     if [[ -n "$PROMPT" ]]; then exec grok "${GOPTS[@]}" "$PROMPT"
     else exec grok "${GOPTS[@]}"; fi
     ;;
   claude)
     COPTS=(--agent "$AGENT")
-    if [[ "$USE_WT" -eq 1 ]]; then
-      COPTS+=(--worktree "$WT_NAME")
-    else
-      [[ "$CONTINUE" -eq 1 ]] && COPTS+=(--continue)
-    fi
+    [[ "$CONTINUE" -eq 1 ]] && COPTS+=(--continue)
     if [[ -n "$PROMPT" ]]; then exec claude "${COPTS[@]}" "$PROMPT"
     else exec claude "${COPTS[@]}"; fi
     ;;
   codex)
-    # Codex has no portable agent switch like grok; document limitation
     if [[ "$AGENT" != "ceo" ]]; then
       echo "[launch] warn: codex path has limited agent cards — prefer grok/claude for ba-user switch" >&2
     fi
