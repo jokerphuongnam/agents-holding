@@ -45,10 +45,15 @@ return = "brief+handoff"
 handoff_dir = "cache/handoff"
 
 # Example split (only applied when enabled = true). Edit to taste:
-#   grok  → ceo / dispatch
-#   codex → ba / po (plan)
-#   claude → *-dev (code)
+#   grok   → ceo / dispatch (+ catch-all)
+#   claude → ba-* (clarify) — CEO on grok hops BA via Claude CLI, not native grok
+#   codex  → po-* (plan writers)
+#   claude → *-dev / *-engineer (code) — adjust globs to your roster
 # First match wins. Catch-all "*" last.
+#
+# Resolve / hop:
+#   python3 …/runtime_router.py resolve --role ba-user --session grok
+#   python3 …/runtime_router.py hop --from ceo --to ba-user --session grok --goal '…'
 
 [[roles]]
 match = "ceo"
@@ -56,7 +61,7 @@ runtime = "grok"
 
 [[roles]]
 match = "ba-*"
-runtime = "codex"
+runtime = "claude"
 
 [[roles]]
 match = "po-*"
@@ -64,6 +69,10 @@ runtime = "codex"
 
 [[roles]]
 match = "*-dev"
+runtime = "claude"
+
+[[roles]]
+match = "*-engineer"
 runtime = "claude"
 
 [[roles]]
