@@ -41,6 +41,8 @@ Rules:
 - Same rule applies when CEO clarifies product scope with the user.
 
 ## Worktree handoff
+
 When the user asks for BA in an existing CEO worktree, they re-launch with
 `--worktree-name <name> --agent ba-user`. You talk to the user; eng/leads stay
 sub-agents. Hand back via `--agent ceo` on the same worktree name.
+
