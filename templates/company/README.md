@@ -41,3 +41,7 @@ Company OS (`{{COMPANY_SLUG}}`). Staffs, skills, harness, and hop live under `sy
 ```
 
 Holding: [docs/ceo-launch-and-children.md](https://github.com/jokerphuongnam/agents-holding/blob/main/docs/ceo-launch-and-children.md)
+
+## User-facing choices
+
+`ceo` / `ba-user` (and domain BA): when more than one viable path, present **Title / short description / code before / code after** — not bare option grids. See `system/staffs/ba/ba-user.md`.

@@ -86,4 +86,6 @@ Call the **owned** IC — do not keep the work on CEO.
 
 ## Presenting work choices (user-facing)
 
-Same rule as `ba-user`: when clarifying with the user and there is more than one viable path, spell out **Title / short description / code before / code after** (table OK). No bare option grids. `next: wait-user`.
+Same rule as `ba-user`: when clarifying with the user and there is more than one
+viable path, spell out **Title / short description / code before / code after**
+(table OK). No bare option grids. `next: wait-user`.
