@@ -43,19 +43,22 @@ Company entry (**SoT = company `launch.sh`**, calls the core):
 | `grok` / `claude` / `codex` | Start **CEO** on that vendor CLI |
 | `merge` | `company_os.sh all`, then CEO on `runtime_router.toml` **default** runtime (cross-vendor Assign when router `enabled = true`) |
 | `"prompt…"` | **First user message** in the CEO session |
-| (default) | **New git worktree** |
-| `--worktree-name NAME` | Name the worktree/branch |
+| (default) | Workspace = **project that contains the company** |
+| `--worktree-name NAME` | Name/join (repo-root → `../.company-worktrees/NAME`) |
 | `--no-worktree` | Stay in current checkout |
 | `--continue` | Reuse checkout + prior session |
 | `<child-ish>` | Fuzzy child name (parent wrapper only) — see aliases |
 
 **Always CEO.** Do not run a random command and then hop to ceo.
 
-**Worktree:** default starts in a **NEW git worktree** as **`ceo`**.  
-**User channels in that worktree:** only **`ceo`** and **`ba-user`** — all other roles are sub-agents.
+**Workspace (never harness/system clone):**
+- Company at **repo root** → `git worktree add` into `<repo-parent>/.company-worktrees/<name>`, launch `--cwd` there.
+- Company **nested** in a monorepo package (e.g. `projects/desk-garden`) → live package cwd (the folder that has `.agents/…-company`).
+**Do not** use `grok --worktree` / Grove system clones.  
+**User channels:** only **`ceo`** and **`ba-user`** — all other roles are sub-agents.
 
 ```bash
-# 1) Start as CEO (new worktree) — note the worktree name
+# 1) Start as CEO (new project worktree) — note the worktree name
 ./.agents/<slug>-company/launch.sh grok "…"
 
 # 2) Same worktree → talk to BA
