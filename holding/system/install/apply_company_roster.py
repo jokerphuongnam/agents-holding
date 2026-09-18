@@ -159,7 +159,6 @@ def rebuild_agents_tsv(company: Path, custom_rows: list[dict]) -> None:
         if meta:
             tier, perm, cap, skill, lead, qc, routing, blurb = meta
         else:
-            # custom / unknown
             tier = "medium"
             perm = "plan"
             cap = "read-only"
@@ -173,13 +172,19 @@ def rebuild_agents_tsv(company: Path, custom_rows: list[dict]) -> None:
                     tier = line.split(":", 1)[1].strip()
                 if line.startswith("description:"):
                     blurb = line.split(":", 1)[1].strip()
-            for c in custom_rows:
-                if c.get("name") == name:
-                    tier = c.get("tier") or tier
-                    lead = c.get("lead") or lead
-                    skill = ",".join(c.get("skill_ids") or [])
-                    blurb = (c.get("description") or blurb).splitlines()[0][:80]
-                    routing = "1" if name in ("ba-user", "ceo", "backend-ba") else routing
+        for c in custom_rows:
+            if c.get("name") != name:
+                continue
+            if c.get("tier"):
+                tier = c["tier"]
+            if c.get("lead"):
+                lead = c["lead"]
+            if c.get("skill_ids"):
+                skill = ",".join(c.get("skill_ids") or [])
+            if c.get("description"):
+                blurb = (c.get("description") or blurb).splitlines()[0][:80]
+            if name in ("ba-user", "ceo", "backend-ba"):
+                routing = "1"
         rows.append((name, tier, perm, cap, skill, lead, qc, routing, blurb or name))
 
     rows.sort(key=lambda r: r[0])
@@ -194,7 +199,14 @@ def apply(company: Path, spec: dict, library: Path) -> int:
     keep = set(spec.get("keep_staffs") or [])
     keep.add("ceo")  # hard requirement
     custom = list(spec.get("custom_staffs") or [])
+    # Per-staff config for template staffs: { name: { skill_ids, paths, description? } }
+    configs = spec.get("staff_configs") or {}
+    if not isinstance(configs, dict):
+        configs = {}
     extra_skills = list(spec.get("extra_skill_ids") or [])
+    fences: dict[str, list] = {}
+    if isinstance(spec.get("staff_path_fences"), dict):
+        fences.update({str(k): list(v or []) for k, v in spec["staff_path_fences"].items()})
 
     # Remove template staffs not kept
     for path in list_staff_files(company):
@@ -205,9 +217,36 @@ def apply(company: Path, spec: dict, library: Path) -> int:
             continue
         path.unlink()
         print(f"staff\tremoved\t{name}")
-        # prune empty team dirs later
 
-    # Custom staffs + their skills
+    # Apply skills / description overrides for kept template staffs
+    staff_files = {p.stem: p for p in list_staff_files(company)}
+    config_rows_for_tsv: list[dict] = []
+    for name in sorted(keep):
+        cfg = configs.get(name) or {}
+        if not isinstance(cfg, dict):
+            cfg = {}
+        skill_ids = list(cfg.get("skill_ids") or [])
+        paths = list(cfg.get("paths") or [])
+        if paths:
+            fences[name] = [str(p).strip() for p in paths if str(p).strip()]
+        team = staff_files[name].parent.name if name in staff_files else "leadership"
+        for sid in skill_ids:
+            copy_skill(library, sid, company, f"{team}/{name}")
+        desc = (cfg.get("description") or "").strip()
+        if desc and name in staff_files:
+            append_or_replace_description(staff_files[name], desc)
+        if skill_ids or desc:
+            config_rows_for_tsv.append(
+                {
+                    "name": name,
+                    "skill_ids": skill_ids,
+                    "description": desc,
+                    "tier": cfg.get("tier") or "",
+                    "lead": cfg.get("lead") or "",
+                }
+            )
+
+    # Custom staffs + their skills (skills belong to that staff)
     for c in custom:
         name = (c.get("name") or "").strip()
         if not name:
@@ -217,6 +256,7 @@ def apply(company: Path, spec: dict, library: Path) -> int:
         tier = c.get("tier") or "medium"
         lead = c.get("lead") or "ceo"
         skill_ids = list(c.get("skill_ids") or [])
+        paths = list(c.get("paths") or [])
         for ns in c.get("new_skills") or []:
             sid = (ns.get("id") or "").strip()
             if not sid:
@@ -234,16 +274,16 @@ def apply(company: Path, spec: dict, library: Path) -> int:
         for sid in skill_ids:
             copy_skill(library, sid, company, f"{team}/{name}")
         write_staff_md(company, name, team, desc, tier, lead, skill_ids)
+        if paths:
+            fences[name] = [str(p).strip() for p in paths if str(p).strip()]
         keep.add(name)
 
     for sid in extra_skills:
         copy_skill(library, sid, company, None)
 
-    fences = spec.get("staff_path_fences") or {}
-    if isinstance(fences, dict):
-        apply_path_fences(company, {str(k): list(v or []) for k, v in fences.items()})
+    if fences:
+        apply_path_fences(company, fences)
 
-    # Drop empty team directories (except keep structure lightly)
     staffs_root = company / "system" / "staffs"
     if staffs_root.is_dir():
         for team_dir in list(staffs_root.iterdir()):
@@ -251,8 +291,30 @@ def apply(company: Path, spec: dict, library: Path) -> int:
                 shutil.rmtree(team_dir)
                 print(f"team\tremoved_empty\t{team_dir.name}")
 
-    rebuild_agents_tsv(company, custom)
+    # Merge custom + config overrides into agents.tsv skill/blurb columns
+    rebuild_agents_tsv(company, custom + config_rows_for_tsv)
     return 0
+
+
+def append_or_replace_description(path: Path, description: str) -> None:
+    marker = "## Wizard description"
+    block = f"{marker}\n\n{description.strip()}\n"
+    text = path.read_text(encoding="utf-8")
+    if marker in text:
+        start = text.index(marker)
+        rest = text[start:]
+        cut = len(rest)
+        acc = 0
+        for i, line in enumerate(rest.splitlines(True)):
+            if i and line.startswith("## "):
+                cut = acc
+                break
+            acc += len(line)
+        text = text[:start] + block + rest[cut:]
+    else:
+        text = text.rstrip() + "\n\n" + block
+    path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
+    print(f"staff\tdescription\t{path.stem}")
 
 
 def apply_path_fences(company: Path, fences: dict[str, list]) -> None:
