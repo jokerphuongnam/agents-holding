@@ -16,7 +16,16 @@ description: >
 - **Optional company pointer (write):** `$COMPANY_ROOT/cache/code-graph/GRAPH.md`
 - **Load when:** index / refresh graph / “where is X” / “who calls Y” / hop needs neighbors.
 
-## Setup (once per machine)
+## Hire / setup gate
+
+`holding-hr` must not hire `code-graph` until this passes:
+
+```bash
+python3 .agents/holding/system/install/check_prism_ready.py
+```
+
+If **missing**, ask the developer: install Code Prism? **Yes** → run one-liner,
+re-check, then hire. **No** → do not hire this staff.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash

@@ -150,6 +150,8 @@ and copy. Engineering does **not** invent a parallel design system.
 C++ / Comm / MPM shaped — usually **no** design team). New frontend companies
 copy the formula **plus** design staffs when CTO marks the stack UI-heavy.
 
-## Optional indexer
+## Optional indexer (`code-graph`)
 
-- `code-graph` (cross-cut): builds `cache/code-graph/` so hops can index from `graph.json` / `GRAPH.md` instead of walking the whole tree.
+- Cross-cut staff backed by **Code Prism** (`prism` + `prism-mcp`), not a homemade walker.
+- **Hire gate:** `holding-hr` runs `system/install/check_prism_ready.py`. If Prism is missing, ask the developer whether to install; **only hire after** install succeeds (or user already has it on PATH).
+- Company `cache/code-graph/` is a thin pointer to `~/Library/Caches/code-prism/…`; queries go through MCP (`ask_graph`, `resolve_symbol`, …).

@@ -155,6 +155,37 @@ Habit `work` may include `topology=teams|companies;packages=…` under
 
 Never hire on a vague “add a Swift dev” without the table above locked.
 
+### Prerequisite gate — `code-graph` (Code Prism)
+
+`code-graph` is **not** a free roster add. It needs **Code Prism** on the
+developer machine (`prism` + `prism-mcp` on PATH).
+
+**Before** you put `code-graph` on the deal table or write its staff card:
+
+```bash
+python3 .agents/holding/system/install/check_prism_ready.py
+# or: ~/.agents/holding/system/install/check_prism_ready.py
+```
+
+| Result | What you do |
+| --- | --- |
+| exit **0** / `ready` | OK to negotiate + lock + hire `code-graph` |
+| exit **1** / `missing` | **Ask the developer** (yes/no): *Install Code Prism so we can hire `code-graph`?* |
+
+If they say **yes**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash
+# then re-run check_prism_ready.py — must be ready before lock
+```
+
+If they say **no** (or install fails): **do not hire** `code-graph`. Offer
+alternatives (defer; hops keep walking the tree; or a different staff). Never
+write `system/staffs/cross-cut/code-graph.md` or the Prism skill until check
+passes.
+
+Same gate if a shortage brief asks for “code graph / indexer / Prism staff”.
+
 ### Options brief → live negotiation
 
 Start from inventory, then propose A/B/C. Example ask: *call feature, need one
@@ -203,6 +234,10 @@ Write under the **target subsidiary** (holding operates the pen):
 - hop `agents.tsv` / `roster.tsv` / `route.tsv`
 - harness via `apply_budget_harness.py` if budget changed
 - then `company_os.sh all` (generate adapters — do not hand-edit `.grok/`)
+
+If the locked roster includes **`code-graph`**: run `check_prism_ready.py`
+again immediately before writing that staff/skill. Still missing → stop that
+line item; do not partial-hire a broken indexer.
 
 New company greenfield: same deal, then `create-company.sh` with locked
 `--budget` / `--tech`.
