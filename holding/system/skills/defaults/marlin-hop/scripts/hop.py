@@ -37,6 +37,108 @@ for r in _ROSTER:
     if p and c and p != "ceo":
         LEAD_BELOW.setdefault(p, []).append(c)
 
+# Optional parent→child handoff table (holding→company analogy, nested).
+# columns: prefix, slug, company_path
+_DATA = Path(__file__).resolve().parents[1] / "data"
+_CHILDREN_ROWS = load_tsv("children.tsv") if (_DATA / "children.tsv").is_file() else []
+CHILDREN: list[tuple[str, str, str]] = [
+    (r["prefix"], r["slug"], r["company_path"])
+    for r in _CHILDREN_ROWS
+    if r.get("prefix") and r.get("slug") and r.get("company_path")
+]
+
+# Child-company scope fence (written by create-child-company.sh).
+# scope_allow.tsv: prefix (only these paths are in-scope for local hop)
+# parent.tsv: key/value — slug, company_path, channel (escalate target)
+_SCOPE_ALLOW: list[str] = []
+if (_DATA / "scope_allow.tsv").is_file():
+    _SCOPE_ALLOW = [
+        r["prefix"]
+        for r in load_tsv("scope_allow.tsv")
+        if r.get("prefix")
+    ]
+_PARENT_META: dict[str, str] = {}
+if (_DATA / "parent.tsv").is_file():
+    for r in load_tsv("parent.tsv"):
+        k, v = r.get("key", ""), r.get("value", "")
+        if k:
+            _PARENT_META[k] = v
+
+
+def in_child_scope(path: str) -> bool:
+    """True if path is inside this child company's allowlist (when configured)."""
+    if not _SCOPE_ALLOW:
+        return True  # not a fenced child
+    p = norm_path(path)
+    for pref in _SCOPE_ALLOW:
+        pref_n = pref.rstrip("/")
+        if p == pref_n or p.startswith(pref) or p.startswith(pref_n + "/"):
+            return True
+    return False
+
+
+def emit_escalate_parent(path: str, harness: str = "grok") -> None:
+    """Out-of-scope path on a child company → parent ceo only (no local crawl)."""
+    slug = _PARENT_META.get("slug", "(parent)")
+    cpath = _PARENT_META.get("company_path", "")
+    channel = _PARENT_META.get("channel", "ceo")
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: parent")
+    print(f"parent_slug: {slug}")
+    if cpath:
+        print(f"parent_company: {cpath}")
+    print(f"parent_channel: {channel}")
+    print(f"out_of_scope_path: {norm_path(path)}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: ONLY the parent company's "
+        f"{channel} — ask for grants/info for this path. "
+        "Do not open parent/sibling trees from this child."
+    )
+    print(
+        "do_not: spawn local ICs for out-of-scope paths; crawl parent; "
+        "hop sibling children"
+    )
+    print(f"allowed_prefixes: {', '.join(_SCOPE_ALLOW) if _SCOPE_ALLOW else '(none)'}")
+
+
+def emit_grant_read(path: str, harness: str = "grok") -> None:
+    """Path is under parent GRANTS.toml — child may READ only, stay as child ceo."""
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: grant_read")
+    print(f"grant_path: {norm_path(path)}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: child ceo (or brief IC) may READ this granted parent slice only. "
+        "Do not write; do not treat grant paths as a work root."
+    )
+    print(
+        "do_not: write under grant paths; crawl ungated parent trees; "
+        "hop sibling children"
+    )
+
 
 LIBRARY_LESSONS = re.compile(
     r"(?:^|/)(?:18_foundation|19_secure|21_unittest|22_networking|23_database|errors/21_)"
@@ -76,6 +178,29 @@ def norm_path(p: str) -> str:
     return s
 
 
+def child_for_path(path: str) -> tuple[str, str, str] | None:
+    """Longest-prefix match in children.tsv → (prefix, slug, company_path)."""
+    if not CHILDREN:
+        return None
+    p = norm_path(path)
+    hits = [
+        (pref, slug, cpath)
+        for pref, slug, cpath in CHILDREN
+        if p == pref.rstrip("/") or p.startswith(pref) or f"/{pref}" in f"/{p}"
+    ]
+    if not hits:
+        # also allow match when path contains children/<stem>/
+        for pref, slug, cpath in CHILDREN:
+            stem = slug[: -len("-company")] if slug.endswith("-company") else slug
+            needle = f"children/{stem}/"
+            if needle in p or p.endswith(f"children/{stem}") or p.endswith(stem + "-company") or f"/{stem}-company/" in f"/{p}/":
+                hits.append((pref, slug, cpath))
+    if not hits:
+        return None
+    hits.sort(key=lambda x: len(x[0]), reverse=True)
+    return hits[0]
+
+
 def agent_for_path(path: str) -> str | None:
     p = norm_path(path)
     # Marlin authoring split (not C++ product ICs)
@@ -93,6 +218,38 @@ def agent_for_path(path: str) -> str | None:
         return None
     hits.sort(key=lambda x: len(x[0]), reverse=True)
     return hits[0][1]
+
+
+def emit_child_handoff(slug: str, company_path: str, harness: str = "grok") -> None:
+    """Token-cheap parent→child: spawn only the child company ceo."""
+    fm = AGENTS.get("ceo", {})
+    tier = fm.get("tier") or "dispatch"
+    model, effort = resolve_vendor(tier, harness)
+    print("agent: ceo")
+    print("handoff: child")
+    print(f"child_slug: {slug}")
+    print(f"child_company: {company_path}")
+    print(f"tier: {tier}")
+    print(f"harness: {harness}")
+    if model:
+        print(f"model: {model}")
+    print(f"effort: {effort}")
+    print("capability_mode: read-only")
+    print("permission_mode: plan")
+    print("skill: —")
+    print("graph: —")
+    print(
+        "spawn: ONLY that child company's ceo with a short goal "
+        "(path + done-when). Do not load child staffs/ORG/skills."
+    )
+    print(
+        "do_not: deep-spawn child ICs from here; open sibling children; "
+        "scan full parent tree"
+    )
+    print(
+        "child_flow: child ceo hops its own staffs inside the child folder only; "
+        "may escalate back to this parent ceo for more grants/info"
+    )
 
 
 def agent_for_section(section: str) -> str | None:
@@ -246,15 +403,58 @@ def main() -> int:
     elif args.lesson:
         agent = agent_for_lesson(args.lesson)
     elif args.path:
+        # Parent→child handoff first (cheap): never deep-route into child staffs here
+        ch = child_for_path(args.path)
+        if ch:
+            _pref, slug, cpath = ch
+            emit_child_handoff(slug, cpath, harness)
+            return 0
+        # Child fence via scope_guard: rw / grant RO / deny→parent
+        if _PARENT_META and _SCOPE_ALLOW:
+            try:
+                from scope_guard import classify_path  # type: ignore
+
+                level, _detail = classify_path(args.path, want_write=False)
+            except Exception:
+                level = "deny" if not in_child_scope(args.path) else "allow_rw"
+            if level == "allow_ro":
+                emit_grant_read(args.path, harness)
+                return 0
+            if level == "deny":
+                emit_escalate_parent(args.path, harness)
+                return 0
         agent = agent_for_path(args.path)
     else:
         ap.print_help()
         return 2
     if not agent:
+        if args.path and _PARENT_META and _SCOPE_ALLOW and not in_child_scope(args.path):
+            try:
+                from scope_guard import classify_path  # type: ignore
+
+                level, _ = classify_path(args.path, want_write=False)
+                if level == "allow_ro":
+                    emit_grant_read(args.path, harness)
+                    return 0
+                if level == "deny":
+                    emit_escalate_parent(args.path, harness)
+                    return 0
+            except Exception:
+                emit_escalate_parent(args.path, harness)
+                return 0
         print("unmapped — unique IC unknown; spawn team-lead or ceo", file=sys.stderr)
         return 1
     emit(agent, args.role, harness)
-    return 0
+    return apply_tool_gates(agent)
+
+
+def apply_tool_gates(agent: str) -> int:
+    """Block spawn when staff tools are missing (e.g. code-graph → Code Prism)."""
+    try:
+        from require_prism import emit_gate_for_agent  # type: ignore
+    except ImportError:
+        return 0
+    return emit_gate_for_agent(agent)
 
 
 if __name__ == "__main__":

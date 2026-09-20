@@ -77,6 +77,8 @@ Call the **owned** IC — do not keep the work on CEO.
 | product conflict *semantics* (which side to keep) while merging | lead (`tech-lead` / `int-tech-lead` / …) **brief** → then **`git`** for index/`git add` |
 | product feature / bugfix code | hop → owning IC (not CEO) |
 
+**Hard — `code-graph`:** Before Assign `code-graph`, hop must show `gate:prism=ready`. If `gate:prism=missing`, ask the user to install Code Prism (one-liner from hop stdout); do **not** spawn until ready — even if the staff is already hired.
+
 **Hard:** CEO does **not** run `git` / resolve conflict files / push. If the session opened as `ceo` but the ask is pure git/merge → **Assign `git`** immediately.
 
 ## Escalation

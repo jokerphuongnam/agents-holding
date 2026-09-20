@@ -8,16 +8,23 @@ requires: prism, prism-mcp
 ---
 **Code Prism** owner for this company/repo slice. Does not invent product behavior.
 
-## Hire gate (holding-hr)
+## Hard dependency — Code Prism
 
-Do **not** hire this staff until Code Prism is installed on the machine:
+This staff is **unusable** without `prism` + `prism-mcp` on the machine.
+
+| When | Gate |
+| --- | --- |
+| **Hire** | `holding-hr` runs `check_prism_ready.py`; if missing → ask install; hire only after ready |
+| **Hop / Assign** | `hop.py` prints `gate:prism=…`; if `missing` (exit 3) CEO must **not** spawn — ask install, re-hop |
+| **On wake** | First action: verify Prism; if missing → stop work, ask user to install (do not analyze/query) |
 
 ```bash
 python3 .agents/holding/system/install/check_prism_ready.py
+# or from company hop scripts:
+python3 system/skills/defaults/marlin-hop/scripts/require_prism.py --agent code-graph
 ```
 
-If missing → HR asks the developer yes/no to install; on **yes** run the
-one-liner, re-check, **then** lock hire. On **no** → skip this staff.
+If missing → ask yes/no to install; on **yes**:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash

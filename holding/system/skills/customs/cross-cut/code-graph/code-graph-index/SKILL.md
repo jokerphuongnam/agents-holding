@@ -16,16 +16,23 @@ description: >
 - **Optional company pointer (write):** `$COMPANY_ROOT/cache/code-graph/GRAPH.md`
 - **Load when:** index / refresh graph / “where is X” / “who calls Y” / hop needs neighbors.
 
-## Hire / setup gate
+## Hard gate (hire + hop + wake)
 
-`holding-hr` must not hire `code-graph` until this passes:
+Prism is mandatory for this skill — not optional.
+
+| Moment | Behavior |
+| --- | --- |
+| Hire | `check_prism_ready.py` must be ready or HR asks install first |
+| Hop to `code-graph` | `hop.py` → `require_prism.py`; `gate:prism=missing` / exit 3 → **no spawn** until install |
+| Staff wake | Re-check; if missing → ask install; do not run analyze/MCP |
 
 ```bash
 python3 .agents/holding/system/install/check_prism_ready.py
+python3 system/skills/defaults/marlin-hop/scripts/require_prism.py --agent code-graph
 ```
 
 If **missing**, ask the developer: install Code Prism? **Yes** → run one-liner,
-re-check, then hire. **No** → do not hire this staff.
+re-check, then continue (hire or hop). **No** → stop; do not fake a graph.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash

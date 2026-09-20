@@ -445,7 +445,16 @@ def main() -> int:
         print("unmapped — unique IC unknown; spawn team-lead or ceo", file=sys.stderr)
         return 1
     emit(agent, args.role, harness)
-    return 0
+    return apply_tool_gates(agent)
+
+
+def apply_tool_gates(agent: str) -> int:
+    """Block spawn when staff tools are missing (e.g. code-graph → Code Prism)."""
+    try:
+        from require_prism import emit_gate_for_agent  # type: ignore
+    except ImportError:
+        return 0
+    return emit_gate_for_agent(agent)
 
 
 if __name__ == "__main__":

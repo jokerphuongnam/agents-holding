@@ -16,6 +16,11 @@ python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --path 
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --section hiring
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --list
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/hop.py --roster holding-ceo
+# Parent → child CEO (fuzzy); prefer company launch.sh:
+python3 …/handoff_child.py --list
+python3 …/handoff_child.py desk-garden --print-path
+./.agents/<parent>-company/launch.sh grok <child> "prompt"
+./launch.sh grok|claude|codex|merge "prompt"   # always CEO; see docs/ceo-launch-and-children.md
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to grok
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to codex
 python3 .agents/holding/system/skills/defaults/marlin-hop/scripts/export_harness.py --to all
@@ -41,11 +46,22 @@ Stdout is the brief. Do **not** open `ORG.md` or the skill catalog after the scr
 - `export_harness.py` → materialize runtime views (Grok cards; Codex `AGENTS.md`; Claude mounts)
 - `sync_agents.py` → thin alias for `export_harness.py --to grok`
 
-### Spawn brief (parent / holding-ceo)
+### Spawn brief (parent / holding-ceo / company ceo)
 
 - Spawn the exact `subagent_type` hop returned (`holding-hr`, `holding-coordinator`, …).
 - Prompt is a **short goal** only: path, done-when, constraints. Do not rewrite persona.
 - Cascade: user/subsidiary → holding-ceo → holding-hr (hire) or holding-coordinator (multi-company).
 - Product work after hire returns to the **subsidiary** `ceo` hop — not holding ICs.
+
+#### Tool gate — `code-graph` / Code Prism
+
+When hop stdout includes `agent: code-graph` (or you Assign `code-graph` directly):
+
+1. Read `gate:prism=…` on the same hop stdout (hop.py runs the check).
+2. If `gate:prism=missing` / hop exit **3** → **do not spawn** `code-graph`.
+3. Ask the user: install Code Prism? On **yes**, run the `gate:install` one-liner, re-run hop, spawn only when `gate:prism=ready`.
+4. On **no** → refuse the graph task or escalate; hops keep walking the tree.
+
+Same rule if the staff is **already hired** but Prism was uninstalled — hop still blocks.
 
 Route tables are TSV under `data/`, not JSON.

@@ -46,11 +46,22 @@ Stdout is the brief. Do **not** open `ORG.md` or the skill catalog after the scr
 - `export_harness.py` → materialize runtime views (Grok cards; Codex `AGENTS.md`; Claude mounts)
 - `sync_agents.py` → thin alias for `export_harness.py --to grok`
 
-### Spawn brief (parent / holding-ceo)
+### Spawn brief (parent / holding-ceo / company ceo)
 
 - Spawn the exact `subagent_type` hop returned (`holding-hr`, `holding-coordinator`, …).
 - Prompt is a **short goal** only: path, done-when, constraints. Do not rewrite persona.
 - Cascade: user/subsidiary → holding-ceo → holding-hr (hire) or holding-coordinator (multi-company).
 - Product work after hire returns to the **subsidiary** `ceo` hop — not holding ICs.
+
+#### Tool gate — `code-graph` / Code Prism
+
+When hop stdout includes `agent: code-graph` (or you Assign `code-graph` directly):
+
+1. Read `gate:prism=…` on the same hop stdout (hop.py runs the check).
+2. If `gate:prism=missing` / hop exit **3** → **do not spawn** `code-graph`.
+3. Ask the user: install Code Prism? On **yes**, run the `gate:install` one-liner, re-run hop, spawn only when `gate:prism=ready`.
+4. On **no** → refuse the graph task or escalate; hops keep walking the tree.
+
+Same rule if the staff is **already hired** but Prism was uninstalled — hop still blocks.
 
 Route tables are TSV under `data/`, not JSON.
