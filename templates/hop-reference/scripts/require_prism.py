@@ -55,8 +55,11 @@ def emit_gate_for_agent(agent: str) -> int:
     print("gate:prism=missing\tASK_INSTALL")
     print(f"gate:install\t{INSTALL}")
     print(
-        "gate:rule\tdo NOT spawn code-graph; ask user to install Code Prism; "
-        "on yes run gate:install; re-hop only after ready"
+        "gate:rule\tdo NOT spawn code-graph this turn; ask user to install Code Prism "
+        "(ask again every hop even if they said no before). "
+        "On yes → run gate:install → re-hop → spawn when ready. "
+        "On no → continue WITHOUT code-graph (other staffs / tree walk OK); "
+        "keep the hired staff on roster — do not fire them."
     )
     return 3
 

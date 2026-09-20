@@ -18,21 +18,22 @@ description: >
 
 ## Hard gate (hire + hop + wake)
 
-Prism is mandatory for this skill — not optional.
+Prism is mandatory **to use this staff** — not to run the company.
 
 | Moment | Behavior |
 | --- | --- |
-| Hire | `check_prism_ready.py` must be ready or HR asks install first |
-| Hop to `code-graph` | `hop.py` → `require_prism.py`; `gate:prism=missing` / exit 3 → **no spawn** until install |
-| Staff wake | Re-check; if missing → ask install; do not run analyze/MCP |
+| Hire | Ready check, or ask install before writing the staff |
+| Hop to `code-graph` | `missing` / exit 3 → no spawn this turn; **ask install every hop** (prior “no” does not stick) |
+| User declines | Continue **without** this staff (other work OK). Do not remove a hired `code-graph` |
+| Staff wake | Re-check; if missing → ask install; do not analyze/MCP |
 
 ```bash
 python3 .agents/holding/system/install/check_prism_ready.py
 python3 system/skills/defaults/marlin-hop/scripts/require_prism.py --agent code-graph
 ```
 
-If **missing**, ask the developer: install Code Prism? **Yes** → run one-liner,
-re-check, then continue (hire or hop). **No** → stop; do not fake a graph.
+If **missing**, ask: install Code Prism? **Yes** → one-liner → re-check → continue.
+**No** → skip this staff for now; do not fake a graph; ask again next time they are touched.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash

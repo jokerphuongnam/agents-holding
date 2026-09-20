@@ -58,10 +58,9 @@ Stdout is the brief. Do **not** open `ORG.md` or the skill catalog after the scr
 When hop stdout includes `agent: code-graph` (or you Assign `code-graph` directly):
 
 1. Read `gate:prism=…` on the same hop stdout (hop.py runs the check).
-2. If `gate:prism=missing` / hop exit **3** → **do not spawn** `code-graph`.
-3. Ask the user: install Code Prism? On **yes**, run the `gate:install` one-liner, re-run hop, spawn only when `gate:prism=ready`.
-4. On **no** → refuse the graph task or escalate; hops keep walking the tree.
-
-Same rule if the staff is **already hired** but Prism was uninstalled — hop still blocks.
+2. If `gate:prism=missing` / hop exit **3** → **do not spawn** `code-graph` this turn.
+3. Ask the user to install Code Prism (**ask again on every hop** — a prior “no” is not permanent).
+4. **Yes** → run `gate:install`, re-hop, spawn when `gate:prism=ready`.
+5. **No** → continue the company **without** that staff: other ICs / tree walk / normal hops still work. Do **not** fire or remove a hired `code-graph`; next time anything routes to them, ask install again.
 
 Route tables are TSV under `data/`, not JSON.
