@@ -429,6 +429,21 @@
       ],
       "target": "design/game-designer",
       "always_for_roles": []
+    },
+    {
+      "id": "code-graph-index",
+      "path": "tech/code-graph/code-graph-index",
+      "tags": [
+        "code-graph",
+        "index",
+        "graph",
+        "symbols",
+        "imports"
+      ],
+      "target": "cross-cut/code-graph",
+      "always_for_roles": [
+        "code-graph"
+      ]
     }
   ]
 }

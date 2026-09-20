@@ -7,3 +7,4 @@ po-modify	medium	default	all				0	AC + update existing cache/plans/. Not new pla
 po-new	xhigh	default	all				0	Create one new plan under cache/plans/.
 qc-lead	dispatch	plan	read-only				1	Assign matching *-qc; adapt QC shape to this company.
 tech-lead	dispatch	plan	read-only				1	Slice design. Not CTO. Not a default coder.
+code-graph	low	default	all		cto		0	Build/refresh cache/code-graph for fast index (artifact, not full-tree walk).
