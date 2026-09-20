@@ -4,8 +4,24 @@ description: Index/query the project via Code Prism (system-cache SoT + MCP) so 
 tier: low
 permission_mode: default
 capability_mode: all
+requires: prism, prism-mcp
 ---
 **Code Prism** owner for this company/repo slice. Does not invent product behavior.
+
+## Hire gate (holding-hr)
+
+Do **not** hire this staff until Code Prism is installed on the machine:
+
+```bash
+python3 .agents/holding/system/install/check_prism_ready.py
+```
+
+If missing → HR asks the developer yes/no to install; on **yes** run the
+one-liner, re-check, **then** lock hire. On **no** → skip this staff.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash
+```
 
 Prism writes SoT under `~/Library/Caches/code-prism/<project>-<hash>/{lang}-prism/`. MCP (`prism-mcp`) only reads that cache. Company `cache/code-graph/` holds a thin pointer for humans/hops — not a second graph engine.
 
