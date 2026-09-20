@@ -149,3 +149,7 @@ and copy. Engineering does **not** invent a parallel design system.
 `marlin-language-company` is the **reference instance** of the formula (Marlin /
 C++ / Comm / MPM shaped — usually **no** design team). New frontend companies
 copy the formula **plus** design staffs when CTO marks the stack UI-heavy.
+
+## Optional indexer
+
+- `code-graph` (cross-cut): builds `cache/code-graph/` so hops can index from `graph.json` / `GRAPH.md` instead of walking the whole tree.
