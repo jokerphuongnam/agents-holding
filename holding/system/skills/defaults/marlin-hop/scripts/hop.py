@@ -444,8 +444,16 @@ def main() -> int:
                 return 0
         print("unmapped — unique IC unknown; spawn team-lead or ceo", file=sys.stderr)
         return 1
-    emit(agent, args.role, harness)
-    return apply_tool_gates(agent)
+    # Gate first so missing Prism is visible even if harness/emit fails.
+    gate_code = apply_tool_gates(agent)
+    try:
+        emit(agent, args.role, harness)
+    except Exception as err:
+        print(f"emit_error: {err}", file=sys.stderr)
+        if gate_code != 0:
+            return gate_code
+        raise
+    return gate_code
 
 
 def apply_tool_gates(agent: str) -> int:
