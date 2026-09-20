@@ -4,7 +4,8 @@ Canonical: this `system/staffs/` tree. Spawn by `name:` frontmatter.
 
 **Always-on (formula):** `ceo`, `cto`, `ba-lead` (+ `ba-user` / `ba-workflow`),
 `po-lead` (+ `po-new` / `po-modify`), `git`, QC (`qc-lead` + adapt). **Optional:**
-tech teams (from CTO/stack), `data`, **design** (when UI-heavy — see holding ORG).
+tech teams (from CTO/stack), `data`, **design** (when UI-heavy — see holding ORG),
+**`code-graph`** (fast code index artifact under `cache/code-graph/` — tick when you want hops to read a graph instead of walking the whole tree).
 
 **User channel (product):** only `ceo` and `ba-user` address the user.
 
@@ -22,11 +23,11 @@ system/staffs/
 ├── ba/             ba-lead, ba-user, ba-workflow
 ├── po/             po-lead, po-new, po-modify
 ├── qc/             qc-lead (+ embed *-qc as the company grows)
-└── cross-cut/      git
+└── cross-cut/      git, code-graph (optional)
 ```
 
 `tech-lead` lives on the **seeded tech team** folder (`frontend/`, `mobile/`,
-or `backend/`) — not under `cross-cut/`. `git` stays cross-cut.
+or `backend/`) — not under `cross-cut/`. `git` and optional `code-graph` stay cross-cut.
 
 **Tiers (default):** leads (`ba-lead`, `po-lead`, `design-lead`, `qc-lead`,
 `tech-lead`) = `dispatch` (effort low). BA ICs `ba-user` / `ba-workflow` =
