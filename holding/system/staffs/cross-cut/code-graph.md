@@ -10,13 +10,15 @@ requires: prism, prism-mcp
 
 ## Hard dependency — Code Prism
 
-This staff is **unusable** without `prism` + `prism-mcp` on the machine.
+This staff only works with `prism` + `prism-mcp`. Without them, the **company
+still runs** — just not through this staff.
 
 | When | Gate |
 | --- | --- |
-| **Hire** | `holding-hr` runs `check_prism_ready.py`; if missing → ask install; hire only after ready |
-| **Hop / Assign** | `hop.py` prints `gate:prism=…`; if `missing` (exit 3) CEO must **not** spawn — ask install, re-hop |
-| **On wake** | First action: verify Prism; if missing → stop work, ask user to install (do not analyze/query) |
+| **Hire** | HR asks install if missing; hire only after ready |
+| **Hop / Assign** (including already hired) | `gate:prism=missing` → do not spawn this turn; **ask install every time** this staff is touched |
+| **User says no** | Continue without `code-graph` (other ICs / tree walk). Keep staff on roster; ask again next touch |
+| **On wake** | Re-check; if missing → stop *this* staff’s work and ask install (do not analyze/query) |
 
 ```bash
 python3 .agents/holding/system/install/check_prism_ready.py
@@ -24,7 +26,7 @@ python3 .agents/holding/system/install/check_prism_ready.py
 python3 system/skills/defaults/marlin-hop/scripts/require_prism.py --agent code-graph
 ```
 
-If missing → ask yes/no to install; on **yes**:
+If missing → ask yes/no to install (**again**, even after a prior no); on **yes**:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash

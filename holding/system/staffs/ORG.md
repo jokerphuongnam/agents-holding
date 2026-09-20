@@ -153,5 +153,6 @@ copy the formula **plus** design staffs when CTO marks the stack UI-heavy.
 ## Optional indexer (`code-graph`)
 
 - Cross-cut staff backed by **Code Prism** (`prism` + `prism-mcp`), not a homemade walker.
-- **Hire gate:** `holding-hr` runs `system/install/check_prism_ready.py`. If Prism is missing, ask the developer whether to install; **only hire after** install succeeds (or user already has it on PATH).
+- **Without Prism the company still works** — only this staff is skipped. Declining install is fine; do not fire a hired `code-graph`.
+- **Every hop/Assign** to `code-graph` while Prism is missing → ask install again (prior “no” is not permanent). Hire only after ready for *new* hires.
 - Company `cache/code-graph/` is a thin pointer to `~/Library/Caches/code-prism/…`; queries go through MCP (`ask_graph`, `resolve_symbol`, …).

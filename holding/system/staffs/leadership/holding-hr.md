@@ -179,10 +179,18 @@ curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/
 # then re-run check_prism_ready.py — must be ready before lock
 ```
 
-If they say **no** (or install fails): **do not hire** `code-graph`. Offer
-alternatives (defer; hops keep walking the tree; or a different staff). Never
-write `system/staffs/cross-cut/code-graph.md` or the Prism skill until check
-passes.
+If they say **no** (or install fails):
+
+- **Do not hire** `code-graph` on this lock (company still works — other staffs
+  unchanged; hops keep walking the tree).
+- Do **not** treat “no” as forever: if they later ask for a code-graph hire
+  again, re-run the check and ask install again.
+- If `code-graph` is **already hired** from an earlier deal and Prism is
+  missing now → do **not** fire them; hop/CEO will re-ask install whenever
+  that staff is touched.
+
+Never write `system/staffs/cross-cut/code-graph.md` or the Prism skill on a
+**new** hire until check passes.
 
 Same gate if a shortage brief asks for “code graph / indexer / Prism staff”.
 
