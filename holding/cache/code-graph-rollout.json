@@ -1,0 +1,72 @@
+[
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/agents-holding/holding",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/demo-analytics-lab/.agents/demo-analytics-lab-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/eval-todo-bench/case-3-agents-holding/.agents/todo-app-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/eval-todo-bench-v2/case-3-agents-holding/.agents/todo-app-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/eval-todo-bench-v3/case-b-company-os/.agents/todo-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Agents/eval-todo-bench-v3/published/case-b-company-os/.agents/todo-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Code/Language/marlin-language/private-source/marlin-language/.agents/marlin-language-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Code/Language/marlin-language/private-source/marlin-language/projects/desk-garden/.agents/desk-garden-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Code/iOS/GPULoad/.agents/gpuload-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  },
+  {
+    "company": "/Users/phuongnampham/Documents/Code/iOS/LiteTrace/.agents/litetrace-company",
+    "staff": "staff:ok",
+    "skill": "skill:ok",
+    "tsv": "tsv:system/skills/defaults/marlin-hop/data/agents.tsv",
+    "org": "org:patched"
+  }
+]
