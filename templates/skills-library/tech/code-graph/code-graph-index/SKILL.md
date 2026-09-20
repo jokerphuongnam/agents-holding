@@ -1,59 +1,112 @@
 ---
 name: code-graph-index
 description: >
-  Build and refresh a lightweight code graph (graph.json / graph.jsonl / GRAPH.md)
-  so agents can index from an artifact instead of walking the whole project.
-  Use when asked to index, map the repo, or speed up hop briefs.
+  Install/refresh Code Prism SoT for a project and query it via MCP tools
+  (ask_graph, resolve_symbol, …) so agents index from a real symbol graph
+  instead of walking the whole tree or a homemade path graph.
 ---
 
 # code-graph-index
 
 ## Who / paths
 
-- **You:** `code-graph` staff (cross-cut). Own the graph artifact only.
-- **Not you:** Implementing product features; rewriting app code; inventing architecture.
-- **Paths (read):** project `--root` (source tree). **Paths (write):** `cache/code-graph/` or `.agents/code-graph/`.
-- **Load when:** Brief asks to index / refresh code graph / map imports for faster hops.
+- **You:** `code-graph` staff (cross-cut). Own Prism index + MCP query for this company.
+- **Not you:** Product features; architecture (`cto`); git commits (`git`).
+- **SoT (system):** `~/Library/Caches/code-prism/<projectName>-<hash>/{lang}-prism/`
+- **Optional company pointer (write):** `$COMPANY_ROOT/cache/code-graph/GRAPH.md`
+- **Load when:** index / refresh graph / “where is X” / “who calls Y” / hop needs neighbors.
+
+## Setup (once per machine)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash
+# needs Node ≥ 20, git, npm — puts prism + prism-mcp on ~/bin
+```
+
+Verify: `prism plugins` and `prism-mcp which`.
 
 ## How
 
-1. **Prefer artifact first.** If `GRAPH.md` / `graph.json` already exists and the ask is “where is X?”, read the graph **before** a full-repo walk.
+### 1. Prefer Prism cache first
 
-2. **Refresh command** (from company or holding templates copy):
+If the ask is “where is X?” / “who calls Y?”, **query MCP** before re-analyzing:
+
+| Tool | Use |
+|------|-----|
+| `get_project_summary` | Entry overview / node counts |
+| `search_symbols` | Relative name → ranked ids |
+| `resolve_symbol` | Best hit + `full_info` |
+| `ask_graph` | Natural-language relative ask (any language) |
+| `get_node_info` | One or many node ids |
+| `get_smart_context` | Target ids + neighborhood |
+| `get_logical_cluster` / `trace_dependency` / `find_impact_range` | Structure / blast radius |
+
+MCP client (after analyze):
+
+```json
+{
+  "mcpServers": {
+    "code-prism": {
+      "command": "prism-mcp",
+      "args": ["."]
+    }
+  }
+}
+```
+
+Or short cache name: `"args": ["LiteTrace"]` / `["game"]`.
+
+### 2. Refresh SoT
 
 ```bash
-python3 system/skills/customs/cross-cut/code-graph/code-graph-index/scripts/build_code_graph.py \
+prism detect  --root "$PROJECT_ROOT"
+prism analyze --root "$PROJECT_ROOT"
+```
+
+Optional company pointer (human + hop brief):
+
+```bash
+python3 system/skills/customs/cross-cut/code-graph/code-graph-index/scripts/sync_prism_pointer.py \
   --root "$PROJECT_ROOT" \
   --out "$COMPANY_ROOT/cache/code-graph"
 ```
 
-If the skill still lives only in the holding library (not yet copied into company customs):
+If the skill is only in the holding library:
 
 ```bash
-python3 "$HOLDING/templates/skills-library/tech/code-graph/code-graph-index/scripts/build_code_graph.py" \
+python3 "$HOLDING/templates/skills-library/tech/code-graph/code-graph-index/scripts/sync_prism_pointer.py" \
   --root "$PROJECT_ROOT" \
   --out "$COMPANY_ROOT/cache/code-graph"
 ```
 
-3. **Outputs**
-   - `graph.json` — full snapshot (`files[]`, `edges[]`, lang counts)
-   - `graph.jsonl` — one file record per line (stream-friendly)
-   - `GRAPH.md` — short summary for humans / hop briefs
+### 3. What Prism owns vs company cache
 
-4. **Ignore noise.** The script skips `.git`, `node_modules`, `.build`, `DerivedData`, lockfiles, binaries. Do not hand-edit those lists unless asked.
+| Location | Role |
+|----------|------|
+| `~/Library/Caches/code-prism/…` | **Source of truth** (JSON + SQLite per language) |
+| `$COMPANY_ROOT/cache/code-graph/GRAPH.md` | Thin pointer + how to query — **not** a second indexer |
 
-5. **Scope.** Default root = project root registered for this company. Do not scan sibling companies unless the brief says so.
+Do **not** run or extend deprecated `build_code_graph.py` (homemade path/import walk).
 
-6. **After large refactors** (many files moved/renamed): refresh once; tell CEO/CTO the new `file_count` / `edge_count`.
+### 4. Scope
+
+Default root = project root registered for this company. Do not scan sibling companies unless the brief says so.
+
+### 5. After large refactors
+
+`prism analyze` once; reply with languages, cache slug/dir, and a sample `ask_graph` / `resolve_symbol` hit if the brief asked a question.
 
 ## Done-when
 
-- [ ] `graph.json`, `graph.jsonl`, and `GRAPH.md` exist under the out dir.
-- [ ] Script exited 0; stdout printed the three paths.
-- [ ] Brief reply includes file_count, edge_count, and out dir — no product code changes.
+- [ ] `prism` available (or install one-liner reported if blocked)
+- [ ] `prism analyze --root …` succeeded (or cache already fresh and query-only)
+- [ ] Query asks answered via MCP tools — not a full-tree walk
+- [ ] Optional `GRAPH.md` pointer updated if `--out` was requested
+- [ ] No product code changes
 
 ## Anti-patterns
 
-- Re-walking the entire monorepo on every hop when a fresh graph already answers the ask.
-- Committing huge generated graphs without ask (ask `git` / user if unsure).
-- Treating this as a full SCIP/LSP semantic index — it is a **lightweight** path/import map.
+- Re-walking the monorepo when `ask_graph` / `resolve_symbol` already answers
+- Treating company `cache/code-graph/*.json` from the old script as SoT
+- Writing Prism SoT into the user project tree
+- Inventing absolute node ids when a relative ask works
