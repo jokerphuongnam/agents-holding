@@ -137,20 +137,35 @@ PY
 }
 
 # Link company/harness overlays that are gitignored (not present in a fresh worktree).
+# Also symlink other top-level live paths missing from dest (empty/sparse HEAD, e.g. Pilot).
 link_company_overlays() {
   local src="$1" dest="$2"
   [[ -n "$src" && -n "$dest" && "$src" != "$dest" ]] || return 0
-  local d
+  local d base
   for d in .agents .grok .claude .codex; do
     if [[ -e "$src/$d" && ! -e "$dest/$d" ]]; then
       ln -s "$src/$d" "$dest/$d"
       echo "[launch] symlink $dest/$d → $src/$d" >&2
     fi
   done
+  # Untracked / nested package trees are absent from an empty-commit worktree.
+  shopt -s nullglob dotglob
+  for d in "$src"/*; do
+    base="$(basename "$d")"
+    case "$base" in
+      .|..|.git) continue ;;
+    esac
+    if [[ -e "$d" && ! -e "$dest/$base" ]]; then
+      ln -s "$d" "$dest/$base"
+      echo "[launch] symlink $dest/$base → $d" >&2
+    fi
+  done
+  shopt -u nullglob dotglob
 }
 
 ensure_project_worktree() {
   # Create or reuse: <parent-of-repo>/.company-worktrees/<name>
+  # stdout = path only (git chatter must not pollute command substitution).
   local repo="$1" name="$2"
   local parent dest found
   found="$(resolve_worktree_path "$name" "$repo" || true)"
@@ -167,9 +182,9 @@ ensure_project_worktree() {
   fi
   echo "[launch] git worktree add $dest (branch $name) from $repo" >&2
   if git -C "$repo" show-ref --verify --quiet "refs/heads/$name"; then
-    git -C "$repo" worktree add "$dest" "$name"
+    git -C "$repo" worktree add "$dest" "$name" >&2
   else
-    git -C "$repo" worktree add -b "$name" "$dest" HEAD
+    git -C "$repo" worktree add -b "$name" "$dest" HEAD >&2
   fi
   printf '%s\n' "$dest"
 }
