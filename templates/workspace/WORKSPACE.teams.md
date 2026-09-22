@@ -25,6 +25,10 @@ Each package path is a **tech team** slice only (engineers + hop `route.tsv`
 prefixes). Cross-package work stays in-company (`cto` / `tech-lead`).
 Hiring / new companies → `holding-ceo`.
 
+One repo team may **contain child teams** (`system/staffs/<repo>/teams/<child>/`).
+Child teams are slices of that repo (crates, bindings), not extra companies and
+not extra ceos. See `company/system/staffs/ORG.md`.
+
 ## Next
 
 {{NEXT_STEPS}}

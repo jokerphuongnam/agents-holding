@@ -42,7 +42,8 @@ Stdout is the brief. Do **not** open `ORG.md` or the skill catalog after the scr
 
 - `hop.py` → agent, **tier**, harness, model/effort (from harness map), capability_mode, one skill path
 - `hop.py --list` → full agent list from `data/agents.tsv` (do **not** ls `.md`)
-- `hop.py --roster <rank>` → one-line blurbs of the rank below; **do not open child `.md`**
+- `hop.py --roster <rank>` → one rank down only (that team's members + direct child-team leads). From `system/staffs/**/teams` depth when that tree exists. **Do not open child `.md`.**
+- `hop.py --path <file> --from <you>` → `agent` is one rank toward the path owner, never a skip. `chain:` is the full escalate path. Omit `--from` only when you are `ceo`.
 - `export_harness.py` → materialize runtime views (Grok cards; Codex `AGENTS.md`; Claude mounts)
 - `sync_agents.py` → thin alias for `export_harness.py --to grok`
 
