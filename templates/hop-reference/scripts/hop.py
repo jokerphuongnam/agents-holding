@@ -37,6 +37,104 @@ for r in _ROSTER:
     if p and c and p != "ceo":
         LEAD_BELOW.setdefault(p, []).append(c)
 
+
+def _staffs_root() -> Path | None:
+    """Company system/staffs next to this hop, if this file lives in a company."""
+    here = Path(__file__).resolve()
+    for d in here.parents:
+        cand = d / "system" / "staffs"
+        if (cand / "ORG.md").is_file():
+            return cand
+    return None
+
+
+def _team_parent_of() -> dict[str, str]:
+    """One-rank parent from staffs/**/teams depth.
+
+    A directory is a team. ``teams/<child>/`` is a smaller team.
+    ``*-lead`` in a direct team reports to ceo. ``*-lead`` in a nested team
+    reports to the parent team's lead. A member reports to the sole ``*-lead``
+    in the same folder. No lead in the folder → member in no team (tsv lead,
+    else ceo). Multiple leads in one folder keep tsv lead (no guess, no skip).
+    """
+    root = _staffs_root()
+    if root is None:
+        return {}
+    by_dir: dict[Path, list[str]] = {}
+    for path in root.rglob("*.md"):
+        if path.name == "ORG.md" or path.parent.name == "teams":
+            continue
+        by_dir.setdefault(path.parent, []).append(path.stem)
+    if not by_dir:
+        return {}
+    root_name = "holding-ceo" if (root / "leadership" / "holding-ceo.md").is_file() else "ceo"
+
+    def leads_in(directory: Path) -> list[str]:
+        return [
+            n
+            for n in by_dir.get(directory, [])
+            if n.endswith("-lead") and n not in ("ceo", "holding-ceo")
+        ]
+
+    parent_of: dict[str, str] = {}
+    for directory, names in by_dir.items():
+        lead_names = [n for n in names if n.endswith("-lead") and n not in ("ceo", "holding-ceo")]
+        plain = [n for n in names if n not in lead_names and n not in ("ceo", "holding-ceo")]
+        if directory.parent.name == "teams":
+            parent_leads = leads_in(directory.parent.parent)
+        else:
+            parent_leads = [root_name]
+        for lead in lead_names:
+            if len(parent_leads) == 1:
+                parent_of[lead] = parent_leads[0]
+            else:
+                tsv = LEAD.get(lead, "")
+                parent_of[lead] = tsv if tsv in parent_leads else (parent_leads[0] if parent_leads else root_name)
+        for member in plain:
+            if len(lead_names) == 1:
+                parent_of[member] = lead_names[0]
+            else:
+                parent_of[member] = LEAD.get(member, "") or root_name
+    return parent_of
+
+
+_TEAM_PARENT = _team_parent_of()
+_TEAM_CHILDREN: dict[str, list[str]] = {}
+for _name, _parent in _TEAM_PARENT.items():
+    _TEAM_CHILDREN.setdefault(_parent, []).append(_name)
+for _kids in _TEAM_CHILDREN.values():
+    _kids.sort()
+
+_HOP_CHAIN: list[str] = []
+_HOP_OWNER = ""
+
+
+def chain_to_root(owner: str) -> list[str]:
+    """[ceo, …, owner] using team depth. Owner alone if the tree has no row."""
+    if not _TEAM_PARENT or owner not in _TEAM_PARENT:
+        return [owner]
+    chain = [owner]
+    seen = {owner}
+    cur = owner
+    while cur in _TEAM_PARENT and _TEAM_PARENT[cur] and _TEAM_PARENT[cur] not in seen:
+        cur = _TEAM_PARENT[cur]
+        chain.append(cur)
+        seen.add(cur)
+    chain.reverse()
+    return chain
+
+
+def one_rank_toward(owner: str, frm: str) -> tuple[str, list[str]]:
+    """Next rank from ``frm`` toward ``owner``. No skip."""
+    chain = chain_to_root(owner)
+    if len(chain) <= 1:
+        return owner, chain
+    start = (frm or "").strip() or chain[0]
+    if start not in chain:
+        start = chain[0]
+    i = chain.index(start)
+    return chain[min(i + 1, len(chain) - 1)], chain
+
 # Optional parent→child handoff table (holding→company analogy, nested).
 # columns: prefix, slug, company_path
 _DATA = Path(__file__).resolve().parents[1] / "data"
@@ -306,8 +404,15 @@ def emit(agent: str, role: str, harness: str = "grok") -> None:
     print(f"graph: {graph}")
     if agent in QC:
         print(f"qc: {QC[agent]}")
-    if agent in LEAD:
-        print(f"lead: {LEAD[agent]}")
+    shown_lead = _TEAM_PARENT.get(agent) or LEAD.get(agent, "")
+    if shown_lead:
+        print(f"lead: {shown_lead}")
+    if _HOP_OWNER and _HOP_OWNER != agent:
+        print(f"owner: {_HOP_OWNER}")
+    if _HOP_CHAIN:
+        print("chain: " + " → ".join(_HOP_CHAIN))
+        print("hop: one rank down only")
+        print("escalate: one rank up only")
     print("do_not: open ORG.md, load skill catalog, grep the repo")
 
 
@@ -326,9 +431,22 @@ def emit_list(harness: str = "grok") -> int:
 
 
 def emit_roster(who: str) -> int:
-    """Short blurbs of the rank below `who`. Do not open their agent files."""
+    """Short blurbs of the rank below `who`. Do not open their agent files.
+
+    When ``system/staffs`` is visible, one rank is the team tree: own members
+    and direct child-team leads only — not roster.tsv edges that skip.
+    """
     who = (who or "ceo").strip()
-    if who in ("ceo", "all"):
+    if _TEAM_CHILDREN:
+        if who == "all":
+            names = list(BLURB)
+        else:
+            key = "ceo" if who == "ceo" else who
+            names = _TEAM_CHILDREN.get(key)
+            if not names:
+                print(f"no roster for {who} — not a dispatch rank", file=sys.stderr)
+                return 1
+    elif who in ("ceo", "all"):
         names = CEO_BELOW if who == "ceo" else list(BLURB)
     else:
         names = LEAD_BELOW.get(who)
@@ -378,7 +496,13 @@ def main() -> int:
     ap.add_argument("--agent", help="dump YAML fields for a known agent")
     ap.add_argument("--role", choices=("ic", "qc", "lead"), default="ic")
     ap.add_argument("--roster", nargs="?", const="ceo",
-                    help="one-liners for the rank below (ceo|*-lead|cto|all)")
+                    help="one rank down (ceo|*-lead|all) — members + direct child-team leads")
+    ap.add_argument(
+        "--from",
+        dest="frm",
+        default="",
+        help="caller role for --path; agent is one rank toward the owner (default: ceo)",
+    )
     ap.add_argument("--list", action="store_true", help="print agents.tsv (do not read .md)")
     ap.add_argument(
         "--harness",
@@ -424,6 +548,12 @@ def main() -> int:
                 emit_escalate_parent(args.path, harness)
                 return 0
         agent = agent_for_path(args.path)
+        if agent and _TEAM_PARENT:
+            global _HOP_CHAIN, _HOP_OWNER
+            nxt, chain = one_rank_toward(agent, args.frm)
+            _HOP_OWNER = agent
+            _HOP_CHAIN = chain
+            agent = nxt
     else:
         ap.print_help()
         return 2

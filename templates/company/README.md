@@ -42,6 +42,12 @@ Company OS (`{{COMPANY_SLUG}}`). Staffs, skills, harness, and hop live under `sy
 
 Holding: [docs/ceo-launch-and-children.md](https://github.com/jokerphuongnam/agents-holding/blob/main/docs/ceo-launch-and-children.md)
 
+## Nested teams
+
+A tech team may contain child teams: `system/staffs/<team>/teams/<child>/` with
+staff `*.md` in each team folder. Same company `ceo`. This is not
+`children/` (child companies), which need `hr` + `manage-children`.
+
 ## User-facing choices
 
 `ceo` / `ba-user` (and domain BA): when more than one viable path, present **Title / short description / code before / code after** — not bare option grids. See `system/staffs/ba/ba-user.md`.

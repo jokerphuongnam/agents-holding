@@ -29,6 +29,30 @@ system/staffs/
 `tech-lead` lives on the **seeded tech team** folder (`frontend/`, `mobile/`,
 or `backend/`) — not under `cross-cut/`. `git` and optional `code-graph` stay cross-cut.
 
+**Nested teams:** a team directory may contain child teams. Staff markdown stays
+in that team’s folder. Children live only under `teams/<child>/` (repeatable):
+
+```text
+system/staffs/<parent>/
+├── <staff>.md
+└── teams/
+    └── <child>/
+        ├── <staff>.md
+        └── teams/<grandchild>/
+```
+
+Do not put child-team folders next to staff files (those dirs are not teams).
+A nested team is **not** a child company: still one `ceo`. Child companies stay
+under `children/` and still require `hr` + `manage-children` on the parent.
+
+**Hop rank (one ceo, infinite teams):** `ceo` → direct team or a member in no
+team → that team's members or a smaller team → members of the smaller team, and
+so on. Hop **one rank down** only. A lead spawns that team's own members and the
+**lead** of each direct `teams/<child>/`. A lead does not spawn members inside a
+child team. Escalate **one rank up** only: member → their lead → parent lead →
+… → `ceo`. No skip. `hop.py` reads this from `system/staffs/**/teams` depth
+(`--roster <you>`, `--path <file> --from <you>`).
+
 **Tiers (default):** leads (`ba-lead`, `po-lead`, `design-lead`, `qc-lead`,
 `tech-lead`) = `dispatch` (effort low). BA ICs `ba-user` / `ba-workflow` =
 medium. Plan writers `po-new` / `po-modify` = always xhigh.

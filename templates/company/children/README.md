@@ -23,6 +23,10 @@ holding
 
 **No `hr` on a company ⇒ no child-org flows** (cannot create/list/approve children).
 
+Repo **subteams** (`system/staffs/<team>/teams/<child>/`) are not child companies.
+They do not use this gate. Creating `children/<stem>/` still requires `hr` +
+`manage-children` on that parent first.
+
 ## No hr yet → escalate up
 
 ```text
