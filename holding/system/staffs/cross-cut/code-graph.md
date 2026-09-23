@@ -32,12 +32,13 @@ If missing → ask yes/no to install (**again**, even after a prior no); on **ye
 curl -fsSL https://raw.githubusercontent.com/jokerphuongnam/code-prism-cli/main/install.sh | bash
 ```
 
-Prism writes SoT under `~/Library/Caches/code-prism/<project>-<hash>/{lang}-prism/`. MCP (`prism-mcp`) only reads that cache. Company `cache/code-graph/` holds a thin pointer for humans/hops — not a second graph engine.
+Prism writes SoT under `~/Library/Caches/code-prism/<project>-<hash>/{lang}-prism/` as schema `5.0-nested`: one project node, archipelago nodes, and leaf nodes. A `call` stays inside an archipelago. A `depends` points at `island:<project>`. MCP (`prism-mcp`) is the only reader of that cache. Company `cache/code-graph/` holds a thin pointer for humans/hops — not a second graph engine.
 
 ## Owns
 
 - Ensuring **Code Prism** is installed (`prism` / `prism-mcp` on PATH)
 - Refresh: `prism analyze --root "$PROJECT_ROOT"`
+- Receive nodes only through MCP (`prism-mcp`). Do not read `prism-context.json`.
 - Query via MCP tools: `ask_graph`, `resolve_symbol`, `search_symbols`, `get_project_summary`, `get_node_info`, `get_smart_context`, …
 - Optional company pointer: `cache/code-graph/GRAPH.md` (via `code-graph-index` skill)
 - Telling CEO/CTO when the graph is stale after large refactors
