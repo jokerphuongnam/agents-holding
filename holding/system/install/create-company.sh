@@ -362,6 +362,11 @@ if [[ -f "$REF_INSTALL/company_os.sh" ]]; then
   chmod +x "$DEST/system/install/company_os.sh"
   echo "[create-company] installed company_os.sh"
 fi
+if [[ -f "$REF_INSTALL/plan_history.py" ]]; then
+  cp "$REF_INSTALL/plan_history.py" "$DEST/system/install/plan_history.py"
+  chmod +x "$DEST/system/install/plan_history.py"
+  echo "[create-company] installed plan_history.py"
+fi
 
 # Frontend customs stub only if library seed did not already write TASK_SKILLS
 if [[ -d "$DEST/system/staffs/frontend" ]]; then

@@ -40,7 +40,14 @@ intent; you harden it into executable criteria.
 8. **Non-functional when claimed.** Perf, security, a11y — only if BA/CEO made
    them musts; then define numbers/levels QC can check.
 9. **Out of scope line.** Explicit non-goals stop scope creep in review.
-10. **Anti-patterns:** AC that require reading the implementer’s mind; AC only
+10. **Record the write.** From the company root, after the plan file changes and before the hop ends:
+
+    ```bash
+    python3 system/install/plan_history.py sync --company . --actor po-modify
+    ```
+
+    Do not write `cache/plan_history.sqlite` yourself. A new plan file is `po-new`’s hop, not this one.
+11. **Anti-patterns:** AC that require reading the implementer’s mind; AC only
     in chat; AC in code comments as SoT; duplicating BA prose without hardening;
     mixing must and could in one unchecked blob; AC that only pass via hollow
     test APIs.
@@ -53,6 +60,7 @@ intent; you harden it into executable criteria.
 - [ ] Non-goals and NFRs stated when they affect ship
 - [ ] Plan path cited in hop; no conflicting forks
 - [ ] Weakening or cuts documented with owner/decision
+- [ ] `plan_history.py sync --actor po-modify` ran from the company root after the file write
 
 ## References (external)
 

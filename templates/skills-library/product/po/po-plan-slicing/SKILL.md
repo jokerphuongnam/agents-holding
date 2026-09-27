@@ -40,7 +40,14 @@ not renegotiate with the user in chat.
 8. **QC & design hooks.** Note whether slice needs `design-lead` before eng,
    and which `*-qc` shape proves it — avoid “build then invent tests”.
 9. **Rollback / feature-flag notes** when a slice ships dark or partial.
-10. **Anti-patterns:** horizontal-only waterfalls; mega-plans that never ship;
+10. **Record the write.** From the company root, after the plan file is created or changed and before the hop ends:
+
+    ```bash
+    python3 system/install/plan_history.py sync --company . --actor <your-staff-name>
+    ```
+
+    `po-new` passes `po-new`. `po-modify` passes `po-modify`. That command is the history SoT (`cache/plan_history.sqlite`). Do not insert rows yourself.
+11. **Anti-patterns:** horizontal-only waterfalls; mega-plans that never ship;
     silent must drops; tech spikes disguised as product scope without CTO;
     duplicating the same AC across three files with drift; plans with no demo
     or QC story.
@@ -53,6 +60,7 @@ not renegotiate with the user in chat.
 - [ ] Plan path exists under `cache/plans/`; AC hooks present
 - [ ] Design/QC hooks noted when relevant
 - [ ] One new file ownership clear for `po-new` hops
+- [ ] `plan_history.py sync --actor` ran from the company root after the file write
 
 ## References (external)
 
