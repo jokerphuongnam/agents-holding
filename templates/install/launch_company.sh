@@ -214,30 +214,31 @@ echo "[launch] agent=$AGENT harness=$HARNESS room=${WT_NAME:-none} root=$LAUNCH_
 
 cd "$LAUNCH_ROOT"
 
+set +e
 case "$HARNESS" in
   grok)
     # Always --cwd of the project or its room. Never grok --worktree.
     GOPTS=(--agent "$AGENT" --cwd "$LAUNCH_ROOT")
     [[ "$CONTINUE" -eq 1 ]] && GOPTS+=(--continue)
-    if [[ -n "$PROMPT" ]]; then exec grok "${GOPTS[@]}" "$PROMPT"
-    else exec grok "${GOPTS[@]}"; fi
+    if [[ -n "$PROMPT" ]]; then grok "${GOPTS[@]}" "$PROMPT"
+    else grok "${GOPTS[@]}"; fi
     ;;
   claude)
     COPTS=(--agent "$AGENT")
     [[ "$CONTINUE" -eq 1 ]] && COPTS+=(--continue)
-    if [[ -n "$PROMPT" ]]; then exec claude "${COPTS[@]}" "$PROMPT"
-    else exec claude "${COPTS[@]}"; fi
+    if [[ -n "$PROMPT" ]]; then claude "${COPTS[@]}" "$PROMPT"
+    else claude "${COPTS[@]}"; fi
     ;;
   codex)
     if [[ "$AGENT" != "ceo" ]]; then
       echo "[launch] warn: codex path has limited agent cards — prefer grok/claude for ba-user switch" >&2
     fi
     if [[ "$CONTINUE" -eq 1 ]]; then
-      if [[ -n "$PROMPT" ]]; then exec codex resume --last "$PROMPT" 2>/dev/null || exec codex "$PROMPT"
-      else exec codex resume --last 2>/dev/null || exec codex; fi
+      if [[ -n "$PROMPT" ]]; then codex resume --last "$PROMPT" 2>/dev/null || codex "$PROMPT"
+      else codex resume --last 2>/dev/null || codex; fi
     else
-      if [[ -n "$PROMPT" ]]; then exec codex "$PROMPT"
-      else exec codex; fi
+      if [[ -n "$PROMPT" ]]; then codex "$PROMPT"
+      else codex; fi
     fi
     ;;
   *)
@@ -245,3 +246,16 @@ case "$HARNESS" in
     exit 2
     ;;
 esac
+agent_status=$?
+set -e
+
+# The room records this turn when the agent process returns.
+if [[ -n "$WT_NAME" ]]; then
+  python3 "$WORK_HISTORY" capture \
+    --company "$COMPANY_DIR" \
+    --room "$LAUNCH_ROOT" \
+    --room-name "$WT_NAME" \
+    --staff "$AGENT" \
+    --message "${PROMPT:-session}" || agent_status=$?
+fi
+exit "$agent_status"
