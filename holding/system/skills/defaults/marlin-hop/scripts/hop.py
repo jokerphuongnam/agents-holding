@@ -27,6 +27,16 @@ AGENTS = {r["name"]: r for r in load_tsv("agents.tsv") if r.get("name")}
 BLURB = {n: r.get("blurb", "") for n, r in AGENTS.items()}
 SKILL = {n: r["skill"] for n, r in AGENTS.items() if r.get("skill")}
 LEAD = {n: r["lead"] for n, r in AGENTS.items() if r.get("lead")}
+
+
+def real_lead(agent: str) -> str | None:
+    """Team lead stays in `lead`. QA staff also report to the company QA lead."""
+    if not (agent.endswith("-qc") or agent.endswith("-quality-lead")):
+        return None
+    functional = "qc-lead" if "qc-lead" in AGENTS else ("qa-lead" if "qa-lead" in AGENTS else None)
+    if not functional or functional == agent or LEAD.get(agent) == functional:
+        return None
+    return functional
 QC = {n: r["qc"] for n, r in AGENTS.items() if r.get("qc")}
 ROUTING = {n for n, r in AGENTS.items() if r.get("routing") == "1"}
 _ROSTER = load_tsv("roster.tsv")
@@ -308,6 +318,8 @@ def emit(agent: str, role: str, harness: str = "grok") -> None:
         print(f"qc: {QC[agent]}")
     if agent in LEAD:
         print(f"lead: {LEAD[agent]}")
+    if (also := real_lead(agent)):
+        print(f"real_lead: {also}")
     print("do_not: open ORG.md, load skill catalog, grep the repo")
 
 
