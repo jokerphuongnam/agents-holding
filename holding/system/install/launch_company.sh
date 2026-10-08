@@ -214,6 +214,16 @@ echo "[launch] agent=$AGENT harness=$HARNESS room=${WT_NAME:-none} root=$LAUNCH_
 
 cd "$LAUNCH_ROOT"
 
+# The user line is written before staff work. File commits wait until the round is closed.
+if [[ -n "$WT_NAME" && -n "$PROMPT" ]]; then
+  python3 "$WORK_HISTORY" say \
+    --company "$COMPANY_DIR" \
+    --room-name "$WT_NAME" \
+    --who user \
+    --message "$PROMPT" \
+    --thread ceo
+fi
+
 set +e
 case "$HARNESS" in
   grok)

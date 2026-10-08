@@ -258,7 +258,7 @@ def claim_pairs(company: Path, room_name: str) -> list[tuple[str, Path, Path]]:
         return []
     pairs = []
     for index in sorted(root.iterdir()):
-        if not index.is_file() or index.name.endswith(".base") or index.name.endswith(".record"):
+        if not index.is_file() or index.name.endswith((".base", ".record", ".message")):
             continue
         base = index.with_name(f"{index.name}.base")
         if base.is_file():
@@ -278,6 +278,7 @@ def ensure_claim(room: Path, company: Path, room_name: str, staff: str) -> tuple
 def clear_claim(index: Path, base: Path) -> None:
     index.unlink(missing_ok=True)
     base.unlink(missing_ok=True)
+    index.with_name(f"{index.name}.message").unlink(missing_ok=True)
 
 
 def room_blob(room: Path, rev: str, path: str) -> bytes | None:
@@ -455,13 +456,33 @@ def claim_worktree(company: Path, room: Path, room_name: str, staff: str) -> Non
             apply_hunk(room, path, False, number, False, index=index)
 
 
-def capture(company: Path, room: Path, room_name: str, staff: str, message: str) -> str | None:
+def round_still_open(company: Path, room_name: str) -> bool:
+    for line in status_text(company, room_name).splitlines():
+        _name, state, _text = line.split("\t", 2)
+        if state != "done":
+            return True
+    return False
+
+
+def capture(company: Path, room: Path, room_name: str, staff: str, message: str) -> tuple[list[tuple[str, str]], bool]:
+    """Keep each staff claim until every staff in the round is done, then commit them."""
     room = open_room(company, room, room_name)
     claim_worktree(company, room, room_name, staff)
-    commit = record(company, room, room_name, staff, message)
-    spoken = say(company, room_name, staff, message)
-    print(f"talk {spoken}")
-    return commit
+    index, _base = claim_paths(company, room_name, staff)
+    if index.is_file():
+        index.with_name(f"{index.name}.message").write_text(message, encoding="utf-8")
+    set_status(company, room_name, staff, "done", message)
+    if round_still_open(company, room_name):
+        print("commit later")
+        return [], True
+    made: list[tuple[str, str]] = []
+    for name, claim, _base_path in claim_pairs(company, room_name):
+        note = claim.with_name(f"{name}.message")
+        text = note.read_text(encoding="utf-8") if note.is_file() else message
+        commit = record(company, room, room_name, name, text)
+        if commit:
+            made.append((name, commit))
+    return made, False
 
 
 def commit_header(store: Path, commit: str) -> None:
@@ -891,11 +912,14 @@ def main() -> None:
     elif args.cmd == "status":
         set_status(args.company, args.room_name, args.staff, args.state, args.message)
     elif args.cmd == "capture":
-        commit = capture(args.company, args.room, args.room_name, args.staff, args.message)
-        if commit:
-            print(f"commit {commit}")
-            print(f"branch {branch_name(args.room_name)}")
-            print(f"author {args.staff}")
+        commits, waiting = capture(args.company, args.room, args.room_name, args.staff, args.message)
+        if waiting:
+            pass
+        elif commits:
+            for name, commit in commits:
+                print(f"commit {commit}")
+                print(f"branch {branch_name(args.room_name)}")
+                print(f"author {name}")
         else:
             print("commit none")
     else:
