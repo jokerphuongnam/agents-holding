@@ -133,6 +133,40 @@ def room_of_store(store: Path, folder: Path) -> bool:
     return common.resolve() == store.resolve()
 
 
+def project_git(source: Path) -> Path | None:
+    if not source.is_dir():
+        return None
+    proc = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "--git-common-dir"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return None
+    found = Path(proc.stdout.strip())
+    if not found.is_absolute():
+        found = (source / found).resolve()
+    return found
+
+
+def mirror_project(store: Path, source: Path) -> str | None:
+    """Copy the project branches into refs/heads/mirror/*. Room branches stay put."""
+    origin = project_git(source)
+    if origin is None or origin.resolve() == store.resolve():
+        return None
+    require(git(store, "fetch", "--no-tags", str(origin), "+refs/heads/*:refs/heads/mirror/*"))
+    head = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if head.returncode != 0:
+        return None
+    return head.stdout.strip()
+
+
 def seed_branch(store: Path, source: Path, branch: str, staff: str, message: str) -> None:
     require(git(store, "symbolic-ref", "HEAD", f"refs/heads/{branch}"))
     require(git(store, "add", "-A", worktree=source, staff=staff))
@@ -165,8 +199,11 @@ def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, 
         seed_from = source
     else:
         seed_from = None
+    mirrored = mirror_project(store, source if source.is_dir() else seed_from or source)
     if not branch_exists(store, branch):
-        if seed_from is None:
+        if mirrored:
+            require(git(store, "branch", branch, mirrored))
+        elif seed_from is None:
             seed_from = dest_parent / ".empty-room-seed"
             seed_from.mkdir(exist_ok=True)
             seed_branch(store, seed_from, branch, "company", "room start")
@@ -713,6 +750,10 @@ def main() -> None:
     room.add_argument("--dest-parent", type=Path, required=True)
     room.add_argument("--join-only", action="store_true")
 
+    copied = sub.add_parser("mirror")
+    copied.add_argument("--company", type=Path, required=True)
+    copied.add_argument("--source", type=Path, required=True)
+
     rec = sub.add_parser("record")
     rec.add_argument("--company", type=Path, required=True)
     rec.add_argument("--room", type=Path, required=True)
@@ -810,6 +851,13 @@ def main() -> None:
     args = parser.parse_args()
     if args.cmd == "ensure-room":
         ensure_room(args.company, args.source, args.room_name, args.dest_parent, args.join_only)
+    elif args.cmd == "mirror":
+        store = ensure_store(args.company)
+        head = mirror_project(store, args.source)
+        if head:
+            print(f"mirror {head}")
+        else:
+            print("mirror none")
     elif args.cmd == "record":
         commit = record(args.company, args.room, args.room_name, args.staff, args.message)
         if commit:
