@@ -24,31 +24,31 @@ Company OS (\`$SLUG\`). Staffs, skills, harness, and hop live under \`system/\`.
 
 Package / adapters root: \`$PKG_ROOT\`
 
-## Usage — CEO / BA in one worktree
+## Usage — CEO / BA in one room
 
 **User talks only to \`ceo\` and \`ba-user\`.** Everyone else is a **sub-agent**
 (Assigned by ceo/ba-user; not a direct user chat).
 
 **Default launch = the project that contains this company as \`ceo\`**
-(repo-root → \`../.company-worktrees/<name>\`; nested package → live package cwd —
+(room folder → \`../.company-rooms/<name>\` —
 **never** a harness/system clone).
 
 \`\`\`bash
-# Start (new project worktree as CEO) — note the worktree name
+# Start (new company room as CEO) — note the room name
 ./$REL_COMP/launch.sh grok "ship empty-state"
 
-# Call BA in the SAME worktree (handoff conversation surface to ba-user)
-./$REL_COMP/launch.sh grok --worktree-name <name> --agent ba-user "clarify acceptance with user"
+# Call BA in the SAME room (handoff conversation surface to ba-user)
+./$REL_COMP/launch.sh grok --room-name <name> --agent ba-user "clarify acceptance with user"
 
-# Return to CEO in that worktree
-./$REL_COMP/launch.sh grok --worktree-name <name> --agent ceo "BA done — continue eng"
+# Return to CEO in that room
+./$REL_COMP/launch.sh grok --room-name <name> --agent ceo "BA done — continue eng"
 
 # Other harnesses
 ./$REL_COMP/launch.sh claude "…"
 ./$REL_COMP/launch.sh merge "…"
 
-# Opt out of new worktree / resume
-./$REL_COMP/launch.sh grok --no-worktree "…"
+# Opt out of a new room / resume
+./$REL_COMP/launch.sh grok --no-room "…"
 ./$REL_COMP/launch.sh grok --continue "…"
 \`\`\`
 
@@ -57,9 +57,9 @@ Package / adapters root: \`$PKG_ROOT\`
 | \`grok\` / \`claude\` / \`codex\` | Vendor CLI |
 | \`merge\` | \`company_os all\` + default runtime_router vendor |
 | \`--agent ceo\|ba-user\` | User-facing agent (default \`ceo\`) |
-| \`--worktree-name NAME\` | Name/join \`../.company-worktrees/NAME\` (required for \`--agent ba-user\`) |
-| (default) | **New** project git worktree as ceo |
-| \`--no-worktree\` / \`--continue\` | Stay in current tree / resume session |
+| \`--room-name NAME\` | Name/join \`../.company-rooms/NAME\` (required for \`--agent ba-user\`) |
+| (default) | **New** company room as ceo |
+| \`--no-room\` / \`--continue\` | Stay in current folder / resume session |
 
 ### Parent → child product CEO
 

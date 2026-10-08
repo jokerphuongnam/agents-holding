@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Shared Company OS launcher — every company (parent + children).
 #
-# User-facing agents in a worktree: ceo | ba-user only (everyone else = sub-agent).
+# User-facing agents in a room: ceo | ba-user only (everyone else = sub-agent).
 # Default workspace = the PROJECT that contains the company (--cwd there).
-#   - Company at repo root → sibling git worktree <repo-parent>/.company-worktrees/<name>
-#   - Company nested in a monorepo package → live package cwd (avoids empty HEAD checkouts)
+#   - A room is one branch of <company>/cache/work-history
+#     under <project-parent>/.company-rooms/<name>
+#   - The project does not need its own git repository.
 # Never use harness --worktree / Grove clone into system trees.
 #
 #   launch_company.sh --company-dir DIR --root DIR <harness|merge> \
-#     [--agent ceo|ba-user] [--worktree-name NAME] [--no-worktree] [--continue] \
+#     [--agent ceo|ba-user] [--room-name NAME] [--no-room] [--continue] \
 #     ["prompt…"]
 #
 set -euo pipefail
@@ -25,26 +26,26 @@ usage() {
   cat <<'USAGE'
 launch_company.sh --company-dir DIR --root DIR <harness|merge> [options] ["prompt…"]
 
-User channels in the worktree: ceo | ba-user only (other roles = sub-agents).
+User channels in the room: ceo | ba-user only (other roles = sub-agents).
 
-  # Start (new git worktree of the project as CEO):
+  # Start (new company room as CEO):
   launch_company.sh --company-dir … --root … grok "…"
 
-  # Call BA in the SAME worktree:
-  launch_company.sh --company-dir … --root … grok --worktree-name NAME --agent ba-user "…"
+  # Call BA in the SAME room:
+  launch_company.sh --company-dir … --root … grok --room-name NAME --agent ba-user "…"
 
-  # Return to CEO in that worktree:
-  launch_company.sh --company-dir … --root … grok --worktree-name NAME --agent ceo "…"
+  # Return to CEO in that room:
+  launch_company.sh --company-dir … --root … grok --room-name NAME --agent ceo "…"
 
 Options:
   --agent ceo|ba-user   User-facing agent (default: ceo)
-  --worktree-name NAME  Name/join worktree under ../.company-worktrees/NAME
-  --no-worktree         Stay in --root (no new worktree)
-  --continue            Continue prior session (implies join existing / no new worktree)
+  --room-name NAME      Name/join room under ../.company-rooms/NAME
+  --no-room             Stay in --root (no new room)
+  --continue            Continue prior session (implies join existing / no new room)
 
-Worktrees are always `git worktree add` from the project repo that contains the
-company — never a harness system clone. Ignored overlays (.agents/.grok/…) are
-symlinked from --root into the worktree when missing.
+Rooms are branches of the company work history at cache/work-history, not of the
+project repository. The project does not have to be a git repo. Ignored overlays
+(.agents/.grok/…) are symlinked from --root into the room when missing.
 USAGE
 }
 
@@ -57,8 +58,8 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --continue|-c) CONTINUE=1; NO_WORKTREE=1; shift ;;
-    --no-worktree) NO_WORKTREE=1; shift ;;
-    --worktree-name|--worktree)
+    --no-room|--no-worktree) NO_WORKTREE=1; shift ;;
+    --room-name|--worktree-name|--worktree)
       if [[ "${2:-}" == -* || -z "${2:-}" ]]; then
         WT_NAME=""
         shift
@@ -108,35 +109,13 @@ print(rt)
 PY
 }
 
-resolve_worktree_path() {
-  # Prefer git worktree list match by branch/path basename
-  local name="$1" repo="$2"
-  git -C "$repo" worktree list --porcelain 2>/dev/null | python3 - "$name" <<'PY'
-import sys
-name = sys.argv[1]
-lines = sys.stdin.read().splitlines()
-cur = {}
-rows = []
-for line in lines + [""]:
-    if not line.strip():
-        if cur:
-            rows.append(cur)
-        cur = {}
-        continue
-    if line.startswith("worktree "):
-        cur["path"] = line.split(" ", 1)[1]
-    elif line.startswith("branch "):
-        cur["branch"] = line.split(" ", 1)[1].removeprefix("refs/heads/")
-for r in rows:
-    path = r.get("path", "")
-    branch = r.get("branch", "")
-    if branch == name or path.rstrip("/").endswith("/" + name) or path.rstrip("/").endswith(name):
-        print(path)
-        break
-PY
+WORK_HISTORY="$(cd "$(dirname "$0")" && pwd)/work_history.py"
+
+room_dest_parent() {
+  echo "$(dirname "$ROOT")/.company-rooms"
 }
 
-# Link company/harness overlays that are gitignored (not present in a fresh worktree).
+# Link company/harness overlays that are gitignored (not present in a fresh room).
 # Also symlink other top-level live paths missing from dest (empty/sparse HEAD, e.g. Pilot).
 link_company_overlays() {
   local src="$1" dest="$2"
@@ -148,7 +127,7 @@ link_company_overlays() {
       echo "[launch] symlink $dest/$d → $src/$d" >&2
     fi
   done
-  # Untracked / nested package trees are absent from an empty-commit worktree.
+  # Untracked / nested package trees are absent from an empty-commit room.
   shopt -s nullglob dotglob
   for d in "$src"/*; do
     base="$(basename "$d")"
@@ -163,30 +142,17 @@ link_company_overlays() {
   shopt -u nullglob dotglob
 }
 
-ensure_project_worktree() {
-  # Create or reuse: <parent-of-repo>/.company-worktrees/<name>
-  # stdout = path only (git chatter must not pollute command substitution).
-  local repo="$1" name="$2"
-  local parent dest found
-  found="$(resolve_worktree_path "$name" "$repo" || true)"
-  if [[ -n "$found" && -d "$found" ]]; then
-    printf '%s\n' "$found"
-    return 0
-  fi
-  parent="$(dirname "$repo")/.company-worktrees"
-  mkdir -p "$parent"
-  dest="$parent/$name"
-  if [[ -d "$dest" ]]; then
-    echo "error: path exists but is not a registered git worktree: $dest" >&2
-    exit 2
-  fi
-  echo "[launch] git worktree add $dest (branch $name) from $repo" >&2
-  if git -C "$repo" show-ref --verify --quiet "refs/heads/$name"; then
-    git -C "$repo" worktree add "$dest" "$name" >&2
-  else
-    git -C "$repo" worktree add -b "$name" "$dest" HEAD >&2
-  fi
-  printf '%s\n' "$dest"
+ensure_company_room() {
+  # stdout = path only. A missing room is created.
+  local name="$1"
+  local parent
+  parent="$(room_dest_parent)"
+  echo "[launch] company room $parent/$name" >&2
+  python3 "$WORK_HISTORY" ensure-room \
+    --company "$COMPANY_DIR" \
+    --source "$ROOT" \
+    --room-name "$name" \
+    --dest-parent "$parent"
 }
 
 HARNESS="$MODE"
@@ -223,73 +189,34 @@ if [[ -z "$WT_NAME" && "$USE_WT" -eq 1 ]]; then
   WT_NAME="${STEM}-$(date +%Y%m%d-%H%M%S)"
 fi
 
-# Switching to ba-user without a worktree name is unsafe (would create a new tree as BA)
+# Switching to ba-user without a room name is unsafe (would create a new room as BA)
 if [[ "$AGENT" == "ba-user" && -z "$WT_NAME" ]]; then
-  echo "error: --agent ba-user requires --worktree-name <existing> (same tree as CEO)" >&2
-  echo "hint: launch as ceo first, note the worktree name, then:" >&2
-  echo "  launch.sh grok --worktree-name <name> --agent ba-user \"…\"" >&2
+  echo "error: --agent ba-user requires --room-name <existing> (same room as CEO)" >&2
+  echo "hint: launch as ceo first, note the room name, then:" >&2
+  echo "  launch.sh grok --room-name <name> --agent ba-user \"…\"" >&2
   exit 2
 fi
 
 LAUNCH_ROOT="$ROOT"
-REPO_GIT="$(cd "$ROOT" && git rev-parse --show-toplevel 2>/dev/null || true)"
-# Non-empty when company package root is nested inside a monorepo checkout.
-PKG_REL=""
-if [[ -n "$REPO_GIT" ]]; then
-  PKG_REL="$(python3 -c "import os; print(os.path.relpath('$ROOT', '$REPO_GIT'))")"
-  [[ "$PKG_REL" == "." ]] && PKG_REL=""
-fi
 
 if [[ "$USE_WT" -eq 1 ]]; then
-  if [[ -z "$REPO_GIT" ]]; then
-    echo "error: --root is not inside a git repo; cannot create a project worktree" >&2
-    echo "hint: use --no-worktree, or run from the project that contains the company" >&2
-    exit 2
-  fi
-
-  if [[ -n "$PKG_REL" ]]; then
-    # Nested package (e.g. projects/desk-garden): always the live package that holds
-    # the company. A monorepo git worktree from HEAD often lacks uncommitted package
-    # files — and harness --worktree clones are wrong. BA handoff = same cwd + --agent.
-    LAUNCH_ROOT="$ROOT"
-    if [[ "$AGENT" == "ba-user" ]]; then
-      echo "[launch] nested package — joining live project $LAUNCH_ROOT (agent=$AGENT name=$WT_NAME)" >&2
-    else
-      echo "[launch] nested package — cwd=$LAUNCH_ROOT (project contains company; name=$WT_NAME)" >&2
-    fi
-  elif [[ "$AGENT" == "ba-user" ]]; then
-    FOUND="$(resolve_worktree_path "$WT_NAME" "$REPO_GIT" || true)"
-    if [[ -z "$FOUND" || ! -d "$FOUND" ]]; then
-      echo "error: worktree '$WT_NAME' not found under project $REPO_GIT" >&2
-      echo "hint: start ceo first (creates ../.company-worktrees/$WT_NAME), then hand off" >&2
-      exit 2
-    fi
-    LAUNCH_ROOT="$FOUND"
-    echo "[launch] joining existing worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
-  else
-    # Company at repo root: sibling git worktree (never harness --worktree clone)
-    LAUNCH_ROOT="$(ensure_project_worktree "$REPO_GIT" "$WT_NAME")"
-    echo "[launch] project worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
-  fi
-elif [[ -n "$WT_NAME" && -n "$REPO_GIT" && -z "$PKG_REL" ]]; then
-  # --continue / --no-worktree with an explicit name → prefer that checkout if registered
-  FOUND="$(resolve_worktree_path "$WT_NAME" "$REPO_GIT" || true)"
-  if [[ -n "$FOUND" && -d "$FOUND" ]]; then
-    LAUNCH_ROOT="$FOUND"
-    echo "[launch] joining existing worktree: $LAUNCH_ROOT (agent=$AGENT)" >&2
-  fi
+  LAUNCH_ROOT="$(ensure_company_room "$WT_NAME")"
+  echo "[launch] company room: $LAUNCH_ROOT (agent=$AGENT)" >&2
+elif [[ -n "$WT_NAME" ]]; then
+  LAUNCH_ROOT="$(ensure_company_room "$WT_NAME")"
+  echo "[launch] company room: $LAUNCH_ROOT (agent=$AGENT)" >&2
 fi
 
 link_company_overlays "$ROOT" "$LAUNCH_ROOT"
 
-echo "[launch] agent=$AGENT harness=$HARNESS worktree=${WT_NAME:-none} root=$LAUNCH_ROOT company=$COMPANY_DIR" >&2
+echo "[launch] agent=$AGENT harness=$HARNESS room=${WT_NAME:-none} root=$LAUNCH_ROOT company=$COMPANY_DIR" >&2
 [[ -n "$PROMPT" ]] && echo "[launch] first_prompt=${PROMPT:0:160}" >&2
 
 cd "$LAUNCH_ROOT"
 
 case "$HARNESS" in
   grok)
-    # Always --cwd of the project (or its git worktree). Never grok --worktree.
+    # Always --cwd of the project or its room. Never grok --worktree.
     GOPTS=(--agent "$AGENT" --cwd "$LAUNCH_ROOT")
     [[ "$CONTINUE" -eq 1 ]] && GOPTS+=(--continue)
     if [[ -n "$PROMPT" ]]; then exec grok "${GOPTS[@]}" "$PROMPT"
