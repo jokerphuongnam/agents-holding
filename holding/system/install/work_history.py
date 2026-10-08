@@ -6,8 +6,9 @@ project repository. A room is one branch in that history. Each command
 points the history at one room folder.
 
 One room name is one branch. One staff is one author. One user message
-is one commit for each staff who changed files. The commit message is the
-user's message. A staff who changed nothing gets no commit.
+is one commit for each staff who staged files. The commit message is the
+user's message. ``record`` commits only the index. Unstaged edits stay in
+the room. A staff who staged nothing gets no commit.
 
 Reads and writes go through ordinary git commands in the room folder
 (``git status``, ``git show``, ``git diff``, ``git commit``, ``git reset``).
@@ -206,7 +207,6 @@ def record(company: Path, room: Path, room_name: str, staff: str, message: str) 
     head = git_at(room, "rev-parse", "--abbrev-ref", "HEAD")
     if head.returncode != 0 or head.stdout.strip() != branch:
         raise SystemExit(f"room is not checked out on {branch}")
-    require(git_at(room, "add", "-A", staff=staff))
     quiet = git_at(room, "diff", "--cached", "--quiet")
     if quiet.returncode == 0:
         return None
