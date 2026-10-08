@@ -39,7 +39,7 @@ from pathlib import Path
 tmpl = Path('$TMPL').read_text(encoding='utf-8')
 text = (tmpl
   .replace('@@PKG@@', '$PKG_ROOT')
-  .replace('@@CORE@@', '$CORE')
+  .replace('@@CORE@@', '\$COMP/system/install/launch_company.sh')
   .replace('@@REL@@', '$REL_COMP'))
 Path('$OUT').write_text(text, encoding='utf-8')
 import os
