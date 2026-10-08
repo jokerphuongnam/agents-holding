@@ -342,7 +342,7 @@ def side_branch(prefix: str, room_name: str) -> str:
     return prefix + "/" + branch_name(room_name).split("/", 1)[1]
 
 
-def write_side(company: Path, room_name: str, prefix: str, filename: str, content: str, who: str, message: str) -> str:
+def write_side(company: Path, room_name: str, prefix: str, filename: str, content: str, who: str, message: str, body: str | None = None) -> str:
     store = ensure_store(company)
     branch = side_branch(prefix, room_name)
     blob = require(git(store, "hash-object", "-w", "--stdin", staff=who, input_text=content))
@@ -351,16 +351,21 @@ def write_side(company: Path, room_name: str, prefix: str, filename: str, conten
     if branch_exists(store, branch):
         command.extend(["-p", require(git(store, "rev-parse", branch))])
     command.extend(["-m", message])
+    if body:
+        command.extend(["-m", body])
     commit = require(git(store, *command, staff=who))
     require(git(store, "update-ref", f"refs/heads/{branch}", commit))
     return commit
 
 
-def say(company: Path, room_name: str, who: str, message: str) -> str:
+def say(company: Path, room_name: str, who: str, message: str, thread: str = "ceo") -> str:
     if not message.strip():
         raise SystemExit("message is empty")
     who = author(who)
-    return write_side(company, room_name, "talk", "message", message, who, message)
+    thread = thread.strip() or "ceo"
+    if any(c in thread for c in "<>\n"):
+        raise SystemExit("thread name is empty")
+    return write_side(company, room_name, "talk", "message", message, who, message, f"thread {thread}")
 
 
 def talk(company: Path, room_name: str) -> None:
@@ -368,7 +373,7 @@ def talk(company: Path, room_name: str) -> None:
     branch = side_branch("talk", room_name)
     if not branch_exists(store, branch):
         return
-    proc = git(store, "log", "--format=hash %H%nauthor %an%nauthor-date %aI%nmessage %s%n", branch)
+    proc = git(store, "log", "--format=---%nhash %H%nauthor %an%nauthor-date %aI%nbody %b%nmessage %s", branch)
     require(proc)
     sys.stdout.write(proc.stdout)
 
@@ -782,6 +787,7 @@ def main() -> None:
     spoken.add_argument("--room-name", required=True)
     spoken.add_argument("--who", required=True)
     spoken.add_argument("--message", required=True)
+    spoken.add_argument("--thread", default="ceo")
 
     transcript = sub.add_parser("talk")
     transcript.add_argument("--company", type=Path, required=True)
@@ -831,7 +837,7 @@ def main() -> None:
     elif args.cmd == "fallback":
         fallback(args.company, args.room, args.room_name, args.path)
     elif args.cmd == "say":
-        print(f"talk {say(args.company, args.room_name, args.who, args.message)}")
+        print(f"talk {say(args.company, args.room_name, args.who, args.message, args.thread)}")
     elif args.cmd == "talk":
         talk(args.company, args.room_name)
     elif args.cmd == "status":
