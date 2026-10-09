@@ -33,6 +33,17 @@ COMPANY_DIR="$(cd "$COMPANY_DIR" && pwd)"
 PKG_ROOT="$(cd "$PKG_ROOT" && pwd)"
 REL_COMP="$(python3 -c "import os; print(os.path.relpath('$COMPANY_DIR', '$PKG_ROOT'))")"
 OUT="$COMPANY_DIR/launch.sh"
+INSTALL_DIR="$COMPANY_DIR/system/install"
+mkdir -p "$INSTALL_DIR"
+# launch.sh calls these beside company_os.sh. Generate must copy them or the first run fails.
+for script in launch_company.sh work_history.py; do
+  if [[ ! -f "$HOLDING_INSTALL/$script" ]]; then
+    echo "error: missing $HOLDING_INSTALL/$script" >&2
+    exit 2
+  fi
+  cp "$HOLDING_INSTALL/$script" "$INSTALL_DIR/$script"
+  chmod +x "$INSTALL_DIR/$script"
+done
 
 python3 -c "
 from pathlib import Path
