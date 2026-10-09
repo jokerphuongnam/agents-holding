@@ -136,15 +136,14 @@ If the subsidiary is primarily **UI/UX** (React, mobile, etc.), CTO should seed 
 | Role | Owns |
 | --- | --- |
 | `design-lead` | Assign one design IC per hop; quality bar for UX/UI consistency |
+| `ui-designer` | Reads Figma and other design files. Owns the design system: color, type, iconography, components, and the design brief |
 | `ux-writer` | User-facing copy, microcopy, tone — clearer UX through words |
-| `ui-designer` | Design system for the project: color, type, iconography, components |
-| `ba-user` (design intake) | Always-on BA IC, with a **design-intake** duty: read designs from
-  external sources (Figma/specs/other products) and produce a **canonical brief**
-  for the company (what to build, constraints, glossary) — not invent pixels |
+| `ba-user` | User channel only. Clarifies the ask with the user. Does not read Figma |
 
-**Flow:** external design / research → `ba-user` (canonical brief) → `design-lead`
-Assigns `ui-designer` / `ux-writer` as needed → engineering consumes the system
-and copy. Engineering does **not** invent a parallel design system.
+**Flow:** Figma and other design files → `ui-designer` → `design-lead` assigns
+`ux-writer` when copy is needed → engineering consumes the system and copy.
+`ba-user` only clarifies the product ask with the user. Engineering does **not**
+invent a parallel design system.
 
 `marlin-language-company` is the **reference instance** of the formula (Marlin /
 C++ / Comm / MPM shaped — usually **no** design team). New frontend companies

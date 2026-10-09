@@ -18,7 +18,7 @@ product locale for user-facing samples.
 - **Not you:** Assign hops (`design-lead`); final product microcopy (`ux-writer`);
   implementing React/Swift/Kotlin UI unless brief says assets-only handoff;
   inventing product scope (`ba` / `po-*`).
-- **Upstream:** canonical brief from `ba`. **Downstream:** frontend/mobile
+- **Upstream:** Figma, read by `ui-designer`. **Downstream:** frontend/mobile
   engineers consume tokens — they do not invent a second system.
 
 ## How

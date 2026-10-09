@@ -28,4 +28,4 @@ When stack is UI-heavy (React, mobile, …), include under `system/staffs/design
 - `ux-writer`
 - `ui-designer`
 
-And use always-on `ba-user` for **design intake** (external designs → canonical brief).
+`ui-designer` reads Figma and writes the design brief. `ba-user` only clarifies the ask with the user.
