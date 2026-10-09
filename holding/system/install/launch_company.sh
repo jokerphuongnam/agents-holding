@@ -41,11 +41,14 @@ Options:
   --agent ceo|ba-user   User-facing agent (default: ceo)
   --room-name NAME      Name/join room under ../.company-rooms/NAME
   --no-room             Stay in --root (no new room)
-  --continue            Continue prior session (implies join existing / no new room)
+  --continue NAME       Resume that room: switch to its branch and open the agent
 
 Rooms are branches of the company work history at cache/work-history, not of the
-project repository. The project does not have to be a git repo. Ignored overlays
-(.agents/.grok/…) are symlinked from --root into the room when missing.
+project repository. Each room branch is checked out as the CEO worktree. Another
+staff gets a worktree only when that staff is launched in this room, and that
+worktree is linked to the CEO worktree. The project does not have to be a git
+repo. Ignored overlays (.agents/.grok/…) are symlinked from --root into the
+worktree when missing.
 USAGE
 }
 
@@ -57,7 +60,16 @@ while [[ $# -gt 0 ]]; do
       AGENT="$(printf '%s' "${2:-}" | tr '[:upper:]' '[:lower:]')"
       shift 2
       ;;
-    --continue|-c) CONTINUE=1; NO_WORKTREE=1; shift ;;
+    --continue|-c)
+      CONTINUE=1
+      if [[ -n "${2:-}" && "${2:-}" != -* ]]; then
+        WT_NAME="${2:-}"
+        shift 2
+      else
+        echo "error: --continue needs the room name" >&2
+        exit 2
+      fi
+      ;;
     --no-room|--no-worktree) NO_WORKTREE=1; shift ;;
     --room-name|--worktree-name|--worktree)
       if [[ "${2:-}" == -* || -z "${2:-}" ]]; then
@@ -185,7 +197,12 @@ STEM="${STEM%-company}"
 USE_WT=1
 [[ "$NO_WORKTREE" -eq 1 ]] && USE_WT=0
 
-if [[ -z "$WT_NAME" && "$USE_WT" -eq 1 ]]; then
+if [[ "$CONTINUE" -eq 1 && -z "$WT_NAME" ]]; then
+  echo "error: --continue needs the room name" >&2
+  exit 2
+fi
+
+if [[ "$CONTINUE" -eq 0 && -z "$WT_NAME" && "$USE_WT" -eq 1 ]]; then
   WT_NAME="${STEM}-$(date +%Y%m%d-%H%M%S)"
 fi
 
@@ -199,11 +216,20 @@ fi
 
 LAUNCH_ROOT="$ROOT"
 
-if [[ "$USE_WT" -eq 1 ]]; then
-  LAUNCH_ROOT="$(ensure_company_room "$WT_NAME")"
-  echo "[launch] company room: $LAUNCH_ROOT (agent=$AGENT)" >&2
-elif [[ -n "$WT_NAME" ]]; then
-  LAUNCH_ROOT="$(ensure_company_room "$WT_NAME")"
+if [[ "$USE_WT" -eq 1 || -n "$WT_NAME" ]]; then
+  # The room branch stays on the CEO worktree. Other staff attach beside it.
+  if [[ "$AGENT" == "ceo" ]]; then
+    LAUNCH_ROOT="$(ensure_company_room "$WT_NAME")"
+  else
+    parent="$(room_dest_parent)"
+    echo "[launch] activate $AGENT on room $WT_NAME" >&2
+    LAUNCH_ROOT="$(python3 "$WORK_HISTORY" activate-staff \
+      --company "$COMPANY_DIR" \
+      --source "$ROOT" \
+      --room-name "$WT_NAME" \
+      --dest-parent "$parent" \
+      --staff "$AGENT")"
+  fi
   echo "[launch] company room: $LAUNCH_ROOT (agent=$AGENT)" >&2
 fi
 
@@ -230,8 +256,26 @@ case "$HARNESS" in
     # Always --cwd of the project or its room. Never grok --worktree.
     GOPTS=(--agent "$AGENT" --cwd "$LAUNCH_ROOT")
     [[ "$CONTINUE" -eq 1 ]] && GOPTS+=(--continue)
-    if [[ -n "$PROMPT" ]]; then grok "${GOPTS[@]}" "$PROMPT"
-    else grok "${GOPTS[@]}"; fi
+    if [[ -n "$PROMPT" && ! -t 0 ]]; then
+      # The app has no terminal. One turn, then the reply is stored on the talk branch.
+      reply="$(grok "${GOPTS[@]}" --always-approve --single "$PROMPT" || true)"
+      reply="${reply#"${reply%%[![:space:]]*}"}"
+      reply="${reply%"${reply##*[![:space:]]}"}"
+      if [[ -n "$reply" && -n "$WT_NAME" ]]; then
+        python3 "$WORK_HISTORY" say \
+          --company "$COMPANY_DIR" \
+          --room-name "$WT_NAME" \
+          --who "$AGENT" \
+          --message "$reply" \
+          --thread ceo
+      fi
+    elif [[ -n "$PROMPT" ]]; then
+      grok "${GOPTS[@]}" "$PROMPT"
+    elif [[ "$CONTINUE" -eq 1 && ! -t 0 ]]; then
+      echo "[launch] room ready: $LAUNCH_ROOT" >&2
+    else
+      grok "${GOPTS[@]}"
+    fi
     ;;
   claude)
     COPTS=(--agent "$AGENT")

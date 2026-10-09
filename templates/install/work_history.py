@@ -167,6 +167,14 @@ def mirror_project(store: Path, source: Path) -> str | None:
     return head.stdout.strip()
 
 
+def seed_orphan(store: Path, branch: str, staff: str, message: str) -> str:
+    """One root commit and no parents, so the room log does not contain older commits."""
+    tree = require(git(store, "mktree", staff=staff, input_text=""))
+    commit = require(git(store, "commit-tree", tree, "-m", message, staff=staff))
+    require(git(store, "update-ref", f"refs/heads/{branch}", commit))
+    return commit
+
+
 def seed_branch(store: Path, source: Path, branch: str, staff: str, message: str) -> None:
     require(git(store, "symbolic-ref", "HEAD", f"refs/heads/{branch}"))
     require(git(store, "add", "-A", worktree=source, staff=staff))
@@ -182,6 +190,36 @@ def seed_branch(store: Path, source: Path, branch: str, staff: str, message: str
     require(git(store, "symbolic-ref", "HEAD", "refs/heads/__room_idle"))
 
 
+def pin_latest_code(dest: Path, source: Path) -> None:
+    """The room branch is the conversation. The files in the checkout are the live project."""
+    if not source.is_dir() or not dest.is_dir():
+        return
+    if dest.resolve() == source.resolve():
+        return
+    names = set()
+    for child in source.iterdir():
+        if child.name == ".git":
+            continue
+        names.add(child.name)
+        link = dest / child.name
+        target = child.resolve()
+        if link.is_symlink() and link.resolve() == target:
+            continue
+        if link.is_symlink() or link.exists():
+            if link.is_dir() and not link.is_symlink():
+                shutil.rmtree(link)
+            else:
+                link.unlink()
+        link.symlink_to(target, target_is_directory=target.is_dir())
+    for child in list(dest.iterdir()):
+        if child.name == ".git" or child.name in names:
+            continue
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
 def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, join_only: bool = False, announce: bool = True) -> Path:
     """Create the work history and the room folder when they are missing."""
     del join_only  # a missing room is set up, not rejected
@@ -189,6 +227,8 @@ def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, 
     branch = branch_name(room_name)
     dest = dest_parent / room_name
     if room_of_store(store, dest):
+        pin_latest_code(dest, source)
+        bind_ceo_worktree(company, room_name, dest)
         if announce:
             print(dest)
         return dest
@@ -199,17 +239,10 @@ def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, 
         seed_from = source
     else:
         seed_from = None
-    mirrored = mirror_project(store, source if source.is_dir() else seed_from or source)
+    mirror_project(store, source if source.is_dir() else seed_from or source)
+    # A room branch starts empty. It does not continue the project history or another room.
     if not branch_exists(store, branch):
-        if mirrored:
-            require(git(store, "branch", branch, mirrored))
-        elif seed_from is None:
-            seed_from = dest_parent / ".empty-room-seed"
-            seed_from.mkdir(exist_ok=True)
-            seed_branch(store, seed_from, branch, "company", "room start")
-            seed_from.rmdir()
-        else:
-            seed_branch(store, seed_from, branch, "company", "room start")
+        seed_orphan(store, branch, "company", "room start")
     aside = None
     if dest.exists():
         aside = dest_parent / f".{room_name}.before-room"
@@ -227,6 +260,7 @@ def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, 
             end = err.find("'", start)
             existing = Path(err[start:end])
             if existing.is_dir():
+                bind_ceo_worktree(company, room_name, existing)
                 if announce:
                     print(existing)
                 return existing
@@ -234,9 +268,81 @@ def ensure_room(company: Path, source: Path, room_name: str, dest_parent: Path, 
         raise SystemExit(added.returncode or 1)
     if aside is not None and aside.exists():
         shutil.rmtree(aside)
+    pin_latest_code(dest, source)
+    bind_ceo_worktree(company, room_name, dest)
     if announce:
         print(dest)
     return dest
+
+
+def links_file(company: Path, room_name: str) -> Path:
+    token = branch_name(room_name).split("/", 1)[1].replace("/", "-")
+    path = company / "cache" / "work-history-links"
+    path.mkdir(parents=True, exist_ok=True)
+    return path / f"{token}.tsv"
+
+
+def read_links(company: Path, room_name: str) -> list[tuple[str, str, str, str]]:
+    path = links_file(company, room_name)
+    if not path.is_file():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        kind, staff, folder, branch = line.split("\t")
+        rows.append((kind, staff, folder, branch))
+    return rows
+
+
+def write_links(company: Path, room_name: str, rows: list[tuple[str, str, str, str]]) -> None:
+    ordered = sorted(rows, key=lambda row: (row[0] != "ceo", row[1]))
+    body = "".join(f"{kind}\t{staff}\t{folder}\t{branch}\n" for kind, staff, folder, branch in ordered)
+    links_file(company, room_name).write_text(body, encoding="utf-8")
+
+
+def upsert_link(company: Path, room_name: str, kind: str, staff: str, folder: Path, branch: str) -> None:
+    rows = [row for row in read_links(company, room_name) if not (row[0] == kind and row[1] == staff)]
+    rows.append((kind, staff, str(folder), branch))
+    write_links(company, room_name, rows)
+
+
+def bind_ceo_worktree(company: Path, room_name: str, folder: Path) -> None:
+    """The room branch has one checkout, and that checkout is the CEO worktree."""
+    upsert_link(company, room_name, "ceo", "ceo", folder, branch_name(room_name))
+
+
+def activate_staff(company: Path, source: Path, room_name: str, dest_parent: Path, staff: str) -> Path:
+    """Attach a staff worktree to this room's CEO worktree. CEO returns the room checkout."""
+    ceo = ensure_room(company, source, room_name, dest_parent, announce=False)
+    staff = author(staff)
+    if staff == "ceo":
+        print(ceo)
+        return ceo
+    store = ensure_store(company)
+    ceo_branch = branch_name(room_name)
+    staff_branch = f"{ceo_branch}/staff/{staff}"
+    dest = dest_parent / f"{room_name}.staff" / staff
+    if room_of_store(store, dest):
+        pin_latest_code(dest, source)
+        upsert_link(company, room_name, "staff", staff, dest, staff_branch)
+        print(dest)
+        return dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if branch_exists(store, staff_branch):
+        added = git(store, "worktree", "add", str(dest), staff_branch)
+    else:
+        added = git(store, "worktree", "add", "-b", staff_branch, str(dest), ceo_branch)
+    if added.returncode != 0:
+        sys.stderr.write(added.stderr or "")
+        raise SystemExit(added.returncode or 1)
+    pin_latest_code(dest, source)
+    upsert_link(company, room_name, "staff", staff, dest, staff_branch)
+    print(dest)
+    return dest
+
+
+def show_links(company: Path, room_name: str) -> None:
+    for kind, staff, folder, branch in read_links(company, room_name):
+        print(f"{kind}\t{staff}\t{folder}\t{branch}")
 
 
 def claims_dir(company: Path, room_name: str) -> Path:
@@ -497,7 +603,9 @@ def open_room(company: Path, room: Path, room_name: str) -> Path:
         room = ensure_room(company, room if room.is_dir() else room.parent, room_name, room.parent, announce=False)
     branch = branch_name(room_name)
     head = git_at(room, "rev-parse", "--abbrev-ref", "HEAD")
-    if head.returncode != 0 or head.stdout.strip() != branch:
+    checked = head.stdout.strip()
+    staff_prefix = branch + "/staff/"
+    if head.returncode != 0 or not (checked == branch or checked.startswith(staff_prefix)):
         raise SystemExit(f"room is not checked out on {branch}")
     return room
 
@@ -862,6 +970,17 @@ def main() -> None:
     marked.add_argument("--state", required=True)
     marked.add_argument("--message", default="")
 
+    linked = sub.add_parser("activate-staff")
+    linked.add_argument("--company", type=Path, required=True)
+    linked.add_argument("--source", type=Path, required=True)
+    linked.add_argument("--room-name", required=True)
+    linked.add_argument("--dest-parent", type=Path, required=True)
+    linked.add_argument("--staff", required=True)
+
+    shown_links = sub.add_parser("links")
+    shown_links.add_argument("--company", type=Path, required=True)
+    shown_links.add_argument("--room-name", required=True)
+
     taken_all = sub.add_parser("capture")
     taken_all.add_argument("--company", type=Path, required=True)
     taken_all.add_argument("--room", type=Path, required=True)
@@ -879,6 +998,10 @@ def main() -> None:
             print(f"mirror {head}")
         else:
             print("mirror none")
+    elif args.cmd == "activate-staff":
+        activate_staff(args.company, args.source, args.room_name, args.dest_parent, args.staff)
+    elif args.cmd == "links":
+        show_links(args.company, args.room_name)
     elif args.cmd == "record":
         commit = record(args.company, args.room, args.room_name, args.staff, args.message)
         if commit:

@@ -59,7 +59,8 @@ Package / adapters root: \`$PKG_ROOT\`
 | \`--agent ceo\|ba-user\` | User-facing agent (default \`ceo\`) |
 | \`--room-name NAME\` | Name/join \`../.company-rooms/NAME\` (required for \`--agent ba-user\`) |
 | (default) | **New** company room as ceo |
-| \`--no-room\` / \`--continue\` | Stay in current folder / resume session |
+| \`--no-room\` | Stay in the project folder, no room |
+| \`--continue <room>\` | Switch to that room branch and open the conversation |
 
 ### Parent → child product CEO
 
